@@ -3,7 +3,7 @@
 // Get your free key at https://aistudio.google.com/app/apikey
 
 const GEMINI_KEY = import.meta.env.VITE_GEMINI_API_KEY
-const GEMINI_URL = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${GEMINI_KEY}`
+const GEMINI_URL = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${GEMINI_KEY}`
 
 async function callGemini(prompt, systemPrompt = '') {
   if (!GEMINI_KEY) return { error: 'No Gemini API key configured. Add VITE_GEMINI_API_KEY to your .env.local file.' }
