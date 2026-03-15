@@ -4,6 +4,7 @@ import { Routes, Route, Navigate } from 'react-router-dom'
 import { Toaster } from 'react-hot-toast'
 import { AuthProvider, useAuth } from './context/AuthContext'
 import { ThemeProvider } from './context/ThemeContext'
+import { BadgeProvider } from './context/BadgeContext'
 import Layout from './components/Layout'
 import LoadingScreen from './components/LoadingScreen'
 import { requestNotificationPermission } from './utils/notifications'
@@ -68,6 +69,7 @@ export default function App() {
   return (
     <ThemeProvider>
       <AuthProvider>
+        <BadgeProvider>
         <NotificationInit />
         <Toaster
           position="top-right"
@@ -101,6 +103,7 @@ export default function App() {
             <Route path="*" element={<Navigate to="/" replace />} />
           </Routes>
         </Suspense>
+        </BadgeProvider>
       </AuthProvider>
     </ThemeProvider>
   )
