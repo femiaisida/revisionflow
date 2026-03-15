@@ -1,7 +1,7 @@
 // src/pages/Timer.jsx
 import React, { useState, useEffect, useRef, useCallback } from 'react'
 import { sendTimerNotification } from '../utils/notifications'
-import { Play, Pause, RotateCcw, Bell, Timer as TimerIcon, Watch, Volume2, ExternalLink, X } from 'lucide-react'
+import { Play, Pause, RotateCcw, Bell, Timer as TimerIcon, Watch, Volume2, ExternalLink, X, Maximize2, Minimize2, Music, Image } from 'lucide-react'
 
 // ── Sound generation using Web Audio API ─────────────────────────────────────
 function createAudioContext() {
@@ -80,15 +80,36 @@ export default function TimerPage({ isWidget = false, onClose }) {
   const [sound, setSound]           = useState('chime')
   const [volume, setVolume]         = useState(0.8)
   const [isPopped, setIsPopped]     = useState(false)
+  const [isFullscreen, setIsFullscreen] = useState(false)
+  const [ambient, setAmbient]       = useState('none')
+  const [customBg, setCustomBg]     = useState(null)
+  const [showAmbient, setShowAmbient] = useState(false)
+  const [musicOpen, setMusicOpen]   = useState(false)
+  const bgFileRef = React.useRef()
 
   return (
     <div className={isWidget ? '' : 'fade-in'} style={isWidget ? {} : {maxWidth:560,margin:'0 auto'}}>
       {!isWidget && (
         <div style={{display:'flex',alignItems:'center',justifyContent:'space-between',marginBottom:24}}>
           <h2 style={{display:'flex',alignItems:'center',gap:10}}><TimerIcon size={24} color="var(--accent-light)"/> Timer</h2>
-          <button className="btn btn-secondary btn-sm" onClick={()=>setIsPopped(true)} title="Pop out as widget">
-            <ExternalLink size={14}/> Pop out
-          </button>
+          <div style={{display:'flex',gap:6}}>
+            <button className="btn btn-secondary btn-sm" onClick={()=>setShowAmbient(s=>!s)} title="Ambient background">
+              <Image size={14}/> Ambient
+            </button>
+            <button className="btn btn-secondary btn-sm" onClick={()=>setMusicOpen(s=>!s)} title="Revision music">
+              <Music size={14}/> Music
+            </button>
+            <button className="btn btn-secondary btn-sm" onClick={()=>{
+              if (!isFullscreen) document.documentElement.requestFullscreen?.()
+              else document.exitFullscreen?.()
+              setIsFullscreen(f=>!f)
+            }} title="Fullscreen">
+              {isFullscreen ? <Minimize2 size={14}/> : <Maximize2 size={14}/>} {isFullscreen?'Exit':'Fullscreen'}
+            </button>
+            <button className="btn btn-secondary btn-sm" onClick={()=>setIsPopped(true)} title="Pop out as widget">
+              <ExternalLink size={14}/> Pop out
+            </button>
+          </div>
         </div>
       )}
 
@@ -122,6 +143,27 @@ export default function TimerPage({ isWidget = false, onClose }) {
 
       {/* Pop-out widget */}
       {isPopped && <TimerWidget onClose={()=>setIsPopped(false)} sound={sound}/>}
+
+      {/* ── Ambient background panel ── */}
+      {showAmbient && (
+        <AmbientPanel
+          current={ambient}
+          customBg={customBg}
+          onSelect={setAmbient}
+          onCustom={setCustomBg}
+          bgFileRef={bgFileRef}
+          onClose={()=>setShowAmbient(false)}/>
+      )}
+
+      {/* ── Music panel ── */}
+      {musicOpen && (
+        <MusicPanel onClose={()=>setMusicOpen(false)}/>
+      )}
+
+      {/* ── Ambient background overlay ── */}
+      {(ambient !== 'none' || customBg) && (
+        <AmbientBackground ambient={ambient} customBg={customBg}/>
+      )}
     </div>
   )
 }
@@ -505,6 +547,194 @@ export function TimerWidget({ onClose, sound }) {
         </button>
         <button className="btn btn-secondary btn-icon btn-sm" onClick={()=>{setRunning(false);setRemaining(total);setFinished(false)}}><RotateCcw size={13}/></button>
       </div>
+    </div>
+  )
+}
+
+// ── Ambient Background Overlay ────────────────────────────────────────────────
+const AMBIENT_PRESETS = {
+  none:      { label:'None',          css: 'none' },
+  forest:    { label:'Forest',        css: 'linear-gradient(135deg,#1a4731 0%,#2d6a4f 40%,#52b788 100%)' },
+  rain:      { label:'Rainy Window',  css: 'linear-gradient(180deg,#2c3e50 0%,#4a5568 50%,#2c3e50 100%)' },
+  ocean:     { label:'Deep Ocean',    css: 'linear-gradient(180deg,#0c1445 0%,#1a3a6e 40%,#0c7abf 100%)' },
+  sunset:    { label:'Sunset',        css: 'linear-gradient(180deg,#ff6b35 0%,#f7931e 40%,#ffcc02 100%)' },
+  space:     { label:'Space',         css: 'radial-gradient(ellipse at 20% 50%,#1a0533 0%,#0d0221 50%,#000000 100%)' },
+  aurora:    { label:'Aurora',        css: 'linear-gradient(135deg,#0d1b2a 0%,#1b4332 30%,#6a0572 70%,#0d1b2a 100%)' },
+  cosy:      { label:'Cosy Study',    css: 'linear-gradient(135deg,#3d1c02 0%,#6b3a2a 50%,#9a5c38 100%)' },
+  midnight:  { label:'Midnight',      css: 'linear-gradient(180deg,#0a0a1a 0%,#1a1a3e 50%,#0a0a1a 100%)' },
+}
+
+function AmbientBackground({ ambient, customBg }) {
+  const bg = customBg
+    ? `url(${customBg})`
+    : AMBIENT_PRESETS[ambient]?.css || 'none'
+
+  if (bg === 'none') return null
+
+  return (
+    <div style={{
+      position:'fixed', inset:0, zIndex:-1,
+      background: bg,
+      backgroundSize: 'cover',
+      backgroundPosition: 'center',
+      opacity: 0.35,
+      pointerEvents:'none',
+      transition:'background 0.8s ease',
+    }}/>
+  )
+}
+
+function AmbientPanel({ current, customBg, onSelect, onCustom, bgFileRef, onClose }) {
+  function handleFile(e) {
+    const file = e.target.files?.[0]
+    if (!file) return
+    const reader = new FileReader()
+    reader.onload = ev => { onCustom(ev.target.result); onSelect('custom') }
+    reader.readAsDataURL(file)
+  }
+
+  return (
+    <div className="card" style={{marginBottom:16,position:'relative'}}>
+      <div style={{display:'flex',alignItems:'center',justifyContent:'space-between',marginBottom:12}}>
+        <h4 style={{margin:0}}>Ambient Background</h4>
+        <button className="btn btn-ghost btn-icon btn-sm" onClick={onClose}><X size={16}/></button>
+      </div>
+      <div style={{display:'grid',gridTemplateColumns:'repeat(auto-fill,minmax(90px,1fr))',gap:8,marginBottom:10}}>
+        {Object.entries(AMBIENT_PRESETS).map(([key, preset]) => (
+          <button key={key} onClick={()=>{onSelect(key); if(key!=='custom') onCustom(null)}}
+            style={{
+              padding:'10px 6px', borderRadius:'var(--radius-md)',
+              border:`2px solid ${current===key?'var(--accent)':'var(--border)'}`,
+              background: key==='none' ? 'var(--bg-surface)' : preset.css,
+              backgroundSize: 'cover',
+              color: key==='none' ? 'var(--text-primary)' : '#fff',
+              fontSize:'0.72rem', fontWeight:600, cursor:'pointer',
+              textShadow: key==='none' ? 'none' : '0 1px 3px rgba(0,0,0,0.8)',
+            }}>
+            {preset.label}
+          </button>
+        ))}
+        {customBg && (
+          <button onClick={()=>onSelect('custom')}
+            style={{
+              padding:'10px 6px', borderRadius:'var(--radius-md)',
+              border:`2px solid ${current==='custom'?'var(--accent)':'var(--border)'}`,
+              background:`url(${customBg})`, backgroundSize:'cover', backgroundPosition:'center',
+              color:'#fff', fontSize:'0.72rem', fontWeight:600, cursor:'pointer',
+              textShadow:'0 1px 3px rgba(0,0,0,0.8)',
+            }}>
+            Custom
+          </button>
+        )}
+      </div>
+      <div style={{display:'flex',gap:8,alignItems:'center'}}>
+        <button className="btn btn-secondary btn-sm" onClick={()=>bgFileRef.current?.click()}>
+          <Image size={13}/> Upload image
+        </button>
+        <span style={{fontSize:'0.75rem',color:'var(--text-muted)'}}>PNG, JPG, WebP supported</span>
+        <input ref={bgFileRef} type="file" accept="image/*" style={{display:'none'}} onChange={handleFile}/>
+      </div>
+    </div>
+  )
+}
+
+// ── Music Panel ───────────────────────────────────────────────────────────────
+const PLAYLISTS = [
+  { label:'Lo-fi Study Beats',    id:'PLOzDu-MXXLliO9gyCms7DxDGQn3doCOz_', platform:'youtube' },
+  { label:'Classical Focus',      id:'PLNPkGO2_5V_BOCmGqFPd3Cw68K3Xf_1qJ', platform:'youtube' },
+  { label:'Rain & Thunder',       id:'PLMIbmfP_9vb8BCxRoraJpoo4q1yMFg4Ce', platform:'youtube' },
+  { label:'Ambient Study Music',  id:'PLFs4GSJ0MmxiWIJSXUPNv2G-6OPJf-q-K', platform:'youtube' },
+  { label:'Piano & Strings',      id:'PLCVGGn6GhhDu_4yn_9eN3oSCpCPNpt3QB', platform:'youtube' },
+  { label:'Brown Noise Focus',    id:'PLDIoUOhQQPlXr63I_vwF06Dq_HiDkDeRC', platform:'youtube' },
+]
+
+function MusicPanel({ onClose }) {
+  const [selected, setSelected] = useState(null)
+  const [spotifyOpen, setSpotifyOpen] = useState(false)
+
+  return (
+    <div className="card" style={{marginBottom:16}}>
+      <div style={{display:'flex',alignItems:'center',justifyContent:'space-between',marginBottom:12}}>
+        <h4 style={{margin:0}}>Revision Music</h4>
+        <button className="btn btn-ghost btn-icon btn-sm" onClick={onClose}><X size={16}/></button>
+      </div>
+
+      <div className="tabs" style={{marginBottom:12}}>
+        <button className={`tab${!spotifyOpen?' active':''}`} onClick={()=>setSpotifyOpen(false)}>
+          Curated Playlists
+        </button>
+        <button className={`tab${spotifyOpen?' active':''}`} onClick={()=>setSpotifyOpen(true)}>
+          Spotify
+        </button>
+      </div>
+
+      {!spotifyOpen ? (
+        <>
+          <div style={{display:'flex',flexDirection:'column',gap:6,marginBottom:12}}>
+            {PLAYLISTS.map(p=>(
+              <button key={p.id} onClick={()=>setSelected(selected===p.id?null:p.id)}
+                style={{
+                  display:'flex',alignItems:'center',justifyContent:'space-between',
+                  padding:'8px 12px',borderRadius:'var(--radius-md)',
+                  border:`1px solid ${selected===p.id?'var(--accent)':'var(--border)'}`,
+                  background:selected===p.id?'rgba(124,58,237,0.1)':'var(--bg-surface)',
+                  cursor:'pointer',textAlign:'left',width:'100%',
+                }}>
+                <span style={{fontWeight:600,fontSize:'0.875rem'}}>{p.label}</span>
+                <span style={{fontSize:'0.72rem',color:'var(--text-muted)'}}>
+                  {selected===p.id?'▶ Playing':'YouTube'}
+                </span>
+              </button>
+            ))}
+          </div>
+
+          {selected && (
+            <div style={{borderRadius:'var(--radius-md)',overflow:'hidden',border:'1px solid var(--border)'}}>
+              <iframe
+                width="100%" height="120"
+                src={`https://www.youtube.com/embed/videoseries?list=${selected}&autoplay=1&controls=1`}
+                frameBorder="0"
+                allow="autoplay; encrypted-media"
+                allowFullScreen
+                title="Revision music"
+                style={{display:'block'}}/>
+            </div>
+          )}
+          <p style={{fontSize:'0.72rem',color:'var(--text-muted)',marginTop:8}}>
+            Curated royalty-free playlists via YouTube. Ensure volume is comfortable for focus.
+          </p>
+        </>
+      ) : (
+        <div style={{padding:'12px',background:'var(--bg-surface)',borderRadius:'var(--radius-md)',border:'1px solid var(--border)'}}>
+          <div style={{display:'flex',alignItems:'center',gap:10,marginBottom:10}}>
+            <div style={{width:32,height:32,borderRadius:6,background:'#1DB954',display:'flex',alignItems:'center',justifyContent:'center',fontSize:'1.2rem'}}>♫</div>
+            <div>
+              <div style={{fontWeight:700}}>Spotify</div>
+              <div style={{fontSize:'0.75rem',color:'var(--text-muted)'}}>Web Playback requires Spotify Premium</div>
+            </div>
+          </div>
+          <p style={{fontSize:'0.82rem',marginBottom:12}}>
+            Open Spotify directly and play any revision playlist alongside your timer. Recommended playlists:
+          </p>
+          <div style={{display:'flex',flexDirection:'column',gap:6}}>
+            {[
+              {name:'Lo-fi Study',      url:'spotify:playlist:37i9dQZF1DX8Uebhn9wzrS'},
+              {name:'Deep Focus',       url:'spotify:playlist:37i9dQZF1DWZeKCadgRdKQ'},
+              {name:'Classical Study',  url:'spotify:playlist:37i9dQZF1DWWEJlAGA9gs0'},
+              {name:'Brain Food',       url:'spotify:playlist:37i9dQZF1DWXLeA8Omik1L'},
+            ].map(p=>(
+              <a key={p.name} href={p.url}
+                style={{display:'flex',justifyContent:'space-between',padding:'7px 10px',background:'var(--bg-card)',borderRadius:'var(--radius-md)',border:'1px solid var(--border)',textDecoration:'none',color:'inherit',fontSize:'0.82rem',fontWeight:500}}>
+                {p.name}
+                <span style={{color:'#1DB954',fontWeight:600}}>Open →</span>
+              </a>
+            ))}
+          </div>
+          <p style={{fontSize:'0.72rem',color:'var(--text-muted)',marginTop:8}}>
+            These links open in the Spotify app. If you don't have Premium, use the curated playlists tab instead.
+          </p>
+        </div>
+      )}
     </div>
   )
 }

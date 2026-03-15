@@ -75,6 +75,7 @@ export default function AIAdvisor() {
   const [flashTopic,  setFlashTopic]  = useState('')
   const [flashCards,  setFlashCards]  = useState([])
   const [flashLoad,   setFlashLoad]   = useState(false)
+  const [flashCount,  setFlashCount]  = useState(10)
 
   const bottomRef = useRef()
 
@@ -233,7 +234,7 @@ export default function AIAdvisor() {
   async function handleFlashcards() {
     if (!flashSubj) return
     setFlashLoad(true)
-    const prompt = `Generate 8 detailed GCSE flashcards for: ${flashSubj}${flashTopic?` — ${flashTopic}`:''}\n\nFor each card:\nQ: [clear question]\nA: [concise but complete answer]\n\nFocus on high-frequency exam topics. Include key definitions, processes, and common exam question types.`
+    const prompt = `Generate ${flashCount} detailed GCSE/A-Level flashcards for: ${flashSubj}${flashTopic?` — ${flashTopic}`:''}\n\nFor each card use exactly this format:\nQ: [clear, specific question]\nA: [concise but complete answer — include key terms, numbers, processes]\n\nFocus on high-frequency exam topics, key definitions, command word questions, and numbers students must know. Generate exactly ${flashCount} cards, no more.`
     const res = await callGemini(prompt)
     // Parse cards from response
     const text = res.text||''
@@ -386,9 +387,17 @@ export default function AIAdvisor() {
               <div><label className="label">Topic (optional)</label>
                 <input className="input" value={flashTopic} onChange={e=>setFlashTopic(e.target.value)} placeholder="e.g. Cell biology"/></div>
             </div>
-            <button className="btn btn-primary" onClick={handleFlashcards} disabled={flashLoad||!flashSubj}>
-              {flashLoad?'Generating…':'Generate 8 flashcards'}
-            </button>
+            <div style={{display:'flex',alignItems:'center',gap:10,flexWrap:'wrap'}}>
+              <div>
+                <label className="label">Number of cards</label>
+                <select className="select" style={{width:'auto'}} value={flashCount} onChange={e=>setFlashCount(parseInt(e.target.value))}>
+                  {[5,8,10,15,20,25,30].map(n=><option key={n} value={n}>{n} cards</option>)}
+                </select>
+              </div>
+              <button className="btn btn-primary" style={{alignSelf:'flex-end'}} onClick={handleFlashcards} disabled={flashLoad||!flashSubj}>
+                {flashLoad?'Generating…':`Generate ${flashCount} flashcards`}
+              </button>
+            </div>
           </div>
           {flashLoad&&<div className="loading-center"><div className="spinner"/></div>}
           {flashCards.length>0&&(

@@ -28,6 +28,7 @@ const Notes        = lazy(() => import('./pages/Notes'))
 const ExamDates    = lazy(() => import('./pages/ExamDates'))
 const Settings     = lazy(() => import('./pages/Settings'))
 const TimerPage    = lazy(() => import('./pages/Timer'))
+const Analytics    = lazy(() => import('./pages/Analytics'))
 
 function NotificationInit() {
   useEffect(() => {

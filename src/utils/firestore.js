@@ -147,6 +147,24 @@ export async function savePaperAttempt(uid, attempt) {
   return ref.id
 }
 
+export async function deletePaperAttempt(uid, attemptId) {
+  await deleteDoc(doc(db, 'users', uid, 'paperAttempts', attemptId))
+  // Deduct XP for the deleted paper
+  const ref = doc(db, 'users', uid)
+  const snap = await getDoc(ref)
+  if (snap.exists()) {
+    const newXP = Math.max(0, (snap.data().xp || 0) - XP_REWARDS.paperCompleted)
+    await updateDoc(ref, { xp: newXP })
+  }
+}
+
+export async function updatePaperAttempt(uid, attemptId, data) {
+  await updateDoc(doc(db, 'users', uid, 'paperAttempts', attemptId), {
+    ...data,
+    updatedAt: serverTimestamp(),
+  })
+}
+
 export async function getPaperAttempts(uid, subject) {
   let q = collection(db, 'users', uid, 'paperAttempts')
   if (subject) q = query(q, where('subject', '==', subject), orderBy('createdAt', 'desc'))
@@ -293,6 +311,25 @@ export async function getPaperStructures(filters = {}) {
 }
 
 // ── LEADERBOARD ───────────────────────────────────────────────────────────────
+export async function getGlobalLeaderboard(limit = 50) {
+  // Returns top users by XP who have opted into the global leaderboard
+  // All users visible by default (showOnGlobalLeaderboard !== false)
+  const snap = await getDocs(collection(db, 'users'))
+  return snap.docs
+    .map(d => ({ id: d.id, ...d.data() }))
+    .filter(u => u.showOnGlobalLeaderboard !== false)
+    .sort((a,b) => (b.xp||0) - (a.xp||0))
+    .slice(0, limit)
+    .map(u => ({
+      id: u.id,
+      displayName: u.hideNameFromLeaderboard ? 'Anonymous' : (u.displayName || 'Student'),
+      level: u.level || 1,
+      xp: u.xp || 0,
+      streak: u.streak || 0,
+      badges: (u.badges || []).length,
+    }))
+}
+
 export async function getLeaderboard(friendUids, currentUid) {
   const uids = [...friendUids, currentUid]
   const profiles = await Promise.all(uids.map(uid => getDoc(doc(db, 'users', uid))))

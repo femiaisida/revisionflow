@@ -62,8 +62,8 @@ export const PAPER_DATABASE = {
   'AQA-Psychology-N/A-P2':                { maxMarks:100, duration:105 },
   'AQA-Media Studies-N/A-P1':             { maxMarks:84,  duration:90  },
   'AQA-Media Studies-N/A-P2':             { maxMarks:84,  duration:90  },
-  'OCR-Computer Science-N/A-P1':          { maxMarks:90,  duration:90  },
-  'OCR-Computer Science-N/A-P2':          { maxMarks:90,  duration:90  },
+  'OCR-Computer Science-N/A-P1':          { maxMarks:80,  duration:90  },
+  'OCR-Computer Science-N/A-P2':          { maxMarks:80,  duration:90  },
   'OCR-Mathematics-Higher-P1':            { maxMarks:80,  duration:90  },
   'OCR-Mathematics-Higher-P2':            { maxMarks:80,  duration:90  },
   'OCR-Mathematics-Higher-P3':            { maxMarks:80,  duration:90  },
@@ -170,8 +170,8 @@ export const GRADE_BOUNDARIES = {
     'AQA-French-Higher':           { maxMarks:60,  boundaries:[49,43,37,31,25,19,null,null,null], note:'~estimated' },
     'AQA-Spanish-Higher':          { maxMarks:60,  boundaries:[49,43,37,31,25,19,null,null,null], note:'~estimated' },
     // ── OCR GCSE ─────────────────────────────────────────────────────────────
-    // Verified: CS G9=152,G8=140 /180 (÷2=90)
-    'OCR-Computer Science':        { maxMarks:90,  boundaries:[76,70,64,54,44,34,null,null,null] },
+    // Verified: CS total=160 (2×80). 2024: G9=136,G8=126,G7=117 /160 (÷2=80)
+    'OCR-Computer Science':        { maxMarks:80,  boundaries:[68,63,59,51,44,36,26,16,7] },
     'OCR-Mathematics-Higher':      { maxMarks:80,  boundaries:[71,62,53,41,30,18,null,null,null], note:'~estimated' },
     'OCR-Mathematics-Foundation':  { maxMarks:80,  boundaries:[null,null,null,null,60,49,37,24,11], note:'~estimated' },
     'OCR-Geography':               { maxMarks:70,  boundaries:[55,49,44,38,32,27,19,12,5], note:'~estimated' },
@@ -264,6 +264,43 @@ export const GRADE_BOUNDARIES = {
     'AQA-Geography':                  { maxMarks:88,  boundaries:[73,65,57,49,41,34,24,16,8] },
     'OCR-Computer Science':           { maxMarks:90,  boundaries:[77,71,64,53,42,32,null,null,null] },
     'Edexcel-Mathematics-Higher':     { maxMarks:80,  boundaries:[66,56,46,35,24,14,null,null,null] },
+  },
+
+  2021: {
+    // Pandemic year — boundaries lower than normal, labelled accordingly
+    // AQA Maths Higher Nov 2021: total G9=192,G8=155,G7=119,G6=90,G5=62,G4=34 /240 (÷3)
+    'AQA-Mathematics-Higher':     { maxMarks:80, boundaries:[64,52,40,30,21,11,null,null,null], note:'Nov 2021 (pandemic grading)' },
+    // AQA Maths Foundation Nov 2021: G5=145,G4=108,G3=79,G2=51,G1=23 /240 (÷3)
+    'AQA-Mathematics-Foundation': { maxMarks:80, boundaries:[null,null,null,null,48,36,26,17,8], note:'Nov 2021 (pandemic grading)' },
+    // OCR CS Nov 2021: total G9=127,G8=111,G7=95,G6=79,G5=63,G4=48,G3=36,G2=25,G1=14 /160 (÷2)
+    'OCR-Computer Science':       { maxMarks:80, boundaries:[64,56,48,40,32,24,18,13,7], note:'2021 (pandemic grading)' },
+    // Other subjects — no June 2021 exams (teacher assessed grades), only estimates from Nov series
+    'AQA-English Language':       { maxMarks:80, boundaries:[58,52,46,40,34,27,20,13,6], note:'~estimated (pandemic year)' },
+    'AQA-English Literature':     { maxMarks:80, boundaries:[65,58,50,42,34,26,19,12,5], note:'~estimated (pandemic year)' },
+    'AQA-Biology-Higher':         { maxMarks:100, boundaries:[67,59,51,40,30,19,null,null,null], note:'~estimated (pandemic year)' },
+    'AQA-Chemistry-Higher':       { maxMarks:100, boundaries:[68,60,52,41,30,19,null,null,null], note:'~estimated (pandemic year)' },
+    'AQA-Physics-Higher':         { maxMarks:100, boundaries:[66,58,50,39,29,18,null,null,null], note:'~estimated (pandemic year)' },
+    'AQA-Geography':              { maxMarks:88,  boundaries:[67,60,52,45,37,29,21,13,5], note:'~estimated (pandemic year)' },
+    'Edexcel-Mathematics-Higher': { maxMarks:80,  boundaries:[60,50,40,30,21,12,null,null,null], note:'~estimated (pandemic year)' },
+    'AQA-German-Higher':          { maxMarks:60,  boundaries:[46,40,34,28,22,16,null,null,null], note:'~estimated (pandemic year)' },
+  },
+
+  2020: {
+    // Pandemic year — no GCSE exams sat in summer 2020 (centre assessed grades)
+    // Nov 2020 AQA Maths Higher: total G9=194,G8=159,G7=124,G6=95,G5=67,G4=39 /240 (÷3)
+    'AQA-Mathematics-Higher':     { maxMarks:80, boundaries:[65,53,41,32,22,13,null,null,null], note:'Nov 2020 (pandemic grading — no summer exams)' },
+    // AQA Maths Foundation Nov 2020: G5=146,G4=116,G3=86,G2=56,G1=26 /240 (÷3)
+    'AQA-Mathematics-Foundation': { maxMarks:80, boundaries:[null,null,null,null,49,39,29,19,9], note:'Nov 2020 (pandemic grading)' },
+    // No other subjects had written exams in summer 2020
+    // All other entries are estimates from Nov 2020 series where available
+    'AQA-English Language':       { maxMarks:80, boundaries:[57,51,45,39,33,26,19,12,5], note:'~estimated Nov 2020 (pandemic year)' },
+    'AQA-English Literature':     { maxMarks:80, boundaries:[64,57,49,41,33,25,18,11,5], note:'~estimated Nov 2020 (pandemic year)' },
+    'AQA-Biology-Higher':         { maxMarks:100, boundaries:[66,58,50,39,29,18,null,null,null], note:'~estimated (pandemic year)' },
+    'AQA-Chemistry-Higher':       { maxMarks:100, boundaries:[67,59,51,40,29,18,null,null,null], note:'~estimated (pandemic year)' },
+    'AQA-Physics-Higher':         { maxMarks:100, boundaries:[65,57,49,38,28,17,null,null,null], note:'~estimated (pandemic year)' },
+    'AQA-Geography':              { maxMarks:88,  boundaries:[66,59,51,44,36,28,20,12,5], note:'~estimated (pandemic year)' },
+    'Edexcel-Mathematics-Higher': { maxMarks:80,  boundaries:[59,49,39,29,20,11,null,null,null], note:'~estimated (pandemic year)' },
+    'OCR-Computer Science':       { maxMarks:80,  boundaries:[62,54,46,38,30,22,16,11,6], note:'~estimated (pandemic year)' },
   },
 
   2019: {

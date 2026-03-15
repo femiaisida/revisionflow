@@ -1,8 +1,8 @@
 // src/pages/PastPapers.jsx
 import React, { useState, useEffect } from 'react'
 import { useAuth } from '../context/AuthContext'
-import { savePaperAttempt, getPaperAttempts, getPaperStructures, submitPaperStructure } from '../utils/firestore'
-import { doc, deleteDoc, collection } from 'firebase/firestore'
+import { savePaperAttempt, getPaperAttempts, getPaperStructures, submitPaperStructure, deletePaperAttempt, updatePaperAttempt } from '../utils/firestore'
+import { collection } from 'firebase/firestore'
 import { db } from '../firebase'
 import { analyseWeaknesses } from '../utils/ai'
 import { gradeColour } from '../utils/calendar'
@@ -35,16 +35,16 @@ export default function PastPapers() {
   }, [user, selSubject])
 
   async function handleDelete(id) {
-    await deleteDoc(doc(db,'users',user.uid,'paperAttempts',id))
+    await deletePaperAttempt(user.uid, id)
     setAttempts(a=>a.filter(x=>x.id!==id))
-    toast.success('Paper deleted')
+    toast.success('Paper deleted (-100 XP)')
   }
 
   async function handleBulkDelete() {
-    await Promise.all(selected.map(id=>deleteDoc(doc(db,'users',user.uid,'paperAttempts',id))))
+    await Promise.all(selected.map(id=>deletePaperAttempt(user.uid, id)))
     setAttempts(a=>a.filter(x=>!selected.includes(x.id)))
     setSelected([])
-    toast.success(`Deleted ${selected.length} paper${selected.length!==1?'s':''}`)
+    toast.success(`Deleted ${selected.length} paper${selected.length!==1?'s':''} (-${selected.length*100} XP)`)
   }
 
   async function handleAnalyse() {
@@ -111,7 +111,22 @@ export default function PastPapers() {
               <table>
                 <thead><tr>
                   <th><input type="checkbox" checked={selected.length===filtered.length&&filtered.length>0} onChange={e=>setSelected(e.target.checked?filtered.map(x=>x.id):[])} style={{accentColor:'var(--accent)'}}/></th>
-                  <th>Subject</th><th>Paper</th><th>Board</th><th>Year</th><th>Score</th><th>%</th><th>Grade</th><th>Date</th><th></th>
+                  {[
+                    {col:'subject',label:'Subject'},
+                    {col:'paper',label:'Paper'},
+                    {col:'board',label:'Board'},
+                    {col:'year',label:'Year'},
+                    {col:'score',label:'Score'},
+                    {col:'percentage',label:'%'},
+                    {col:'grade',label:'Grade'},
+                    {col:'attemptDate',label:'Date'},
+                  ].map(({col,label})=>(
+                    <th key={col} onClick={()=>toggleSort(col)}
+                      style={{cursor:'pointer',userSelect:'none',whiteSpace:'nowrap'}}>
+                      {label}{sortIcon(col)}
+                    </th>
+                  ))}
+                  <th></th>
                 </tr></thead>
                 <tbody>
                   {filtered.map(a=>(
@@ -125,7 +140,10 @@ export default function PastPapers() {
                       <td>{a.percentage}%</td>
                       <td><span style={{fontWeight:800,color:gradeColour(a.grade||''),fontSize:'1rem'}}>{a.grade||'–'}</span></td>
                       <td style={{fontSize:'0.78rem',color:'var(--text-muted)'}}>{a.attemptDate||'–'}</td>
-                      <td><button className="btn btn-ghost btn-icon btn-sm" style={{color:'var(--danger)'}} onClick={()=>handleDelete(a.id)}><Trash2 size={14}/></button></td>
+                      <td style={{display:'flex',gap:4}}>
+                        <button className="btn btn-ghost btn-icon btn-sm" style={{color:'var(--accent-light)'}} onClick={()=>setEditEntry(a)} title="Edit"><Edit2 size={13}/></button>
+                        <button className="btn btn-ghost btn-icon btn-sm" style={{color:'var(--danger)'}} onClick={()=>handleDelete(a.id)} title="Delete"><Trash2 size={14}/></button>
+                      </td>
                     </tr>
                   ))}
                 </tbody>
@@ -451,6 +469,78 @@ function BoundaryEditorModal({ profile, onClose }) {
         <div style={{display:'flex',justifyContent:'flex-end',marginTop:16}}>
           <button className="btn btn-secondary" onClick={onClose}>Close</button>
         </div>
+      </div>
+    </div>
+  )
+}
+
+// ── Edit Entry Modal ──────────────────────────────────────────────────────────
+function EditEntryModal({ attempt, onClose, onSave }) {
+  const [form, setForm] = useState({
+    score:       attempt.score || 0,
+    maxMarks:    attempt.maxMarks || 80,
+    year:        attempt.year || 2024,
+    attemptDate: attempt.attemptDate || '',
+    notes:       attempt.notes || '',
+  })
+
+  function submit(e) {
+    e.preventDefault()
+    const score      = parseInt(form.score)
+    const maxMarks   = parseInt(form.maxMarks)
+    const percentage = Math.round((score / maxMarks) * 100)
+    onSave({ ...form, score, maxMarks, percentage })
+  }
+
+  return (
+    <div className="modal-overlay" onClick={onClose}>
+      <div className="modal" onClick={e=>e.stopPropagation()}>
+        <div className="modal-header">
+          <span className="modal-title">
+            Edit entry — {attempt.subject} P{attempt.paper} {attempt.year}
+          </span>
+          <button className="btn btn-ghost btn-icon" onClick={onClose}><X size={18}/></button>
+        </div>
+        <form onSubmit={submit} style={{display:'flex',flexDirection:'column',gap:12}}>
+          <div className="grid-2" style={{gap:10}}>
+            <div>
+              <label className="label">Score</label>
+              <input className="input" type="number" min={0} max={form.maxMarks}
+                value={form.score} onChange={e=>setForm(f=>({...f,score:e.target.value}))} required/>
+            </div>
+            <div>
+              <label className="label">Max marks</label>
+              <input className="input" type="number" min={1}
+                value={form.maxMarks} onChange={e=>setForm(f=>({...f,maxMarks:e.target.value}))} required/>
+            </div>
+            <div>
+              <label className="label">Year (paper year)</label>
+              <select className="select" value={form.year} onChange={e=>setForm(f=>({...f,year:parseInt(e.target.value)}))}>
+                {[2024,2023,2022,2021,2020,2019,2018,2017].map(y=><option key={y} value={y}>{y}</option>)}
+              </select>
+            </div>
+            <div>
+              <label className="label">Date attempted</label>
+              <input className="input" type="date" value={form.attemptDate}
+                onChange={e=>setForm(f=>({...f,attemptDate:e.target.value}))}/>
+            </div>
+          </div>
+          <div>
+            <label className="label">Notes</label>
+            <textarea className="textarea" style={{minHeight:55}} value={form.notes}
+              onChange={e=>setForm(f=>({...f,notes:e.target.value}))}
+              placeholder="Topics to revisit, things that went well…"/>
+          </div>
+          {form.score && form.maxMarks && (
+            <div style={{padding:'6px 12px',background:'rgba(124,58,237,0.08)',borderRadius:'var(--radius-md)',fontSize:'0.82rem'}}>
+              {Math.round((form.score/form.maxMarks)*100)}% — this will update the grade automatically
+            </div>
+          )}
+          <div style={{display:'flex',gap:8,justifyContent:'flex-end'}}>
+            <button type="button" className="btn btn-secondary" onClick={onClose}>Cancel</button>
+            <button type="submit" className="btn btn-primary">Save changes</button>
+          </div>
+        </form>
       </div>
     </div>
   )
