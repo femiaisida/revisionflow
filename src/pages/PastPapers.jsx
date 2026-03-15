@@ -24,9 +24,22 @@ export default function PastPapers() {
   const [aiAnalysis, setAiAnalysis] = useState('')
   const [aiLoading, setAiLoading] = useState(false)
   const [tab, setTab] = useState('attempts')
-  const [selected, setSelected] = useState([])
+  const [selected,   setSelected]   = useState([])
+  const [sortCol,    setSortCol]    = useState('attemptDate')
+  const [sortDir,    setSortDir]    = useState('desc')
+  const [editEntry,  setEditEntry]  = useState(null)
 
   const subjects = profile?.subjects?.map(s=>s.name) || []
+
+  function toggleSort(col) {
+    if (sortCol === col) setSortDir(d => d === 'asc' ? 'desc' : 'asc')
+    else { setSortCol(col); setSortDir('asc') }
+  }
+
+  function sortIcon(col) {
+    if (sortCol !== col) return ' ↕'
+    return sortDir === 'asc' ? ' ↑' : ' ↓'
+  }
 
   useEffect(() => {
     if (!user) return
@@ -54,7 +67,25 @@ export default function PastPapers() {
     setAiLoading(false)
   }
 
-  const filtered = selSubject ? attempts.filter(a=>a.subject===selSubject) : attempts
+  const filtered = (selSubject ? attempts.filter(a=>a.subject===selSubject) : [...attempts])
+    .sort((a, b) => {
+      const dir = sortDir === 'asc' ? 1 : -1
+      const map = {
+        subject: [a.subject, b.subject],
+        paper:   [a.paper, b.paper],
+        board:   [a.board, b.board],
+        year:    [a.year, b.year],
+        score:   [a.score, b.score],
+        percentage: [a.percentage, b.percentage],
+        grade:   [a.grade, b.grade],
+        attemptDate: [a.attemptDate, b.attemptDate],
+      }
+      const [av, bv] = map[sortCol] || [a[sortCol], b[sortCol]]
+      if (av == null) return 1
+      if (bv == null) return -1
+      if (typeof av === 'number') return (av - bv) * dir
+      return String(av).localeCompare(String(bv)) * dir
+    })
   const chartData = [...filtered].reverse().map(a=>({ name:`${a.subject} P${a.paper} ${a.year}`, percentage:a.percentage, grade:a.grade }))
 
   const subjectAverages = subjects.map(s=>{
@@ -204,6 +235,17 @@ export default function PastPapers() {
           onSave={async()=>{setShowQPrompt(null);toast.success('Question marks saved')}}/>
       )}
 
+      {editEntry && (
+        <EditEntryModal
+          attempt={editEntry}
+          onClose={()=>setEditEntry(null)}
+          onSave={async (updated) => {
+            await updatePaperAttempt(user.uid, editEntry.id, updated)
+            setAttempts(a => a.map(x => x.id === editEntry.id ? {...x, ...updated} : x))
+            setEditEntry(null)
+            toast.success('Entry updated')
+          }}/>
+      )}
       {showBoundaryEditor && (
         <BoundaryEditorModal profile={profile} onClose={()=>setShowBoundaryEditor(false)}/>
       )}

@@ -94,6 +94,7 @@ export default function App() {
               <Route path="/notes"       element={<Notes />} />
               <Route path="/tasks"       element={<Tasks />} />
               <Route path="/timer"       element={<TimerPage />} />
+              <Route path="/analytics"   element={<Analytics />} />
               <Route path="/ai"          element={<AIAdvisor />} />
               <Route path="/friends"     element={<Friends />} />
               <Route path="/leaderboard" element={<Leaderboard />} />

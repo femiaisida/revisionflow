@@ -4,8 +4,8 @@ import { useAuth } from '../context/AuthContext'
 import { useTheme } from '../context/ThemeContext'
 import { updateUserProfile } from '../utils/firestore'
 import { GCSE_SUBJECTS, ALEVEL_SUBJECTS, EXAM_BOARDS } from '../data/subjects'
-import { GRADE_BOUNDARIES, AVAILABLE_YEARS, getBoundaries, gradeColour } from '../data/paperDatabase'
-import { gradeColour as gradeCol } from '../utils/calendar'
+import { GRADE_BOUNDARIES, AVAILABLE_YEARS, getBoundaries } from '../data/paperDatabase'
+import { gradeColour } from '../utils/calendar'
 import toast from 'react-hot-toast'
 import { Sun, Moon, User, Bell, Shield, BookOpen, Plus, X, Trash2 } from 'lucide-react'
 
@@ -190,7 +190,7 @@ function BoundaryViewer({ profile }) {
               const pct = Math.round((marks / bounds.maxMarks)*100)
               return (
                 <div key={g} style={{padding:'10px 8px',background:'var(--bg-surface)',borderRadius:'var(--radius-md)',border:`1px solid var(--border)`,textAlign:'center'}}>
-                  <div style={{fontWeight:800,fontSize:'1.2rem',color:gradeCol(g)}}>G{g}</div>
+                  <div style={{fontWeight:800,fontSize:'1.2rem',color:gradeColour(g)}}>G{g}</div>
                   <div style={{fontWeight:600,fontSize:'0.85rem',marginTop:2}}>{marks}/{bounds.maxMarks}</div>
                   <div style={{fontSize:'0.72rem',color:'var(--text-muted)',marginTop:1}}>{pct}%</div>
                 </div>

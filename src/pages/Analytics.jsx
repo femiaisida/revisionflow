@@ -4,7 +4,7 @@ import { useAuth } from '../context/AuthContext'
 import { collection, getDocs } from 'firebase/firestore'
 import { db } from '../firebase'
 import { getPaperAttempts } from '../utils/firestore'
-import { format, subDays, eachDayOfInterval, startOfWeek, isToday, differenceInMinutes, parseISO } from 'date-fns'
+import { format, subDays, eachDayOfInterval, isToday } from 'date-fns'
 import {
   BarChart, Bar, LineChart, Line, PieChart, Pie, Cell,
   XAxis, YAxis, Tooltip, ResponsiveContainer, CartesianGrid, Legend
