@@ -1,8 +1,8 @@
 // src/pages/Calendar.jsx
-import React, { useState, useEffect, useRef, useCallback } from 'react'
+import React, { useState, useEffect, useRef } from 'react'
 import { useAuth } from '../context/AuthContext'
-import { addSession, completeSession } from '../utils/firestore'
-import { collection, getDocs, deleteDoc, doc, addDoc, serverTimestamp, query, where } from 'firebase/firestore'
+import { completeSession } from '../utils/firestore'
+import { collection, getDocs, deleteDoc, doc, addDoc, serverTimestamp, writeBatch } from 'firebase/firestore'
 import { db } from '../firebase'
 import { getMonthDays, getWeekDays, sessionsForDay, downloadICS, parseICS, parseCSV } from '../utils/calendar'
 import CalendarGenerator from '../components/CalendarGenerator'
@@ -14,29 +14,39 @@ import {
 } from 'lucide-react'
 import { SUBJECT_COLOURS } from '../data/subjects'
 
-const SESSION_TYPES = ['Content Revision','Exam Practice','Emergency Revision']
+const SESSION_TYPES = ['Content Revision', 'Exam Practice', 'Emergency Revision']
 
 export default function Calendar() {
   const { user, profile } = useAuth()
-  const [view,          setView]          = useState('month')
-  const [current,       setCurrent]       = useState(new Date())
-  const [sessions,      setSessions]      = useState([])
-  const [selected,      setSelected]      = useState(null)
-  const [showAdd,       setShowAdd]       = useState(false)
-  const [showComplete,  setShowComplete]  = useState(null)
-  const [showGen,       setShowGen]       = useState(false)
-  const [showClear,     setShowClear]     = useState(false)
-  const [showImport,    setShowImport]    = useState(false)  // import review modal
-  const [importParsed,  setImportParsed]  = useState([])    // parsed events pending review
-  const [importing,     setImporting]     = useState(false)
+  const [view,         setView]         = useState('month')
+  const [current,      setCurrent]      = useState(new Date())
+  const [sessions,     setSessions]     = useState([])
+  const [selected,     setSelected]     = useState(null)
+  const [showAdd,      setShowAdd]      = useState(false)
+  const [showComplete, setShowComplete] = useState(null)
+  const [showGen,      setShowGen]      = useState(false)
+  const [showClear,    setShowClear]    = useState(false)
+  const [showImport,   setShowImport]   = useState(false)
+  const [importParsed, setImportParsed] = useState([])
+  const [importing,    setImporting]    = useState(false)
+  const [clearing,     setClearing]     = useState(false)
   const fileRef = useRef()
 
   useEffect(() => { loadSessions() }, [user])
 
   async function loadSessions() {
     if (!user) return
-    const snap = await getDocs(collection(db, 'users', user.uid, 'sessions'))
-    setSessions(snap.docs.map(d => ({ id: d.id, ...d.data() })))
+    try {
+      const snap = await getDocs(collection(db, 'users', user.uid, 'sessions'))
+      // Use the Firestore document ID (snap.id) — not any field inside the document
+      setSessions(snap.docs.map(d => ({
+        _docId: d.id,          // always valid Firestore document ID
+        ...d.data(),
+        id: d.id,              // keep id consistent for other uses
+      })))
+    } catch (err) {
+      console.error('Failed to load sessions:', err)
+    }
   }
 
   async function handleComplete(sessionId, notes) {
@@ -46,7 +56,74 @@ export default function Calendar() {
     toast.success('Session completed! +50 XP 🎉')
   }
 
-  // ── IMPORT: parse file → show review modal ──────────────────────────────
+  // ── Delete a single session ───────────────────────────────────────────────
+  async function handleDeleteSession(session) {
+    try {
+      const docId = session._docId || session.id
+      if (!docId) { toast.error('Cannot delete: missing session ID'); return }
+      await deleteDoc(doc(db, 'users', user.uid, 'sessions', docId))
+      setSessions(s => s.filter(x => (x._docId || x.id) !== docId))
+      toast.success('Session deleted')
+    } catch (err) {
+      toast.error('Delete failed: ' + err.message)
+      console.error(err)
+    }
+  }
+
+  // ── Clear calendar ────────────────────────────────────────────────────────
+  async function clearCalendar(mode) {
+    setClearing(true)
+    try {
+      // Always fetch fresh from Firestore to guarantee we have real doc IDs
+      const snap = await getDocs(collection(db, 'users', user.uid, 'sessions'))
+      const allDocs = snap.docs
+
+      let toDelete
+      if (mode === 'all') {
+        toDelete = allDocs
+      } else {
+        // 'generated' mode — match by source field OR by title pattern
+        toDelete = allDocs.filter(d => {
+          const data = d.data()
+          return data.source === 'generated' ||
+                 data.source === 'import' ||
+                 (data.title && (
+                   data.title.includes('Content Revision') ||
+                   data.title.includes('Exam Practice') ||
+                   data.title.includes('EMERGENCY')
+                 ))
+        })
+      }
+
+      if (!toDelete.length) {
+        toast('Nothing to clear')
+        setShowClear(false)
+        setClearing(false)
+        return
+      }
+
+      // Delete in batches of 500 (Firestore limit)
+      const BATCH_SIZE = 400
+      for (let i = 0; i < toDelete.length; i += BATCH_SIZE) {
+        const batch = writeBatch(db)
+        toDelete.slice(i, i + BATCH_SIZE).forEach(d => {
+          batch.delete(doc(db, 'users', user.uid, 'sessions', d.id))
+        })
+        await batch.commit()
+      }
+
+      await loadSessions()
+      setShowClear(false)
+      toast.success(`Cleared ${toDelete.length} session${toDelete.length !== 1 ? 's' : ''}`)
+    } catch (err) {
+      toast.error('Clear failed: ' + err.message)
+      console.error(err)
+    } finally {
+      setClearing(false)
+    }
+  }
+
+  // ── Import file → review modal ────────────────────────────────────────────
   async function handleFileSelect(e) {
     const file = e.target.files?.[0]
     if (!file) return
@@ -61,7 +138,6 @@ export default function Calendar() {
         toast.error('No events found in this file')
         return
       }
-
       setImportParsed(parsed)
       setShowImport(true)
     } catch (err) {
@@ -73,27 +149,50 @@ export default function Calendar() {
     }
   }
 
-  // ── CLEAR CALENDAR ───────────────────────────────────────────────────────
-  async function clearCalendar(mode) {
+  // ── Save imported sessions ────────────────────────────────────────────────
+  async function handleImportConfirm(approved, mode) {
+    setShowImport(false)
+    setImporting(true)
     try {
-      let toDelete
-      if (mode === 'all') {
-        toDelete = sessions
-      } else {
-        toDelete = sessions.filter(s => s.source === 'generated')
+      if (mode === 'replace') {
+        const snap = await getDocs(collection(db, 'users', user.uid, 'sessions'))
+        const batch = writeBatch(db)
+        snap.docs.forEach(d => batch.delete(doc(db, 'users', user.uid, 'sessions', d.id)))
+        await batch.commit()
       }
-      await Promise.all(
-        toDelete.map(s => deleteDoc(doc(db, 'users', user.uid, 'sessions', s.id)))
-      )
+
+      for (const ev of approved) {
+        const start = ev.start instanceof Date && !isNaN(ev.start) ? ev.start : null
+        await addDoc(collection(db, 'users', user.uid, 'sessions'), {
+          title:      ev.title || `${ev.subject || 'Revision'} – ${ev.type || 'Session'}`,
+          subject:    ev.subject    || '',
+          type:       ev.type       || 'Content Revision',
+          paper:      ev.paper      || '',
+          board:      ev.board      || '',
+          isEmergency: ev.isEmergency || false,
+          startTime:  start ? start.toISOString() : null,
+          endTime:    ev.end instanceof Date && !isNaN(ev.end) ? ev.end.toISOString() : null,
+          duration:   ev.duration   || 45,
+          date:       start ? format(start, 'yyyy-MM-dd') : '',
+          start:      start ? format(start, 'HH:mm')      : '',
+          notes:      ev.description || '',
+          source:     'import',
+          completed:  false,
+          createdAt:  serverTimestamp(),
+        })
+      }
+
       await loadSessions()
-      setShowClear(false)
-      toast.success(`Cleared ${toDelete.length} session${toDelete.length !== 1 ? 's' : ''}`)
+      toast.success(`Imported ${approved.length} session${approved.length !== 1 ? 's' : ''}`)
     } catch (err) {
-      toast.error('Failed to clear: ' + err.message)
+      toast.error('Import failed: ' + err.message)
+      console.error(err)
+    } finally {
+      setImporting(false)
     }
   }
 
-  // ── NAV ──────────────────────────────────────────────────────────────────
+  // ── Navigation ────────────────────────────────────────────────────────────
   function navigate(dir) {
     if (view === 'month') setCurrent(dir > 0 ? addMonths(current, 1) : subMonths(current, 1))
     else setCurrent(dir > 0 ? addWeeks(current, 1) : subWeeks(current, 1))
@@ -103,7 +202,7 @@ export default function Calendar() {
     ? getMonthDays(current.getFullYear(), current.getMonth())
     : getWeekDays(current).map(d => ({ date: d, otherMonth: false }))
 
-  const dayNames         = ['Mon','Tue','Wed','Thu','Fri','Sat','Sun']
+  const dayNames         = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun']
   const selectedSessions = selected ? sessionsForDay(sessions, selected) : []
 
   return (
@@ -121,7 +220,7 @@ export default function Calendar() {
           </button>
           <input ref={fileRef} type="file" accept=".ics,.csv" style={{display:'none'}} onChange={handleFileSelect}/>
           <button className="btn btn-secondary btn-sm" onClick={()=>downloadICS(sessions)}>
-            <Download size={14}/> Export ICS
+            <Download size={14}/> Export
           </button>
           <button className="btn btn-secondary btn-sm" onClick={()=>setShowClear(true)}>
             <Trash2 size={14}/> Clear
@@ -130,13 +229,13 @@ export default function Calendar() {
             <Zap size={14}/> Generate
           </button>
           <button className="btn btn-primary btn-sm" onClick={()=>setShowAdd(true)}>
-            <Plus size={14}/> Add session
+            <Plus size={14}/> Add
           </button>
         </div>
       </div>
 
       {/* Navigator */}
-      <div style={{display:'flex',alignItems:'center',gap:14,marginBottom:14}}>
+      <div style={{display:'flex',alignItems:'center',gap:12,marginBottom:14}}>
         <button className="btn btn-ghost btn-icon" onClick={()=>navigate(-1)}><ChevronLeft size={18}/></button>
         <h3 style={{minWidth:220,textAlign:'center'}}>
           {view === 'month'
@@ -145,8 +244,8 @@ export default function Calendar() {
         </h3>
         <button className="btn btn-ghost btn-icon" onClick={()=>navigate(1)}><ChevronRight size={18}/></button>
         <button className="btn btn-ghost btn-sm" onClick={()=>setCurrent(new Date())}>Today</button>
-        <span style={{fontSize:'0.78rem',color:'var(--text-muted)',marginLeft:'auto'}}>
-          {sessions.length} session{sessions.length!==1?'s':''} total
+        <span style={{fontSize:'0.75rem',color:'var(--text-muted)',marginLeft:'auto'}}>
+          {sessions.length} session{sessions.length!==1?'s':''}
         </span>
       </div>
 
@@ -154,34 +253,34 @@ export default function Calendar() {
         {/* Calendar grid */}
         <div className="card" style={{padding:14}}>
           <div className="cal-grid" style={{marginBottom:3}}>
-            {dayNames.map(d => (
+            {dayNames.map(d=>(
               <div key={d} style={{textAlign:'center',fontSize:'0.68rem',fontWeight:600,color:'var(--text-muted)',padding:'3px 0'}}>{d}</div>
             ))}
           </div>
           <div className="cal-grid">
-            {days.map(({date,otherMonth},i) => {
-              const ds     = sessionsForDay(sessions, date)
-              const isSel  = selected && isSameDay(date, selected)
+            {days.map(({date,otherMonth},i)=>{
+              const ds    = sessionsForDay(sessions, date)
+              const isSel = selected && isSameDay(date, selected)
               return (
                 <div key={i}
                   className={`cal-day${isToday(date)?' today':''}${otherMonth?' other-month':''}${ds.length>0?' has-session':''}${ds.some(s=>s.completed)?' completed':''}`}
                   style={{background:isSel?'rgba(124,58,237,0.25)':undefined,border:isSel?'1px solid var(--accent)':undefined}}
-                  onClick={() => setSelected(date)}>
+                  onClick={()=>setSelected(date)}>
                   <span style={{fontWeight:isToday(date)?700:400,fontSize:'0.8rem'}}>{format(date,'d')}</span>
-                  {ds.length > 0 && (
+                  {ds.length>0&&(
                     <div style={{display:'flex',gap:2,flexWrap:'wrap',justifyContent:'center',marginTop:2}}>
-                      {ds.slice(0,3).map((s,si) => (
+                      {ds.slice(0,3).map((s,si)=>(
                         <div key={si} style={{width:4,height:4,borderRadius:'50%',
                           background:s.completed?'var(--success)':s.isEmergency?'var(--danger)':SUBJECT_COLOURS[s.subject]||'var(--accent)'}}/>
                       ))}
-                      {ds.length > 3 && <div style={{width:4,height:4,borderRadius:'50%',background:'var(--text-muted)'}}/>}
+                      {ds.length>3&&<div style={{width:4,height:4,borderRadius:'50%',background:'var(--text-muted)'}}/>}
                     </div>
                   )}
                 </div>
               )
             })}
           </div>
-          <div style={{display:'flex',gap:14,marginTop:10,fontSize:'0.68rem',color:'var(--text-muted)',justifyContent:'center',flexWrap:'wrap'}}>
+          <div style={{display:'flex',gap:12,marginTop:10,fontSize:'0.68rem',color:'var(--text-muted)',justifyContent:'center',flexWrap:'wrap'}}>
             {[['var(--accent)','Scheduled'],['var(--success)','Completed'],['var(--danger)','Emergency']].map(([c,l])=>(
               <span key={l} style={{display:'flex',alignItems:'center',gap:3}}>
                 <div style={{width:6,height:6,borderRadius:'50%',background:c}}/>{l}
@@ -190,7 +289,7 @@ export default function Calendar() {
           </div>
         </div>
 
-        {/* Detail panel */}
+        {/* Day detail */}
         <div className="card">
           {selected ? (
             <>
@@ -200,109 +299,69 @@ export default function Calendar() {
                   <Plus size={13}/> Add
                 </button>
               </div>
-              {selectedSessions.length === 0 ? (
+              {selectedSessions.length===0 ? (
                 <div className="empty-state" style={{padding:'28px 0'}}>
                   <p style={{fontSize:'0.875rem'}}>No sessions on this day</p>
                   <button className="btn btn-primary btn-sm" onClick={()=>setShowAdd(true)}>Add session</button>
                 </div>
               ) : (
                 <div style={{display:'flex',flexDirection:'column',gap:8}}>
-                  {selectedSessions.map(s => (
-                    <SessionCard key={s.id} session={s}
-                      onComplete={() => setShowComplete(s)}
-                      onDelete={async () => {
-                        await deleteDoc(doc(db,'users',user.uid,'sessions',s.id))
-                        await loadSessions()
-                        toast.success('Session deleted')
-                      }}/>
+                  {selectedSessions.map(s=>(
+                    <SessionCard key={s._docId||s.id} session={s}
+                      onComplete={()=>setShowComplete(s)}
+                      onDelete={()=>handleDeleteSession(s)}/>
                   ))}
                 </div>
               )}
             </>
           ) : (
-            <div className="empty-state">
-              <p>Select a day to view sessions</p>
-            </div>
+            <div className="empty-state"><p>Select a day to view sessions</p></div>
           )}
         </div>
       </div>
 
       {/* Modals */}
-      {showAdd && (
+      {showAdd&&(
         <AddSessionModal user={user} profile={profile} selectedDate={selected}
-          onClose={() => setShowAdd(false)}
-          onSave={async s => {
-            await addSession(user.uid, s)
+          onClose={()=>setShowAdd(false)}
+          onSave={async s=>{
+            await addDoc(collection(db,'users',user.uid,'sessions'),{
+              ...s, completed:false, source:'manual', createdAt:serverTimestamp()
+            })
             await loadSessions()
             setShowAdd(false)
             toast.success('Session added')
           }}/>
       )}
-      {showComplete && (
+      {showComplete&&(
         <CompleteModal session={showComplete}
-          onClose={() => setShowComplete(null)}
+          onClose={()=>setShowComplete(null)}
           onComplete={handleComplete}/>
       )}
-      {showGen && (
+      {showGen&&(
         <CalendarGenerator
-          onClose={() => setShowGen(false)}
-          onGenerated={() => { loadSessions(); toast.success('Schedule generated!') }}/>
+          onClose={()=>setShowGen(false)}
+          onGenerated={()=>{loadSessions();toast.success('Schedule generated!')}}/>
       )}
-      {showClear && (
-        <ClearModal
-          sessions={sessions}
-          onClose={() => setShowClear(false)}
+      {showClear&&(
+        <ClearModal sessions={sessions} clearing={clearing}
+          onClose={()=>setShowClear(false)}
           onClear={clearCalendar}/>
       )}
-      {showImport && (
+      {showImport&&(
         <ImportReviewModal
           parsed={importParsed}
           profile={profile}
           existingCount={sessions.length}
-          onClose={() => setShowImport(false)}
-          onConfirm={async (approved, mode) => {
-            setShowImport(false)
-            setImporting(true)
-            try {
-              if (mode === 'replace') {
-                const snap = await getDocs(collection(db,'users',user.uid,'sessions'))
-                await Promise.all(snap.docs.map(d => deleteDoc(doc(db,'users',user.uid,'sessions',d.id))))
-              }
-              for (const ev of approved) {
-                const start = ev.start instanceof Date && !isNaN(ev.start) ? ev.start : null
-                await addDoc(collection(db,'users',user.uid,'sessions'), {
-                  title:     ev.title || `${ev.subject||'Revision'} – ${ev.type||'Session'}`,
-                  subject:   ev.subject    || '',
-                  type:      ev.type       || 'Content Revision',
-                  paper:     ev.paper      || '',
-                  board:     ev.board      || '',
-                  isEmergency: ev.isEmergency || false,
-                  startTime: start ? start.toISOString() : null,
-                  endTime:   ev.end instanceof Date && !isNaN(ev.end) ? ev.end.toISOString() : null,
-                  duration:  ev.duration   || 45,
-                  date:      start ? format(start,'yyyy-MM-dd') : '',
-                  start:     start ? format(start,'HH:mm')       : '',
-                  notes:     ev.description || '',
-                  source:    'import',
-                  completed: false,
-                  createdAt: serverTimestamp(),
-                })
-              }
-              await loadSessions()
-              toast.success(`Imported ${approved.length} session${approved.length!==1?'s':''}`)
-            } catch (err) {
-              toast.error('Import failed: ' + err.message)
-            } finally {
-              setImporting(false)
-            }
-          }}/>
+          onClose={()=>setShowImport(false)}
+          onConfirm={handleImportConfirm}/>
       )}
     </div>
   )
 }
 
 // ── Session Card ──────────────────────────────────────────────────────────────
-function SessionCard({ session: s, onComplete, onDelete }) {
+function SessionCard({ session:s, onComplete, onDelete }) {
   return (
     <div style={{padding:12,borderRadius:'var(--radius-md)',background:'var(--bg-surface)',
       border:`1px solid ${s.completed?'var(--success)':s.isEmergency?'var(--danger)':'var(--border)'}`}}>
@@ -313,18 +372,18 @@ function SessionCard({ session: s, onComplete, onDelete }) {
             {s.title||s.subject}
           </div>
           <div style={{display:'flex',flexWrap:'wrap',gap:5}}>
-            {s.start && <span className="badge badge-grey"><Clock size={9}/> {s.start}</span>}
-            {s.duration && <span className="badge badge-grey">{s.duration}min</span>}
-            {s.type && <span className={`badge badge-${s.isEmergency?'red':s.type.includes('Exam')?'blue':'purple'}`}>{s.type}</span>}
+            {s.start&&<span className="badge badge-grey"><Clock size={9}/> {s.start}</span>}
+            {s.duration&&<span className="badge badge-grey">{s.duration}min</span>}
+            {s.type&&<span className={`badge badge-${s.isEmergency?'red':s.type.includes('Exam')?'blue':'purple'}`}>{s.type}</span>}
           </div>
         </div>
-        <div style={{display:'flex',gap:5,flexShrink:0}}>
-          {!s.completed && (
+        <div style={{display:'flex',gap:5,flexShrink:0,alignItems:'flex-start'}}>
+          {!s.completed&&(
             <button className="btn btn-secondary btn-sm" onClick={onComplete}>
               <CheckCircle2 size={13}/> Done
             </button>
           )}
-          {s.completed && <span style={{color:'var(--success)',fontSize:'0.75rem',fontWeight:600,alignSelf:'center'}}>✓</span>}
+          {s.completed&&<span style={{color:'var(--success)',fontSize:'0.75rem',fontWeight:600}}>✓</span>}
           <button className="btn btn-ghost btn-icon btn-sm" style={{color:'var(--danger)'}} onClick={onDelete}>
             <Trash2 size={13}/>
           </button>
@@ -334,14 +393,17 @@ function SessionCard({ session: s, onComplete, onDelete }) {
   )
 }
 
-// ── Clear Calendar Modal ──────────────────────────────────────────────────────
-function ClearModal({ sessions, onClose, onClear }) {
-  const generatedCount = sessions.filter(s => s.source === 'generated').length
-  const manualCount    = sessions.filter(s => s.source !== 'generated').length
+// ── Clear Modal ───────────────────────────────────────────────────────────────
+function ClearModal({ sessions, clearing, onClose, onClear }) {
+  const genCount    = sessions.filter(s =>
+    s.source==='generated' || s.source==='import' ||
+    (s.title&&(s.title.includes('Content Revision')||s.title.includes('Exam Practice')||s.title.includes('EMERGENCY')))
+  ).length
+  const manualCount = sessions.length - genCount
 
   return (
     <div className="modal-overlay" onClick={onClose}>
-      <div className="modal" onClick={e => e.stopPropagation()}>
+      <div className="modal" onClick={e=>e.stopPropagation()}>
         <div className="modal-header">
           <span className="modal-title" style={{display:'flex',alignItems:'center',gap:8}}>
             <Trash2 size={16} color="var(--danger)"/> Clear calendar
@@ -350,27 +412,26 @@ function ClearModal({ sessions, onClose, onClear }) {
         </div>
         <p style={{marginBottom:20,fontSize:'0.875rem'}}>Choose what to clear. This cannot be undone.</p>
         <div style={{display:'flex',flexDirection:'column',gap:10}}>
-          <button
-            className="card"
-            style={{textAlign:'left',cursor:'pointer',padding:14,border:'2px solid var(--border)',background:'var(--bg-card)'}}
-            onClick={() => onClear('generated')}>
-            <div style={{fontWeight:600,marginBottom:3}}>Clear generated sessions only</div>
+          <button className="card"
+            style={{textAlign:'left',cursor:clearing?'not-allowed':'pointer',padding:14,border:'2px solid var(--border)',background:'var(--bg-card)',opacity:clearing?0.6:1}}
+            onClick={()=>!clearing&&onClear('generated')}>
+            <div style={{fontWeight:600,marginBottom:3}}>Clear generated &amp; imported sessions</div>
             <div style={{fontSize:'0.8rem',color:'var(--text-muted)'}}>
-              Removes {generatedCount} auto-generated session{generatedCount!==1?'s':''}. Keeps {manualCount} manually added session{manualCount!==1?'s':''}.
+              Removes ~{genCount} auto-generated and imported session{genCount!==1?'s':''}. Keeps {manualCount} manually added.
             </div>
           </button>
-          <button
-            className="card"
-            style={{textAlign:'left',cursor:'pointer',padding:14,border:'2px solid var(--danger)',background:'rgba(239,68,68,0.06)'}}
-            onClick={() => onClear('all')}>
+          <button className="card"
+            style={{textAlign:'left',cursor:clearing?'not-allowed':'pointer',padding:14,border:'2px solid var(--danger)',background:'rgba(239,68,68,0.06)',opacity:clearing?0.6:1}}
+            onClick={()=>!clearing&&onClear('all')}>
             <div style={{fontWeight:600,marginBottom:3,color:'var(--danger)'}}>Clear everything</div>
             <div style={{fontSize:'0.8rem',color:'var(--text-muted)'}}>
               Removes all {sessions.length} session{sessions.length!==1?'s':''} including manually added ones.
             </div>
           </button>
         </div>
+        {clearing&&<div style={{textAlign:'center',marginTop:14,color:'var(--text-muted)',fontSize:'0.875rem'}}>Clearing…</div>}
         <div style={{display:'flex',justifyContent:'flex-end',marginTop:16}}>
-          <button className="btn btn-secondary" onClick={onClose}>Cancel</button>
+          <button className="btn btn-secondary" onClick={onClose} disabled={clearing}>Cancel</button>
         </div>
       </div>
     </div>
@@ -379,47 +440,29 @@ function ClearModal({ sessions, onClose, onClear }) {
 
 // ── Import Review Modal ───────────────────────────────────────────────────────
 function ImportReviewModal({ parsed, profile, existingCount, onClose, onConfirm }) {
-  const subjects     = profile?.subjects?.map(s => s.name) || []
-  const [items, setItems]   = useState(
-    parsed.map((ev, i) => ({
-      ...ev,
-      _id:      i,
-      _include: true,
-      _subject: ev.subject || '',
-      _type:    ev.type    || 'Content Revision',
+  const subjects = profile?.subjects?.map(s=>s.name)||[]
+  const [items, setItems] = useState(
+    parsed.map((ev,i)=>({
+      ...ev, _id:i, _include:true,
+      _subject: ev.subject||'',
+      _type:    ev.type||'Content Revision',
     }))
   )
-  const [mode, setMode] = useState('add')  // 'add' | 'replace'
+  const [mode, setMode] = useState('add')
 
-  const included    = items.filter(e => e._include)
-  const unrecognised = items.filter(e => !e.subject || e.subjectUnrecognised)
+  const included     = items.filter(e=>e._include)
+  const unrecognised = items.filter(e=>!e.subject||e.subjectUnrecognised)
 
-  function toggleItem(id) {
-    setItems(it => it.map(e => e._id === id ? {...e, _include: !e._include} : e))
-  }
-
-  function updateSubject(id, val) {
-    setItems(it => it.map(e => e._id === id ? {...e, _subject: val, subject: val, subjectUnrecognised: false} : e))
-  }
-
-  function updateType(id, val) {
-    setItems(it => it.map(e => e._id === id ? {...e, _type: val, type: val} : e))
-  }
-
-  function toggleAll(val) {
-    setItems(it => it.map(e => ({...e, _include: val})))
-  }
-
-  const formatDate = (ev) => {
+  const formatDate = ev => {
     if (ev.start instanceof Date && !isNaN(ev.start)) {
-      try { return format(ev.start, 'EEE d MMM, HH:mm') } catch { return '—' }
+      try { return format(ev.start,'EEE d MMM HH:mm') } catch { return '—' }
     }
-    return ev.date || '—'
+    return ev.date||'—'
   }
 
   return (
     <div className="modal-overlay" onClick={onClose}>
-      <div className="modal" style={{maxWidth:680,maxHeight:'92vh',overflowY:'auto'}} onClick={e => e.stopPropagation()}>
+      <div className="modal" style={{maxWidth:680,maxHeight:'92vh',overflowY:'auto'}} onClick={e=>e.stopPropagation()}>
         <div className="modal-header">
           <span className="modal-title" style={{display:'flex',alignItems:'center',gap:8}}>
             <Eye size={16} color="var(--accent-light)"/> Review import
@@ -427,90 +470,58 @@ function ImportReviewModal({ parsed, profile, existingCount, onClose, onConfirm 
           <button className="btn btn-ghost btn-icon" onClick={onClose}><X size={18}/></button>
         </div>
 
-        {/* Summary */}
-        <div style={{display:'flex',gap:10,marginBottom:16,flexWrap:'wrap'}}>
-          {[
-            {l:'Total found',  v:items.length,        c:'var(--accent-light)'},
-            {l:'Selected',     v:included.length,     c:'var(--success)'},
-            {l:'Unrecognised', v:unrecognised.length, c:'var(--warning)'},
-          ].map(s => (
+        <div style={{display:'flex',gap:10,marginBottom:14,flexWrap:'wrap'}}>
+          {[{l:'Found',v:items.length,c:'var(--accent-light)'},{l:'Selected',v:included.length,c:'var(--success)'},{l:'Unassigned',v:unrecognised.length,c:'var(--warning)'}].map(s=>(
             <div key={s.l} style={{padding:'6px 14px',background:'var(--bg-surface)',borderRadius:'var(--radius-md)',border:'1px solid var(--border)',textAlign:'center',flex:1}}>
               <div style={{fontWeight:800,color:s.c,fontSize:'1.2rem'}}>{s.v}</div>
-              <div style={{fontSize:'0.68rem',color:'var(--text-muted)'}}>{s.l}</div>
+              <div style={{fontSize:'0.7rem',color:'var(--text-muted)'}}>{s.l}</div>
             </div>
           ))}
         </div>
 
-        {/* Unrecognised warning */}
-        {unrecognised.length > 0 && (
+        {unrecognised.length>0&&(
           <div style={{padding:'8px 12px',background:'rgba(245,158,11,0.08)',border:'1px solid rgba(245,158,11,0.25)',borderRadius:'var(--radius-md)',fontSize:'0.82rem',marginBottom:12,display:'flex',alignItems:'center',gap:8}}>
             <AlertTriangle size={14} color="var(--warning)"/>
-            {unrecognised.length} session{unrecognised.length!==1?'s':''} couldn't be matched to a subject. You can assign them below or exclude them.
+            {unrecognised.length} session{unrecognised.length!==1?'s':''} couldn't be matched to a subject — assign below or leave as unassigned.
           </div>
         )}
 
-        {/* Select all / deselect all */}
-        <div style={{display:'flex',gap:8,marginBottom:10,alignItems:'center'}}>
-          <button className="btn btn-secondary btn-sm" onClick={() => toggleAll(true)}>Select all</button>
-          <button className="btn btn-secondary btn-sm" onClick={() => toggleAll(false)}>Deselect all</button>
-          <span style={{fontSize:'0.78rem',color:'var(--text-muted)',marginLeft:'auto'}}>
-            {included.length} of {items.length} selected
-          </span>
+        <div style={{display:'flex',gap:8,marginBottom:10}}>
+          <button className="btn btn-secondary btn-sm" onClick={()=>setItems(it=>it.map(e=>({...e,_include:true})))}>Select all</button>
+          <button className="btn btn-secondary btn-sm" onClick={()=>setItems(it=>it.map(e=>({...e,_include:false})))}>Deselect all</button>
         </div>
 
-        {/* Session list */}
-        <div style={{maxHeight:340,overflowY:'auto',borderRadius:'var(--radius-md)',border:'1px solid var(--border)',marginBottom:16}}>
-          {items.map((ev, i) => (
-            <div key={ev._id} style={{
-              display:'flex',alignItems:'center',gap:10,padding:'9px 12px',
-              borderBottom: i < items.length-1 ? '1px solid var(--border)' : 'none',
-              background: ev._include ? 'var(--bg-card)' : 'var(--bg-surface)',
-              opacity: ev._include ? 1 : 0.5,
-            }}>
-              <input type="checkbox" checked={ev._include} onChange={() => toggleItem(ev._id)}
-                style={{width:15,height:15,accentColor:'var(--accent)',flexShrink:0}}/>
-
+        <div style={{maxHeight:320,overflowY:'auto',borderRadius:'var(--radius-md)',border:'1px solid var(--border)',marginBottom:14}}>
+          {items.map((ev,i)=>(
+            <div key={ev._id} style={{display:'flex',alignItems:'center',gap:8,padding:'8px 12px',borderBottom:i<items.length-1?'1px solid var(--border)':'none',background:ev._include?'var(--bg-card)':'var(--bg-surface)',opacity:ev._include?1:0.5}}>
+              <input type="checkbox" checked={ev._include} onChange={()=>setItems(it=>it.map(x=>x._id===ev._id?{...x,_include:!x._include}:x))}
+                style={{width:14,height:14,accentColor:'var(--accent)',flexShrink:0}}/>
               <div style={{flex:1,overflow:'hidden',minWidth:0}}>
-                <div style={{fontWeight:600,fontSize:'0.82rem',whiteSpace:'nowrap',overflow:'hidden',textOverflow:'ellipsis',marginBottom:3}}>
-                  {ev.title || '(no title)'}
-                  {(ev.subjectUnrecognised || !ev.subject) && (
-                    <span className="badge badge-amber" style={{marginLeft:6,fontSize:'0.65rem'}}>unassigned</span>
-                  )}
+                <div style={{fontWeight:600,fontSize:'0.8rem',whiteSpace:'nowrap',overflow:'hidden',textOverflow:'ellipsis'}}>
+                  {ev.title||'(no title)'}
+                  {(ev.subjectUnrecognised||!ev.subject)&&<span className="badge badge-amber" style={{marginLeft:6,fontSize:'0.62rem'}}>unassigned</span>}
                 </div>
-                <div style={{fontSize:'0.72rem',color:'var(--text-muted)'}}>{formatDate(ev)}</div>
+                <div style={{fontSize:'0.7rem',color:'var(--text-muted)'}}>{formatDate(ev)}</div>
               </div>
-
-              {/* Subject selector */}
-              <select
-                className="select"
-                style={{fontSize:'0.75rem',padding:'3px 6px',width:140,flexShrink:0}}
-                value={ev._subject}
-                onChange={e => updateSubject(ev._id, e.target.value)}>
+              <select className="select" style={{fontSize:'0.75rem',padding:'2px 5px',width:130,flexShrink:0}}
+                value={ev._subject} onChange={e=>setItems(it=>it.map(x=>x._id===ev._id?{...x,_subject:e.target.value,subject:e.target.value,subjectUnrecognised:false}:x))}>
                 <option value="">Unassigned</option>
-                {subjects.map(s => <option key={s} value={s}>{s}</option>)}
+                {subjects.map(s=><option key={s} value={s}>{s}</option>)}
               </select>
-
-              {/* Type selector */}
-              <select
-                className="select"
-                style={{fontSize:'0.75rem',padding:'3px 6px',width:130,flexShrink:0}}
-                value={ev._type}
-                onChange={e => updateType(ev._id, e.target.value)}>
-                {SESSION_TYPES.map(t => <option key={t} value={t}>{t}</option>)}
+              <select className="select" style={{fontSize:'0.75rem',padding:'2px 5px',width:120,flexShrink:0}}
+                value={ev._type} onChange={e=>setItems(it=>it.map(x=>x._id===ev._id?{...x,_type:e.target.value,type:e.target.value}:x))}>
+                {SESSION_TYPES.map(t=><option key={t} value={t}>{t}</option>)}
               </select>
             </div>
           ))}
         </div>
 
-        {/* Mode selection */}
-        <div style={{marginBottom:16}}>
+        <div style={{marginBottom:14}}>
           <label className="label">What should happen to your existing {existingCount} sessions?</label>
           <div style={{display:'flex',flexDirection:'column',gap:7}}>
-            {[
-              {val:'add',     label:'Add to existing calendar',   desc:'All current sessions are kept'},
-              {val:'replace', label:'Replace existing calendar',   desc:'All current sessions are deleted first'},
-            ].map(opt => (
-              <button key={opt.val} onClick={() => setMode(opt.val)}
+            {[{val:'add',label:'Add to existing calendar',desc:'Keep all current sessions'},
+              {val:'replace',label:'Replace existing calendar',desc:'Delete all current sessions first'}].map(opt=>(
+              <button key={opt.val} onClick={()=>setMode(opt.val)}
                 style={{padding:'9px 14px',borderRadius:'var(--radius-md)',cursor:'pointer',textAlign:'left',width:'100%',
                   border:`2px solid ${mode===opt.val?'var(--accent)':'var(--border)'}`,
                   background:mode===opt.val?'rgba(124,58,237,0.1)':'var(--bg-surface)'}}>
@@ -523,7 +534,7 @@ function ImportReviewModal({ parsed, profile, existingCount, onClose, onConfirm 
 
         <div style={{display:'flex',gap:10,justifyContent:'flex-end'}}>
           <button className="btn btn-secondary" onClick={onClose}>Cancel</button>
-          <button className="btn btn-primary" onClick={() => onConfirm(included, mode)} disabled={!included.length}>
+          <button className="btn btn-primary" onClick={()=>onConfirm(included,mode)} disabled={!included.length}>
             <Check size={15}/> Import {included.length} session{included.length!==1?'s':''}
           </button>
         </div>
@@ -534,17 +545,12 @@ function ImportReviewModal({ parsed, profile, existingCount, onClose, onConfirm 
 
 // ── Add Session Modal ─────────────────────────────────────────────────────────
 function AddSessionModal({ user, profile, selectedDate, onClose, onSave }) {
-  const subjects = profile?.subjects?.map(s => s.name) || []
-  const [form, setForm] = useState({
-    subject: subjects[0] || '',
-    type:    'Content Revision',
-    date:    selectedDate ? format(selectedDate,'yyyy-MM-dd') : format(new Date(),'yyyy-MM-dd'),
-    start:   '17:00',
-    duration: 45,
-    paper:   '',
-    notes:   '',
+  const subjects = profile?.subjects?.map(s=>s.name)||[]
+  const [form,setForm] = useState({
+    subject:subjects[0]||'',type:'Content Revision',
+    date:selectedDate?format(selectedDate,'yyyy-MM-dd'):format(new Date(),'yyyy-MM-dd'),
+    start:'17:00',duration:45,paper:'',notes:'',
   })
-
   async function submit(e) {
     e.preventDefault()
     const startDt = new Date(`${form.date}T${form.start}`)
@@ -553,29 +559,22 @@ function AddSessionModal({ user, profile, selectedDate, onClose, onSave }) {
       duration:  parseInt(form.duration),
       title:     `${form.subject}${form.paper?' P'+form.paper:''} – ${form.type}`,
       startTime: startDt.toISOString(),
-      endTime:   new Date(startDt.getTime() + parseInt(form.duration)*60000).toISOString(),
-      completed: false,
-      source:    'manual',
+      endTime:   new Date(startDt.getTime()+parseInt(form.duration)*60000).toISOString(),
     })
   }
-
   return (
     <div className="modal-overlay" onClick={onClose}>
-      <div className="modal" onClick={e => e.stopPropagation()}>
-        <div className="modal-header">
-          <span className="modal-title">Add session</span>
-          <button className="btn btn-ghost btn-icon" onClick={onClose}><X size={18}/></button>
-        </div>
+      <div className="modal" onClick={e=>e.stopPropagation()}>
+        <div className="modal-header"><span className="modal-title">Add session</span><button className="btn btn-ghost btn-icon" onClick={onClose}><X size={18}/></button></div>
         <form onSubmit={submit} style={{display:'flex',flexDirection:'column',gap:12}}>
           <div className="grid-2" style={{gap:10}}>
             <div><label className="label">Subject</label>
               <select className="select" value={form.subject} onChange={e=>setForm(f=>({...f,subject:e.target.value}))} required>
-                <option value="">Select…</option>
-                {subjects.map(s => <option key={s} value={s}>{s}</option>)}
+                <option value="">Select…</option>{subjects.map(s=><option key={s} value={s}>{s}</option>)}
               </select></div>
             <div><label className="label">Type</label>
               <select className="select" value={form.type} onChange={e=>setForm(f=>({...f,type:e.target.value}))}>
-                {SESSION_TYPES.map(t => <option key={t} value={t}>{t}</option>)}
+                {SESSION_TYPES.map(t=><option key={t} value={t}>{t}</option>)}
               </select></div>
             <div><label className="label">Paper</label>
               <input className="input" placeholder="1, 2…" value={form.paper} onChange={e=>setForm(f=>({...f,paper:e.target.value}))}/></div>
@@ -600,22 +599,19 @@ function AddSessionModal({ user, profile, selectedDate, onClose, onSave }) {
 
 // ── Complete Modal ────────────────────────────────────────────────────────────
 function CompleteModal({ session, onClose, onComplete }) {
-  const [notes, setNotes] = useState('')
+  const [notes,setNotes] = useState('')
   return (
     <div className="modal-overlay" onClick={onClose}>
-      <div className="modal" onClick={e => e.stopPropagation()}>
-        <div className="modal-header">
-          <span className="modal-title">Mark complete</span>
-          <button className="btn btn-ghost btn-icon" onClick={onClose}><X size={18}/></button>
-        </div>
+      <div className="modal" onClick={e=>e.stopPropagation()}>
+        <div className="modal-header"><span className="modal-title">Mark complete</span><button className="btn btn-ghost btn-icon" onClick={onClose}><X size={18}/></button></div>
         <p style={{marginBottom:12,fontWeight:500}}>{session.title}</p>
         <div className="form-group">
-          <label className="label">Session notes (optional)</label>
+          <label className="label">Notes (optional)</label>
           <textarea className="textarea" value={notes} onChange={e=>setNotes(e.target.value)} placeholder="What did you cover? Any topics to revisit?"/>
         </div>
         <div style={{display:'flex',gap:8,justifyContent:'flex-end'}}>
           <button className="btn btn-secondary" onClick={onClose}>Cancel</button>
-          <button className="btn btn-primary" onClick={() => onComplete(session.id, notes)}>
+          <button className="btn btn-primary" onClick={()=>onComplete(session._docId||session.id,notes)}>
             <CheckCircle2 size={15}/> Complete +50 XP
           </button>
         </div>
