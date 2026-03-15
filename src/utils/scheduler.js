@@ -1,6 +1,6 @@
 // src/utils/scheduler.js
 // Full algorithmic revision schedule generator
-// Mirrors the Python rules built for Femi's schedule:
+// Rule-based revision schedule generator for UK GCSE and A-Level students:
 // - Paper rotation (content and exam practice rotate independently)
 // - 2:1 content:exam ratio (configurable)
 // - Emergency sessions day before each exam

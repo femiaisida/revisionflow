@@ -71,7 +71,7 @@ export default function Signup() {
 
           <form onSubmit={handleSubmit} style={{display:'flex',flexDirection:'column',gap:14}}>
             {[
-              { key:'name', label:'Full name', icon:User, type:'text', placeholder:'Oluwafemi Aisida' },
+              { key:'name', label:'Full name', icon:User, type:'text', placeholder:'Your full name' },
               { key:'email', label:'Email', icon:Mail, type:'email', placeholder:'you@school.ac.uk' },
             ].map(({key,label,icon:Icon,type,placeholder}) => (
               <div key={key} className="form-group" style={{marginBottom:0}}>
