@@ -56,6 +56,7 @@ async function callMistral(prompt, systemPrompt = SYSTEM, maxTokens = 8192) {
     const data = await res.json()
     const text = data.choices?.[0]?.message?.content || ''
     if (!text) return null
+    console.log('[AI] Provider: Mistral (mistral-small-latest)')
     return { text, provider: 'mistral' }
   } catch {
     return null  // Network error — try fallback
@@ -78,6 +79,7 @@ async function callGemini(prompt, systemPrompt = SYSTEM, maxTokens = 8192) {
     const data = await res.json()
     if (data.error) return { error: data.error.message }
     const text = data.candidates?.[0]?.content?.parts?.[0]?.text || ''
+    console.log('[AI] Provider: Gemini 2.5 Flash (fallback)')
     return { text, provider: 'gemini' }
   } catch (e) {
     return { error: e.message }

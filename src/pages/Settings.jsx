@@ -4,6 +4,8 @@ import { useAuth } from '../context/AuthContext'
 import { useTheme } from '../context/ThemeContext'
 import { updateUserProfile } from '../utils/firestore'
 import { GCSE_SUBJECTS, ALEVEL_SUBJECTS, EXAM_BOARDS } from '../data/subjects'
+import { GRADE_BOUNDARIES, AVAILABLE_YEARS, getBoundaries, gradeColour } from '../data/paperDatabase'
+import { gradeColour as gradeCol } from '../utils/calendar'
 import toast from 'react-hot-toast'
 import { Sun, Moon, User, Bell, Shield, BookOpen, Plus, X, Trash2 } from 'lucide-react'
 
@@ -50,9 +52,9 @@ export default function Settings() {
       <h2 style={{marginBottom:24}}>Settings</h2>
 
       <div className="tabs" style={{marginBottom:20}}>
-        {['profile','subjects','appearance','privacy'].map(t=>(
+        {['profile','subjects','appearance','privacy','boundaries'].map(t=>(
           <button key={t} className={`tab${tab===t?' active':''}`} onClick={()=>setTab(t)}>
-            {t.charAt(0).toUpperCase()+t.slice(1)}
+            {t==='boundaries'?'Grade Boundaries':t.charAt(0).toUpperCase()+t.slice(1)}
           </button>
         ))}
       </div>
@@ -113,6 +115,8 @@ export default function Settings() {
         </div>
       )}
 
+      {tab==='boundaries' && <BoundaryViewer profile={profile}/>}
+
       {tab==='privacy' && (
         <div className="card" style={{display:'flex',flexDirection:'column',gap:16}}>
           <h4>Privacy settings</h4>
@@ -132,6 +136,74 @@ export default function Settings() {
           <button className="btn btn-primary" onClick={saveProfile} disabled={saving}>{saving?'Saving…':'Save privacy settings'}</button>
           <div className="divider"/>
           <button className="btn btn-danger" onClick={logout}>Sign out</button>
+        </div>
+      )}
+    </div>
+  )
+}
+
+// ── Grade Boundary Viewer ─────────────────────────────────────────────────────
+function BoundaryViewer({ profile }) {
+  const subjects  = profile?.subjects || []
+  const [selSubj, setSelSubj] = useState(subjects[0]?.name  || '')
+  const [selBoard, setSelBoard] = useState(subjects[0]?.board || 'AQA')
+  const [selTier,  setSelTier]  = useState(subjects[0]?.tier  || 'Higher')
+  const [selYear,  setSelYear]  = useState(2024)
+
+  const bounds = getBoundaries(selBoard, selSubj, selTier, selYear)
+  const grades = ['9','8','7','6','5','4','3','2','1']
+
+  function onSubject(name) {
+    setSelSubj(name)
+    const s = subjects.find(x => x.name === name)
+    if (s) { setSelBoard(s.board); setSelTier(s.tier||'Higher') }
+  }
+
+  return (
+    <div className="card">
+      <h4 style={{marginBottom:4}}>Grade Boundaries Reference</h4>
+      <p style={{fontSize:'0.82rem',marginBottom:16}}>
+        Per-paper boundaries from real published results. Use when entering past paper scores.
+      </p>
+
+      <div className="grid-2" style={{gap:10,marginBottom:16}}>
+        <div><label className="label">Subject</label>
+          <select className="select" value={selSubj} onChange={e=>onSubject(e.target.value)}>
+            <option value="">Select…</option>
+            {subjects.map(s=><option key={s.name} value={s.name}>{s.name}</option>)}
+          </select></div>
+        <div><label className="label">Year</label>
+          <select className="select" value={selYear} onChange={e=>setSelYear(parseInt(e.target.value))}>
+            {AVAILABLE_YEARS.map(y=><option key={y} value={y}>{y}</option>)}
+          </select></div>
+      </div>
+
+      {bounds ? (
+        <div>
+          <div style={{fontSize:'0.78rem',color:'var(--text-muted)',marginBottom:10}}>
+            {selBoard} · {selSubj} · {selTier&&selTier!=='N/A'?selTier+' · ':''}{selYear} · Max marks: {bounds.maxMarks}
+          </div>
+          <div style={{display:'grid',gridTemplateColumns:'repeat(auto-fill,minmax(80px,1fr))',gap:8,marginBottom:12}}>
+            {grades.map((g,i) => {
+              const marks = bounds.boundaries[i]
+              if (marks === null || marks === undefined) return null
+              const pct = Math.round((marks / bounds.maxMarks)*100)
+              return (
+                <div key={g} style={{padding:'10px 8px',background:'var(--bg-surface)',borderRadius:'var(--radius-md)',border:`1px solid var(--border)`,textAlign:'center'}}>
+                  <div style={{fontWeight:800,fontSize:'1.2rem',color:gradeCol(g)}}>G{g}</div>
+                  <div style={{fontWeight:600,fontSize:'0.85rem',marginTop:2}}>{marks}/{bounds.maxMarks}</div>
+                  <div style={{fontSize:'0.72rem',color:'var(--text-muted)',marginTop:1}}>{pct}%</div>
+                </div>
+              )
+            })}
+          </div>
+          <p style={{fontSize:'0.75rem',color:'var(--text-muted)'}}>
+            Boundaries sourced from published AQA/OCR/Edexcel results. 2026 boundaries will be available after results day in August 2026.
+          </p>
+        </div>
+      ) : (
+        <div className="empty-state" style={{padding:'20px 0'}}>
+          <p>No boundary data for this combination. Select a subject to see its boundaries.</p>
         </div>
       )}
     </div>

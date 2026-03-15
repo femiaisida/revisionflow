@@ -14,9 +14,24 @@ export async function updateUserProfile(uid, data) {
 }
 
 export async function getUserByUsername(username) {
-  const q = query(collection(db, 'users'), where('username', '==', username))
+  const q = query(collection(db, 'users'), where('username', '==', username.toLowerCase()))
   const snap = await getDocs(q)
   return snap.empty ? null : { id: snap.docs[0].id, ...snap.docs[0].data() }
+}
+
+export async function searchUsersByName(name) {
+  // Firestore doesn't support full-text search natively.
+  // We fetch all users and filter client-side (works for small user bases).
+  // For scale, use Algolia or Typesense.
+  const snap = await getDocs(collection(db, 'users'))
+  const lower = name.toLowerCase()
+  return snap.docs
+    .map(d => ({ id: d.id, ...d.data() }))
+    .filter(u =>
+      (u.displayName && u.displayName.toLowerCase().includes(lower)) ||
+      (u.username    && u.username.toLowerCase().includes(lower))
+    )
+    .slice(0, 10)  // limit results
 }
 
 // ── XP & GAMIFICATION ────────────────────────────────────────────────────────
@@ -71,6 +86,10 @@ export async function addSession(uid, session) {
     completed: false,
     createdAt: serverTimestamp(),
   })
+  // Award import badge if this is an imported session
+  if (session.source === 'import') {
+    await checkAndAwardBadge(uid, 'calendar_import')
+  }
   return ref.id
 }
 
@@ -86,6 +105,23 @@ export async function completeSession(uid, sessionId, notes = '') {
   const completedCount = snap.docs.filter(d => d.data().completed).length
   if (completedCount === 1)   await checkAndAwardBadge(uid, 'first_session')
   if (completedCount === 100) await checkAndAwardBadge(uid, 'session_100')
+  // Check all_subjects badge: all subjects revised in the last 7 days
+  const userSnap = await getDoc(doc(db, 'users', uid))
+  const userSubjects = (userSnap.data()?.subjects || []).map(s => s.name)
+  if (userSubjects.length > 0) {
+    const sevenDaysAgo = new Date(Date.now() - 7*24*60*60*1000)
+    const recentSnap = await getDocs(collection(db, 'users', uid, 'sessions'))
+    const recentSubjects = new Set(
+      recentSnap.docs
+        .filter(d => {
+          const t = d.data().createdAt?.toDate?.() || new Date(d.data().startTime || 0)
+          return t > sevenDaysAgo && d.data().completed
+        })
+        .map(d => d.data().subject)
+    )
+    const allCovered = userSubjects.every(s => recentSubjects.has(s))
+    if (allCovered) await checkAndAwardBadge(uid, 'all_subjects')
+  }
 }
 
 export async function getSessions(uid, options = {}) {
@@ -106,7 +142,7 @@ export async function savePaperAttempt(uid, attempt) {
   const snap = await getDocs(collection(db, 'users', uid, 'paperAttempts'))
   if (snap.size === 10) await checkAndAwardBadge(uid, 'paper_10')
   if (snap.size === 50) await checkAndAwardBadge(uid, 'paper_50')
-  if (attempt.grade === 9) await checkAndAwardBadge(uid, 'grade_9')
+  if (attempt.grade === '9' || attempt.grade === 9) await checkAndAwardBadge(uid, 'grade_9')
   if (attempt.percentage >= 100) await checkAndAwardBadge(uid, 'perfect_paper')
   return ref.id
 }
@@ -217,6 +253,10 @@ export async function acceptFriendRequest(uid, fromUid) {
   batch.update(doc(db, 'users', fromUid), { friends: arrayUnion(uid) })
   await batch.commit()
   await awardXP(uid, XP_REWARDS.friendAdded, 'Friend added')
+  // Check friend_5 badge
+  const snap = await getDoc(doc(db, 'users', uid))
+  const friendCount = (snap.data()?.friends || []).length
+  if (friendCount >= 5) await checkAndAwardBadge(uid, 'friend_5')
 }
 
 export async function declineFriendRequest(uid, fromUid) {

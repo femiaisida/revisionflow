@@ -271,36 +271,63 @@ function AddAttemptModal({ user, profile, structures, onClose, onSave }) {
             </div>
           )}
 
-          {/* Grade boundary info */}
-          {autoBoundary && !useCustom && (
-            <div style={{padding:'8px 12px',background:'rgba(124,58,237,0.08)',border:'1px solid var(--border)',borderRadius:'var(--radius-md)',fontSize:'0.8rem'}}>
-              <div style={{display:'flex',justifyContent:'space-between',marginBottom:4}}>
-                <span style={{fontWeight:600}}>Grade boundaries ({form.year})</span>
-                <button type="button" style={{background:'none',border:'none',fontSize:'0.75rem',color:'var(--accent-light)',cursor:'pointer'}} onClick={()=>setUseCustom(true)}>Edit</button>
+          {/* Grade boundaries — show both marks and % */}
+          {(autoBoundary || useCustom) && (
+            <div style={{padding:'10px 12px',background:'rgba(124,58,237,0.06)',border:'1px solid var(--border)',borderRadius:'var(--radius-md)',fontSize:'0.8rem'}}>
+              <div style={{display:'flex',justifyContent:'space-between',alignItems:'center',marginBottom:8}}>
+                <span style={{fontWeight:600}}>
+                  Grade boundaries ({form.year}){useCustom?' — custom':' — auto-filled'}
+                </span>
+                {!useCustom ? (
+                  <button type="button" style={{background:'none',border:'none',fontSize:'0.75rem',color:'var(--accent-light)',cursor:'pointer'}}
+                    onClick={()=>{setUseCustom(true);setCustomBoundaries((autoBoundary?.boundaries||[]).map(b=>b||''))}}>
+                    Edit
+                  </button>
+                ) : (
+                  <button type="button" style={{background:'none',border:'none',fontSize:'0.75rem',color:'var(--text-muted)',cursor:'pointer'}}
+                    onClick={()=>setUseCustom(false)}>
+                    Reset to auto
+                  </button>
+                )}
               </div>
-              <div style={{display:'flex',gap:6,flexWrap:'wrap'}}>
-                {['9','8','7','6','5','4'].map((g,i)=>autoBoundary.boundaries[i]!=null&&(
-                  <span key={g} style={{fontSize:'0.75rem',fontWeight:600,color:gradeColour(g)}}>G{g}:{autoBoundary.boundaries[i]}</span>
-                ))}
-              </div>
-            </div>
-          )}
 
-          {useCustom && (
-            <div style={{padding:12,background:'var(--bg-surface)',border:'1px solid var(--border)',borderRadius:'var(--radius-md)'}}>
-              <div style={{display:'flex',justifyContent:'space-between',marginBottom:8}}>
-                <span style={{fontWeight:600,fontSize:'0.875rem'}}>Custom grade boundaries</span>
-                <button type="button" style={{background:'none',border:'none',fontSize:'0.75rem',color:'var(--text-muted)',cursor:'pointer'}} onClick={()=>setUseCustom(false)}>Use auto</button>
-              </div>
-              <div style={{display:'grid',gridTemplateColumns:'repeat(9,1fr)',gap:4}}>
-                {['G9','G8','G7','G6','G5','G4','G3','G2','G1'].map((g,i)=>(
-                  <div key={g} style={{textAlign:'center'}}>
-                    <div style={{fontSize:'0.68rem',color:'var(--text-muted)',marginBottom:2}}>{g}</div>
-                    <input className="input" type="number" min={0} style={{padding:'3px',textAlign:'center',fontSize:'0.78rem'}}
-                      value={customBoundaries[i]||''} onChange={e=>{const b=[...customBoundaries];b[i]=e.target.value;setCustomBoundaries(b)}}/>
+              {!useCustom && autoBoundary ? (
+                <div style={{display:'grid',gridTemplateColumns:'repeat(auto-fill,minmax(60px,1fr))',gap:4}}>
+                  {['9','8','7','6','5','4','3','2','1'].map((g,i)=>{
+                    const marks = autoBoundary.boundaries[i]
+                    if (marks === null || marks === undefined) return null
+                    const pct = Math.round((marks / autoBoundary.maxMarks)*100)
+                    return (
+                      <div key={g} style={{textAlign:'center',padding:'4px 2px',background:'var(--bg-surface)',borderRadius:'var(--radius-md)',border:'1px solid var(--border)'}}>
+                        <div style={{fontWeight:800,color:gradeColour(g),fontSize:'0.9rem'}}>G{g}</div>
+                        <div style={{fontSize:'0.72rem',fontWeight:600}}>{marks}/{autoBoundary.maxMarks}</div>
+                        <div style={{fontSize:'0.68rem',color:'var(--text-muted)'}}>{pct}%</div>
+                      </div>
+                    )
+                  })}
+                </div>
+              ) : (
+                <div>
+                  <p style={{fontSize:'0.75rem',color:'var(--text-muted)',marginBottom:6}}>
+                    Enter the minimum marks needed for each grade (out of {form.maxMarks||autoSpec?.maxMarks||80}):
+                  </p>
+                  <div style={{display:'grid',gridTemplateColumns:'repeat(9,1fr)',gap:4}}>
+                    {['G9','G8','G7','G6','G5','G4','G3','G2','G1'].map((g,i)=>(
+                      <div key={g} style={{textAlign:'center'}}>
+                        <div style={{fontSize:'0.68rem',color:gradeColour(g.slice(1)),fontWeight:700,marginBottom:2}}>{g}</div>
+                        <input className="input" type="number" min={0} max={form.maxMarks||80}
+                          style={{padding:'3px',textAlign:'center',fontSize:'0.75rem'}}
+                          value={customBoundaries[i]||''} onChange={e=>{const b=[...customBoundaries];b[i]=e.target.value;setCustomBoundaries(b)}}/>
+                        {customBoundaries[i] && form.maxMarks && (
+                          <div style={{fontSize:'0.62rem',color:'var(--text-muted)',marginTop:1}}>
+                            {Math.round((parseInt(customBoundaries[i])/(parseInt(form.maxMarks)||80))*100)}%
+                          </div>
+                        )}
+                      </div>
+                    ))}
                   </div>
-                ))}
-              </div>
+                </div>
+              )}
             </div>
           )}
 

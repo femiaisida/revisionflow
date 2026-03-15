@@ -4,6 +4,7 @@ import { useAuth } from '../context/AuthContext'
 import { collection, getDocs } from 'firebase/firestore'
 import { db } from '../firebase'
 import { chatWithAI, getResourceRecommendations, generateStudyPlan, analyseWeaknesses } from '../utils/ai'
+import { checkAndAwardBadge } from '../utils/firestore'
 import { SUBJECT_COLOURS } from '../data/subjects'
 import { MessageSquare, Send, Zap, BookOpen, TrendingUp, X, Brain, Star, Target, FileText } from 'lucide-react'
 
@@ -149,6 +150,7 @@ export default function AIAdvisor() {
       preferences: 'Balanced content and exam practice',
     })
     setStudyPlan(res.text||res.error||'')
+    if (res.text && user) await checkAndAwardBadge(user.uid, 'ai_plan').catch(()=>{})
     setPlanLoading(false)
   }
 
