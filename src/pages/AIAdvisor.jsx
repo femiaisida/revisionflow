@@ -1,7 +1,7 @@
 // src/pages/AIAdvisor.jsx
 import React, { useState, useRef, useEffect } from 'react'
 import { useAuth } from '../context/AuthContext'
-import { collection, getDocs } from 'firebase/firestore'
+import { collection, getDocs, doc, getDoc, setDoc, serverTimestamp } from 'firebase/firestore'
 import { db } from '../firebase'
 import { chatWithAI, getResourceRecommendations, generateStudyPlan, analyseWeaknesses } from '../utils/ai'
 import { checkAndAwardBadge } from '../utils/firestore'
@@ -47,7 +47,11 @@ export default function AIAdvisor() {
     showForm: false, confirmed: false,
     hoursPerWeek: 10, preferences: 'Balanced content and exam practice'
   })
-  const [planCopied, setPlanCopied] = useState(false)
+  const [planCopied,       setPlanCopied]       = useState(false)
+  const [planSaved,        setPlanSaved]        = useState(false)
+  const [showAddCal,       setShowAddCal]       = useState(false)
+  const [addingToCal,      setAddingToCal]      = useState(false)
+  const [calAdded,         setCalAdded]         = useState(false)
 
   // Grade predictor
   const [gradeSubj,   setGradeSubj]   = useState('')
@@ -78,6 +82,21 @@ export default function AIAdvisor() {
   const [userContext, setUserContext] = useState('')
 
   useEffect(() => { buildContext() }, [profile, user])
+
+  // Load saved study plan from Firestore on mount
+  useEffect(() => {
+    if (!user) return
+    const loadSaved = async () => {
+      try {
+        const snap = await getDoc(doc(db, 'users', user.uid, 'aiData', 'studyPlan'))
+        if (snap.exists() && snap.data().text) {
+          setStudyPlan(snap.data().text)
+          setPlanPrefs(p => ({...p, hoursPerWeek: snap.data().hoursPerWeek||10, preferences: snap.data().preferences||p.preferences}))
+        }
+      } catch(e) {}
+    }
+    loadSaved()
+  }, [user])
   useEffect(() => { bottomRef.current?.scrollIntoView({behavior:'smooth'}) }, [messages])
 
   async function buildContext() {
@@ -167,8 +186,20 @@ export default function AIAdvisor() {
       firstExamDate:  firstExam?.examDate,
       lastExamDate:   lastExam?.examDate,
     })
-    setStudyPlan(res.text||res.error||'')
-    if (res.text && user) await checkAndAwardBadge(user.uid, 'ai_plan').catch(()=>{})
+    const planText = res.text||res.error||''
+    setStudyPlan(planText)
+    if (res.text && user) {
+      await checkAndAwardBadge(user.uid, 'ai_plan').catch(()=>{})
+      // Persist plan to Firestore so it survives page refreshes
+      try {
+        await setDoc(doc(db, 'users', user.uid, 'aiData', 'studyPlan'), {
+          text:         planText,
+          hoursPerWeek: planPrefs.hoursPerWeek,
+          preferences:  planPrefs.preferences,
+          generatedAt:  serverTimestamp(),
+        })
+      } catch(e) {}
+    }
     setPlanLoading(false)
   }
 
@@ -420,13 +451,24 @@ export default function AIAdvisor() {
                     a.href=url; a.download='revision-study-plan.txt'; a.click()
                     URL.revokeObjectURL(url)
                   }}>
-                    Save
+                    Save .txt
+                  </button>
+                  <button className="btn btn-secondary btn-sm" onClick={()=>setShowAddCal(true)} disabled={calAdded}>
+                    {calAdded ? <><Check size={13}/> Added to calendar!</> : '+ Add to Calendar'}
+                  </button>
+                  <button className="btn btn-ghost btn-sm"
+                    style={{color:'var(--text-muted)',fontSize:'0.75rem',borderColor:'var(--border)'}}
+                    onClick={()=>setPlanPrefs(p=>({...p,showForm:true,confirmed:false}))} disabled={planLoading}>
+                    New plan
                   </button>
                 </>
               )}
-              <button className="btn btn-primary btn-sm" onClick={()=>setPlanPrefs(p=>({...p,showForm:true,confirmed:false}))} disabled={planLoading}>
-                {planLoading?'Generating…':<><Zap size={13}/> {studyPlan?'Regenerate':'Generate'}</>}
-              </button>
+              {!studyPlan && !planLoading && (
+                <button className="btn btn-primary btn-sm" onClick={()=>setPlanPrefs(p=>({...p,showForm:true,confirmed:false}))}>
+                  <Zap size={13}/> Generate
+                </button>
+              )}
+              {planLoading && <span style={{fontSize:'0.82rem',color:'var(--text-muted)',alignSelf:'center'}}>Generating…</span>}
             </div>
           </div>
 
@@ -482,7 +524,193 @@ export default function AIAdvisor() {
         </div>
       )}
 
+      {/* ── Add to Calendar modal ── */}
+      {showAddCal && (
+        <AddPlanToCalendarModal
+          studyPlan={studyPlan}
+          profile={profile}
+          user={user}
+          onClose={()=>setShowAddCal(false)}
+          onDone={()=>{setShowAddCal(false);setCalAdded(true);setTimeout(()=>setCalAdded(false),4000)}}/>
+      )}
+
       <style>{`@keyframes bounce{0%,100%{transform:translateY(0)}50%{transform:translateY(-4px)}}`}</style>
+    </div>
+  )
+}
+
+// ── Add Plan to Calendar Modal ────────────────────────────────────────────────
+function AddPlanToCalendarModal({ studyPlan, profile, user, onClose, onDone }) {
+  const [mode,     setMode]     = useState('add')      // 'add' | 'replace'
+  const [loading,  setLoading]  = useState(false)
+  const [preview,  setPreview]  = useState(null)
+
+  const subjects  = profile?.subjects?.map(s => s.name) || []
+  const examDates = profile?.examDates || []
+
+  // Parse the AI study plan text into sessions
+  function parsePlanToSessions() {
+    const sessions = []
+    const today    = new Date()
+
+    // Map subject mentions to session objects
+    // Strategy: for each subject, generate a sensible spread of sessions
+    // based on the weeks mentioned in the plan
+    const weekMatches = studyPlan.match(/week\s+(\d+)/gi) || []
+    const maxWeek = weekMatches.length
+      ? Math.max(...weekMatches.map(w => parseInt(w.replace(/\D/g,''))))
+      : 12
+
+    subjects.forEach((subj, si) => {
+      // Check if subject is mentioned in plan
+      if (!studyPlan.toLowerCase().includes(subj.toLowerCase())) return
+
+      // Find exam date for this subject
+      const examEntry = examDates
+        .filter(e => e.subject === subj && new Date(e.examDate) > today)
+        .sort((a,b) => new Date(a.examDate) - new Date(b.examDate))[0]
+
+      const examDate   = examEntry ? new Date(examEntry.examDate) : null
+      const weeksAway  = examDate
+        ? Math.max(1, Math.ceil((examDate - today) / (7*86400000)))
+        : maxWeek
+
+      // Generate 2 sessions per week per subject, spread across weeks
+      // Alternate: content first, then exam practice
+      const sessionsPerSubj = Math.max(2, Math.floor(weeksAway * 2 / Math.max(subjects.length, 1)))
+      const intervalDays    = Math.max(1, Math.floor((weeksAway * 7) / sessionsPerSubj))
+
+      for (let i = 0; i < sessionsPerSubj && i < 20; i++) {
+        const dayOffset = i * intervalDays + (si % 3)  // stagger subjects
+        const sessionDate = new Date(today)
+        sessionDate.setDate(today.getDate() + dayOffset)
+
+        // Skip weekends for content, allow all days for exam practice near exam
+        const dow = sessionDate.getDay()
+        if (dow === 0) sessionDate.setDate(sessionDate.getDate() + 1) // skip Sunday
+
+        const isExamPractice = i >= Math.floor(sessionsPerSubj * 0.6)
+        const hour = 17 + (si % 3)  // stagger start times 17:00–19:00
+        sessionDate.setHours(hour, 0, 0, 0)
+
+        const endDate = new Date(sessionDate.getTime() + 45*60000)
+
+        sessions.push({
+          subject:   subj,
+          type:      isExamPractice ? 'Exam Practice' : 'Content Revision',
+          title:     `${subj} – ${isExamPractice ? 'Exam Practice' : 'Content Revision'}`,
+          date:      sessionDate.toISOString().slice(0,10),
+          start:     `${String(hour).padStart(2,'0')}:00`,
+          startTime: sessionDate.toISOString(),
+          endTime:   endDate.toISOString(),
+          duration:  45,
+          source:    'ai-plan',
+          completed: false,
+          notes:     'Generated from AI Study Plan',
+        })
+      }
+    })
+
+    // Sort by date
+    return sessions.sort((a,b) => new Date(a.startTime) - new Date(b.startTime))
+  }
+
+  useEffect(() => {
+    setPreview(parsePlanToSessions())
+  }, [])
+
+  async function handleConfirm() {
+    if (!user || !preview) return
+    setLoading(true)
+    try {
+      const { collection: col, addDoc: aDoc, getDocs, deleteDoc, doc: fdoc, query, where, serverTimestamp: sTs, writeBatch } = await import('firebase/firestore')
+      const { db: fdb } = await import('../firebase')
+
+      if (mode === 'replace') {
+        const snap = await getDocs(col(fdb, 'users', user.uid, 'sessions'))
+        const batch = writeBatch(fdb)
+        snap.docs.forEach(d => batch.delete(fdoc(fdb, 'users', user.uid, 'sessions', d.id)))
+        await batch.commit()
+      }
+
+      for (const s of preview) {
+        await aDoc(col(fdb, 'users', user.uid, 'sessions'), { ...s, createdAt: sTs() })
+      }
+
+      onDone()
+    } catch(err) {
+      alert('Failed: ' + err.message)
+    } finally {
+      setLoading(false)
+    }
+  }
+
+  const bySubject = preview ? preview.reduce((acc, s) => {
+    if (!acc[s.subject]) acc[s.subject] = 0
+    acc[s.subject]++
+    return acc
+  }, {}) : {}
+
+  return (
+    <div className="modal-overlay" onClick={onClose}>
+      <div className="modal" style={{maxWidth:520}} onClick={e=>e.stopPropagation()}>
+        <div className="modal-header">
+          <span className="modal-title">Add study plan to calendar</span>
+          <button className="btn btn-ghost btn-icon" onClick={onClose}>✕</button>
+        </div>
+
+        <p style={{fontSize:'0.875rem',marginBottom:14}}>
+          This will create revision sessions in your calendar based on the AI study plan,
+          spread across your revision period with content sessions first and exam practice closer to exams.
+        </p>
+
+        {preview && (
+          <>
+            <div style={{padding:'8px 12px',background:'rgba(124,58,237,0.08)',border:'1px solid var(--border)',borderRadius:'var(--radius-md)',fontSize:'0.82rem',marginBottom:14}}>
+              <strong>{preview.length} sessions</strong> will be added across {Object.keys(bySubject).length} subjects:
+              <div style={{marginTop:6,display:'flex',flexWrap:'wrap',gap:6}}>
+                {Object.entries(bySubject).map(([s,n])=>(
+                  <span key={s} className="badge badge-purple" style={{fontSize:'0.72rem'}}>{s}: {n}</span>
+                ))}
+              </div>
+            </div>
+
+            <div style={{maxHeight:160,overflowY:'auto',borderRadius:'var(--radius-md)',border:'1px solid var(--border)',marginBottom:14}}>
+              {preview.slice(0,8).map((s,i)=>(
+                <div key={i} style={{display:'flex',gap:10,padding:'5px 10px',borderBottom:'1px solid var(--border)',fontSize:'0.78rem',alignItems:'center'}}>
+                  <span style={{color:'var(--text-muted)',flexShrink:0,minWidth:68}}>{s.date}</span>
+                  <span style={{flex:1,whiteSpace:'nowrap',overflow:'hidden',textOverflow:'ellipsis'}}>{s.title}</span>
+                  <span className={`badge badge-${s.type.includes('Exam')?'blue':'purple'}`} style={{fontSize:'0.65rem',flexShrink:0}}>{s.type==='Exam Practice'?'Exam':'Content'}</span>
+                </div>
+              ))}
+              {preview.length>8&&<div style={{padding:'4px 10px',fontSize:'0.72rem',color:'var(--text-muted)'}}>…and {preview.length-8} more</div>}
+            </div>
+          </>
+        )}
+
+        <div style={{marginBottom:16}}>
+          <label className="label">What to do with existing sessions?</label>
+          {[
+            {val:'add',     label:'Add to existing calendar', desc:'Keeps current sessions'},
+            {val:'replace', label:'Replace existing calendar', desc:'Deletes all current sessions first'},
+          ].map(opt=>(
+            <button key={opt.val} onClick={()=>setMode(opt.val)}
+              style={{display:'block',width:'100%',padding:'8px 12px',marginBottom:6,borderRadius:'var(--radius-md)',cursor:'pointer',textAlign:'left',
+                border:`2px solid ${mode===opt.val?'var(--accent)':'var(--border)'}`,
+                background:mode===opt.val?'rgba(124,58,237,0.1)':'var(--bg-surface)'}}>
+              <span style={{fontWeight:600,fontSize:'0.875rem'}}>{opt.label}</span>
+              <span style={{fontSize:'0.78rem',color:'var(--text-muted)',marginLeft:8}}>{opt.desc}</span>
+            </button>
+          ))}
+        </div>
+
+        <div style={{display:'flex',gap:8,justifyContent:'flex-end'}}>
+          <button className="btn btn-secondary" onClick={onClose}>Cancel</button>
+          <button className="btn btn-primary" onClick={handleConfirm} disabled={loading||!preview?.length}>
+            {loading?'Adding…':`Add ${preview?.length||0} sessions`}
+          </button>
+        </div>
+      </div>
     </div>
   )
 }
