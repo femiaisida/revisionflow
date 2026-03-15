@@ -511,13 +511,41 @@ export function TimerWidget({ onClose, sound }) {
 
   const pct = total>0 ? ((total-remaining)/total)*100 : 0
 
+  // Draggable state
+  const [pos, setPos] = React.useState({x: window.innerWidth - 220, y: window.innerHeight - 320})
+  const dragging = React.useRef(false)
+  const dragOffset = React.useRef({x:0, y:0})
+
+  function onMouseDown(e) {
+    if (e.target.closest('button') || e.target.closest('select')) return
+    dragging.current = true
+    dragOffset.current = { x: e.clientX - pos.x, y: e.clientY - pos.y }
+    e.preventDefault()
+  }
+
+  React.useEffect(() => {
+    function onMove(e) {
+      if (!dragging.current) return
+      setPos({
+        x: Math.max(0, Math.min(window.innerWidth-220, e.clientX - dragOffset.current.x)),
+        y: Math.max(0, Math.min(window.innerHeight-300, e.clientY - dragOffset.current.y)),
+      })
+    }
+    function onUp() { dragging.current = false }
+    window.addEventListener('mousemove', onMove)
+    window.addEventListener('mouseup', onUp)
+    return () => { window.removeEventListener('mousemove', onMove); window.removeEventListener('mouseup', onUp) }
+  }, [])
+
   return (
-    <div style={{
-      position:'fixed',bottom:80,right:20,zIndex:500,
-      background:'var(--bg-card)',border:'1px solid var(--border)',
-      borderRadius:'var(--radius-xl)',padding:16,width:200,
-      boxShadow:'var(--shadow-lg)',
-    }}>
+    <div
+      onMouseDown={onMouseDown}
+      style={{
+        position:'fixed', left:pos.x, top:pos.y, zIndex:500,
+        background:'var(--bg-card)', border:'1px solid var(--border)',
+        borderRadius:'var(--radius-xl)', padding:16, width:210,
+        boxShadow:'var(--shadow-lg)', cursor:'grab', userSelect:'none',
+      }}>
       <div style={{display:'flex',alignItems:'center',justifyContent:'space-between',marginBottom:10}}>
         <span style={{fontWeight:700,fontSize:'0.82rem',color:'var(--text-muted)'}}>⏱ Timer</span>
         <button className="btn btn-ghost btn-icon btn-sm" onClick={onClose}><X size={14}/></button>
@@ -553,15 +581,18 @@ export function TimerWidget({ onClose, sound }) {
 
 // ── Ambient Background Overlay ────────────────────────────────────────────────
 const AMBIENT_PRESETS = {
-  none:      { label:'None',          css: 'none' },
-  forest:    { label:'Forest',        css: 'linear-gradient(135deg,#1a4731 0%,#2d6a4f 40%,#52b788 100%)' },
-  rain:      { label:'Rainy Window',  css: 'linear-gradient(180deg,#2c3e50 0%,#4a5568 50%,#2c3e50 100%)' },
-  ocean:     { label:'Deep Ocean',    css: 'linear-gradient(180deg,#0c1445 0%,#1a3a6e 40%,#0c7abf 100%)' },
-  sunset:    { label:'Sunset',        css: 'linear-gradient(180deg,#ff6b35 0%,#f7931e 40%,#ffcc02 100%)' },
-  space:     { label:'Space',         css: 'radial-gradient(ellipse at 20% 50%,#1a0533 0%,#0d0221 50%,#000000 100%)' },
-  aurora:    { label:'Aurora',        css: 'linear-gradient(135deg,#0d1b2a 0%,#1b4332 30%,#6a0572 70%,#0d1b2a 100%)' },
-  cosy:      { label:'Cosy Study',    css: 'linear-gradient(135deg,#3d1c02 0%,#6b3a2a 50%,#9a5c38 100%)' },
-  midnight:  { label:'Midnight',      css: 'linear-gradient(180deg,#0a0a1a 0%,#1a1a3e 50%,#0a0a1a 100%)' },
+  none:     { label:'None',            css: 'none' },
+  forest:   { label:'🌲 Forest',       css: 'radial-gradient(ellipse at 30% 20%,#0a2e1a 0%,#1a5c30 35%,#2d8a50 65%,#1a4a28 100%)' },
+  rain:     { label:'🌧 Rain',          css: 'linear-gradient(170deg,#0d1b2a 0%,#1e2f42 25%,#2c4a6b 55%,#1a3050 80%,#0d1b2a 100%)' },
+  ocean:    { label:'🌊 Ocean',         css: 'radial-gradient(ellipse at 50% 100%,#0077b6 0%,#023e8a 40%,#03045e 70%,#000814 100%)' },
+  sunset:   { label:'🌅 Sunset',        css: 'linear-gradient(180deg,#0f0c29 0%,#302b63 30%,#c0392b 60%,#f39c12 80%,#f1c40f 100%)' },
+  space:    { label:'✨ Space',          css: 'radial-gradient(ellipse at 15% 40%,#2d1b69 0%,#11074a 35%,#030014 65%,#000000 100%)' },
+  aurora:   { label:'🌌 Aurora',        css: 'linear-gradient(160deg,#001a0e 0%,#003322 20%,#006644 40%,#4a0080 65%,#1a0040 85%,#000d1a 100%)' },
+  cosy:     { label:'🕯 Candlelight',   css: 'radial-gradient(ellipse at 50% 80%,#7a3b1e 0%,#4a1e0a 35%,#2a0e04 65%,#100400 100%)' },
+  midnight: { label:'🌙 Midnight',      css: 'radial-gradient(ellipse at 70% 30%,#1a1a4e 0%,#0d0d2b 40%,#050510 70%,#000005 100%)' },
+  focus:    { label:'🎯 Focus',         css: 'radial-gradient(ellipse at 50% 50%,#1a1a2e 0%,#16213e 50%,#0f3460 100%)' },
+  nature:   { label:'🍃 Meadow',        css: 'linear-gradient(160deg,#0a1628 0%,#1a3a1a 25%,#2e6b2e 50%,#4a9e3f 70%,#6ab04c 100%)' },
+  zen:      { label:'🎋 Zen',           css: 'linear-gradient(135deg,#1a2a1a 0%,#2d4a2d 30%,#4a6741 60%,#c8a97e 85%,#e8d5b0 100%)' },
 }
 
 function AmbientBackground({ ambient, customBg }) {
@@ -639,13 +670,17 @@ function AmbientPanel({ current, customBg, onSelect, onCustom, bgFileRef, onClos
 }
 
 // ── Music Panel ───────────────────────────────────────────────────────────────
+// Using specific video IDs of long-form embeddable ambient videos
+// These are public domain / Creative Commons ambient study videos
 const PLAYLISTS = [
-  { label:'Lo-fi Study Beats',    id:'PLOzDu-MXXLliO9gyCms7DxDGQn3doCOz_', platform:'youtube' },
-  { label:'Classical Focus',      id:'PLNPkGO2_5V_BOCmGqFPd3Cw68K3Xf_1qJ', platform:'youtube' },
-  { label:'Rain & Thunder',       id:'PLMIbmfP_9vb8BCxRoraJpoo4q1yMFg4Ce', platform:'youtube' },
-  { label:'Ambient Study Music',  id:'PLFs4GSJ0MmxiWIJSXUPNv2G-6OPJf-q-K', platform:'youtube' },
-  { label:'Piano & Strings',      id:'PLCVGGn6GhhDu_4yn_9eN3oSCpCPNpt3QB', platform:'youtube' },
-  { label:'Brown Noise Focus',    id:'PLDIoUOhQQPlXr63I_vwF06Dq_HiDkDeRC', platform:'youtube' },
+  { label:'Lo-fi Study Beats',   vid:'jfKfPfyJRdk', type:'video' },
+  { label:'Classical Focus',     vid:'DWcJFNfaw9c', type:'video' },
+  { label:'Rain & Thunder',      vid:'mPZkdNFkNps', type:'video' },
+  { label:'Deep Focus',          vid:'WPni755-Krg', type:'video' },
+  { label:'Piano & Strings',     vid:'4oStw0r33so', type:'video' },
+  { label:'Brown Noise',         vid:'RqzGzwTY-6w', type:'video' },
+  { label:'Nature Sounds',       vid:'Qm846KdZN_c', type:'video' },
+  { label:'Calm Ambient',        vid:'2gliGzb2_1I', type:'video' },
 ]
 
 function MusicPanel({ onClose }) {
@@ -676,23 +711,23 @@ function MusicPanel({ onClose }) {
                 style={{
                   display:'flex',alignItems:'center',justifyContent:'space-between',
                   padding:'8px 12px',borderRadius:'var(--radius-md)',
-                  border:`1px solid ${selected===p.id?'var(--accent)':'var(--border)'}`,
-                  background:selected===p.id?'rgba(124,58,237,0.1)':'var(--bg-surface)',
+                  border:`1px solid ${selected===p.vid?'var(--accent)':'var(--border)'}`,
+                  background:selected===p.vid?'rgba(124,58,237,0.1)':'var(--bg-surface)',
                   cursor:'pointer',textAlign:'left',width:'100%',
                 }}>
                 <span style={{fontWeight:600,fontSize:'0.875rem'}}>{p.label}</span>
                 <span style={{fontSize:'0.72rem',color:'var(--text-muted)'}}>
-                  {selected===p.id?'▶ Playing':'YouTube'}
+                  {selected===p.vid?'▶ Playing':'Click to play'}
                 </span>
               </button>
             ))}
           </div>
 
-          {selected && (
+          {selected && selected.length > 5 && (
             <div style={{borderRadius:'var(--radius-md)',overflow:'hidden',border:'1px solid var(--border)'}}>
               <iframe
                 width="100%" height="120"
-                src={`https://www.youtube.com/embed/videoseries?list=${selected}&autoplay=1&controls=1`}
+                src={`https://www.youtube.com/embed/${selected}?autoplay=1&controls=1&start=0`}
                 frameBorder="0"
                 allow="autoplay; encrypted-media"
                 allowFullScreen

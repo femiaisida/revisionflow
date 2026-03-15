@@ -11,7 +11,8 @@ import { LEVELS, BADGES, SUBJECT_COLOURS } from '../data/subjects'
 import { format } from 'date-fns'
 import {
   Flame, Zap, Calendar, FileText, Brain,
-  CheckSquare, MessageSquare, ArrowRight, Clock, TrendingUp, Trophy
+  CheckSquare, MessageSquare, ArrowRight, Clock, TrendingUp, Trophy,
+  CheckCircle2, AlertCircle, ChevronRight
 } from 'lucide-react'
 
 export default function Dashboard() {
@@ -77,11 +78,46 @@ export default function Dashboard() {
     .sort((a,b)=>new Date(a.examDate)-new Date(b.examDate))
     .slice(0,4)
 
+  // Setup checklist for new users
+  const setupSteps = [
+    { id:'subjects',   label:'Add your subjects',    done: (profile?.subjects||[]).length > 0,  link:'/settings',   tab:'subjects' },
+    { id:'exams',      label:'Add exam dates',        done: (profile?.examDates||[]).length > 0, link:'/exams',      tab:'' },
+    { id:'calendar',   label:'Generate a revision schedule', done: (profile?.calendarGenerated||false)||(todaySessions.length>0), link:'/calendar', tab:'' },
+  ]
+  const setupDone = setupSteps.every(s => s.done)
+  const setupProgress = setupSteps.filter(s => s.done).length
+
   const hour = new Date().getHours()
   const greeting = hour<12?'morning':hour<17?'afternoon':'evening'
 
   return (
     <div className="fade-in">
+      {/* Setup banner — shown until all steps complete */}
+      {!setupDone && (
+        <div style={{marginBottom:20,padding:16,background:'linear-gradient(135deg,rgba(124,58,237,0.1),rgba(59,130,246,0.1))',border:'1px solid var(--accent)',borderRadius:'var(--radius-lg)'}}>
+          <div style={{display:'flex',alignItems:'center',justifyContent:'space-between',marginBottom:12,flexWrap:'wrap',gap:8}}>
+            <div style={{display:'flex',alignItems:'center',gap:8}}>
+              <AlertCircle size={18} color="var(--accent-light)"/>
+              <span style={{fontWeight:700,fontSize:'0.95rem'}}>Get started — {setupProgress}/{setupSteps.length} steps complete</span>
+            </div>
+            <div style={{height:6,width:140,background:'var(--bg-hover)',borderRadius:3,overflow:'hidden'}}>
+              <div style={{height:'100%',width:`${(setupProgress/setupSteps.length)*100}%`,background:'var(--accent)',borderRadius:3,transition:'width 0.4s'}}/>
+            </div>
+          </div>
+          <div style={{display:'flex',flexDirection:'column',gap:7}}>
+            {setupSteps.map(step=>(
+              <Link key={step.id} to={step.link} style={{display:'flex',alignItems:'center',gap:10,padding:'8px 12px',borderRadius:'var(--radius-md)',background:step.done?'rgba(16,185,129,0.08)':'var(--bg-surface)',border:`1px solid ${step.done?'rgba(16,185,129,0.3)':'var(--border)'}`,textDecoration:'none',color:'inherit'}}>
+                <CheckCircle2 size={16} color={step.done?'var(--success)':'var(--text-muted)'} style={{flexShrink:0}}/>
+                <span style={{flex:1,fontSize:'0.875rem',fontWeight:step.done?400:600,color:step.done?'var(--text-muted)':'var(--text-primary)',textDecoration:step.done?'line-through':'none'}}>
+                  {step.label}
+                </span>
+                {!step.done && <ChevronRight size={14} color="var(--text-muted)"/>}
+              </Link>
+            ))}
+          </div>
+        </div>
+      )}
+
       <div style={{marginBottom:24}}>
         <h1 style={{marginBottom:4}}>
           Good {greeting},{' '}

@@ -5,6 +5,56 @@ import { collection, getDocs, doc, getDoc, setDoc, serverTimestamp } from 'fireb
 import { db } from '../firebase'
 import { chatWithAI, getResourceRecommendations, generateStudyPlan, analyseWeaknesses } from '../utils/ai'
 import { checkAndAwardBadge } from '../utils/firestore'
+
+// ── Lightweight markdown renderer ────────────────────────────────────────────
+// Converts **bold**, *italic*, # headings, - bullets to JSX without a library
+function renderMD(text) {
+  if (!text) return null
+  return text.split('\n').map((line, i) => {
+    // Heading
+    const h3 = line.match(/^### (.+)/)
+    const h2 = line.match(/^## (.+)/)
+    const h1 = line.match(/^# (.+)/)
+    if (h1) return <div key={i} style={{fontWeight:800,fontSize:'1.05rem',marginTop:12,marginBottom:4}}>{inlineFormat(h1[1])}</div>
+    if (h2) return <div key={i} style={{fontWeight:700,fontSize:'0.95rem',marginTop:10,marginBottom:3}}>{inlineFormat(h2[1])}</div>
+    if (h3) return <div key={i} style={{fontWeight:700,fontSize:'0.875rem',marginTop:8,marginBottom:2,color:'var(--accent-light)'}}>{inlineFormat(h3[1])}</div>
+    // Bullet
+    const bullet = line.match(/^[-*•]\s+(.+)/)
+    if (bullet) return (
+      <div key={i} style={{display:'flex',gap:8,marginTop:3}}>
+        <span style={{flexShrink:0,color:'var(--accent-light)',marginTop:1}}>•</span>
+        <span>{inlineFormat(bullet[1])}</span>
+      </div>
+    )
+    // Numbered list
+    const num = line.match(/^(\d+)[.)]\s+(.+)/)
+    if (num) return (
+      <div key={i} style={{display:'flex',gap:8,marginTop:3}}>
+        <span style={{flexShrink:0,color:'var(--accent-light)',fontWeight:600,minWidth:16}}>{num[1]}.</span>
+        <span>{inlineFormat(num[2])}</span>
+      </div>
+    )
+    // Blank line = spacer
+    if (!line.trim()) return <div key={i} style={{height:6}}/>
+    // Normal line
+    return <div key={i} style={{marginTop:2}}>{inlineFormat(line)}</div>
+  })
+}
+
+function inlineFormat(text) {
+  if (!text) return text
+  // Split on **bold**, *italic*, `code`
+  const parts = text.split(/(\*\*[^*]+\*\*|\*[^*]+\*|`[^`]+`)/)
+  return parts.map((part, i) => {
+    if (part.startsWith('**') && part.endsWith('**'))
+      return <strong key={i}>{part.slice(2,-2)}</strong>
+    if (part.startsWith('*') && part.endsWith('*'))
+      return <em key={i}>{part.slice(1,-1)}</em>
+    if (part.startsWith('`') && part.endsWith('`'))
+      return <code key={i} style={{background:'var(--bg-hover)',padding:'1px 4px',borderRadius:3,fontSize:'0.85em',fontFamily:'var(--font-mono)'}}>{part.slice(1,-1)}</code>
+    return part
+  })
+}
 import { SUBJECT_COLOURS } from '../data/subjects'
 import { MessageSquare, Send, Zap, BookOpen, TrendingUp, X, Brain, Star, Target, FileText, Check } from 'lucide-react'
 
@@ -68,6 +118,12 @@ export default function AIAdvisor() {
   const [markQ,       setMarkQ]       = useState('')
   const [markA,       setMarkA]       = useState('')
   const [markResult,  setMarkResult]  = useState('')
+  const [markSummary, setMarkSummary] = useState('')
+  const [markSumLoad, setMarkSumLoad] = useState(false)
+  const [markMarks,   setMarkMarks]   = useState('')
+  const [markIsPaper, setMarkIsPaper] = useState(false)
+  const [markYear,    setMarkYear]    = useState('2024')
+  const [markPaperNum,setMarkPaperNum]= useState('1')
   const [markLoad,    setMarkLoad]    = useState(false)
 
   // Flashcard generator
@@ -225,10 +281,37 @@ export default function AIAdvisor() {
   async function handleMarkAnswer() {
     if (!markSubj||!markQ||!markA) return
     setMarkLoad(true)
-    const prompt = `You are a ${markSubj} GCSE examiner. Mark this student's answer:\n\nQuestion: ${markQ}\n\nStudent's answer: ${markA}\n\nProvide: estimated mark out of the likely total, specific strengths, specific improvements needed, what a model answer would include. Be encouraging but honest.`
-    const res = await callGemini(prompt)
+    setMarkResult('')
+    setMarkSummary('')
+    const marksCtx = markMarks ? `This question is worth ${markMarks} marks.` : 'Determine the likely mark allocation from the question.'
+    const paperCtx = markIsPaper ? `This is from a real past paper: ${markSubj} ${markYear}, Paper ${markPaperNum}.` : ''
+    const prompt = `You are a strict but fair ${markSubj} GCSE examiner marking a student's response.
+${marksCtx} ${paperCtx}
+
+Question: ${markQ}
+
+Student's answer: ${markA}
+
+Provide a detailed marking breakdown with ALL of the following:
+1. **Mark awarded**: X/${markMarks||'?'} (state clearly)
+2. **Mark scheme points hit**: list each point the student earned
+3. **Mark scheme points missed**: list each point not addressed
+4. **Specific strengths**: what was done well (be specific, quote the student's words)
+5. **Improvements needed**: exactly what to add/change to gain the missing marks
+6. **Model answer elements**: what a full-mark response would include
+7. **Exam technique tip**: one actionable tip for this question type`
+    const res = await callAI(prompt)
     setMarkResult(res.text||res.error||'')
     setMarkLoad(false)
+  }
+
+  async function handleMarkSummary() {
+    if (!markResult) return
+    setMarkSumLoad(true)
+    const prompt = `Summarise this marking feedback in exactly 2-3 plain sentences. State the mark, the single best thing done, and the single most important thing to improve. No bullet points, no markdown formatting, just plain sentences:\n\n${markResult}`
+    const res = await callAI(prompt)
+    setMarkSummary(res.text||res.error||'')
+    setMarkSumLoad(false)
   }
 
   async function handleFlashcards() {
@@ -281,8 +364,8 @@ export default function AIAdvisor() {
                 <div style={{width:30,height:30,borderRadius:'50%',flexShrink:0,display:'flex',alignItems:'center',justifyContent:'center',background:m.role==='user'?'var(--accent)':'rgba(124,58,237,0.2)'}}>
                   {m.role==='user'?'👤':<Zap size={14} color="var(--accent-light)"/>}
                 </div>
-                <div style={{maxWidth:'78%',padding:'9px 13px',borderRadius:'var(--radius-lg)',background:m.role==='user'?'var(--accent)':'var(--bg-surface)',border:m.role==='user'?'none':'1px solid var(--border)',fontSize:'0.875rem',lineHeight:1.7,whiteSpace:'pre-wrap',borderBottomRightRadius:m.role==='user'?4:undefined,borderBottomLeftRadius:m.role==='assistant'?4:undefined}}>
-                  {m.content}
+                <div style={{maxWidth:'78%',padding:'9px 13px',borderRadius:'var(--radius-lg)',background:m.role==='user'?'var(--accent)':'var(--bg-surface)',border:m.role==='user'?'none':'1px solid var(--border)',fontSize:'0.875rem',lineHeight:1.7,borderBottomRightRadius:m.role==='user'?4:undefined,borderBottomLeftRadius:m.role==='assistant'?4:undefined}}>
+                  {m.role==='user' ? m.content : renderMD(m.content)}
                 </div>
               </div>
             ))}
@@ -321,7 +404,7 @@ export default function AIAdvisor() {
             </button>
           </div>
           {gradeLoad&&<div className="loading-center"><div className="spinner"/></div>}
-          {gradePred&&<div style={{whiteSpace:'pre-wrap',fontSize:'0.875rem',lineHeight:1.8}}>{gradePred}</div>}
+          {gradePred&&<div style={{fontSize:'0.875rem',lineHeight:1.8}}>{renderMD(gradePred)}</div>}
         </div>
       )}
 
@@ -340,7 +423,7 @@ export default function AIAdvisor() {
             </button>
           </div>
           {nextLoad&&<div className="loading-center"><div className="spinner"/></div>}
-          {nextTopic&&<div style={{whiteSpace:'pre-wrap',fontSize:'0.875rem',lineHeight:1.8}}>{nextTopic}</div>}
+          {nextTopic&&<div style={{fontSize:'0.875rem',lineHeight:1.8}}>{renderMD(nextTopic)}</div>}
         </div>
       )}
 
@@ -359,14 +442,64 @@ export default function AIAdvisor() {
               <textarea className="textarea" style={{minHeight:70}} value={markQ} onChange={e=>setMarkQ(e.target.value)} placeholder="Paste or type the exam question here…"/></div>
             <div><label className="label">Your answer</label>
               <textarea className="textarea" style={{minHeight:120}} value={markA} onChange={e=>setMarkA(e.target.value)} placeholder="Write your answer here…"/></div>
+
+            {/* Marks + paper context row */}
+            <div className="grid-2" style={{gap:10}}>
+              <div>
+                <label className="label">Marks available (optional)</label>
+                <input className="input" type="number" min={1} max={40} value={markMarks} onChange={e=>setMarkMarks(e.target.value)} placeholder="e.g. 8"/>
+              </div>
+              <div style={{display:'flex',alignItems:'flex-end',gap:8}}>
+                <label style={{display:'flex',alignItems:'center',gap:6,cursor:'pointer',paddingBottom:8}}>
+                  <input type="checkbox" checked={markIsPaper} onChange={e=>setMarkIsPaper(e.target.checked)}
+                    style={{width:15,height:15,accentColor:'var(--accent)'}}/>
+                  <span style={{fontSize:'0.82rem',fontWeight:500}}>From a real past paper</span>
+                </label>
+              </div>
+            </div>
+            {markIsPaper && (
+              <div className="grid-2" style={{gap:10}}>
+                <div>
+                  <label className="label">Year</label>
+                  <select className="select" value={markYear} onChange={e=>setMarkYear(e.target.value)}>
+                    {[2024,2023,2022,2021,2020,2019,2018,2017].map(y=><option key={y} value={y}>{y}</option>)}
+                  </select>
+                </div>
+                <div>
+                  <label className="label">Paper number</label>
+                  <select className="select" value={markPaperNum} onChange={e=>setMarkPaperNum(e.target.value)}>
+                    {['1','2','3','4'].map(p=><option key={p} value={p}>Paper {p}</option>)}
+                  </select>
+                </div>
+              </div>
+            )}
+
             <button className="btn btn-primary" onClick={handleMarkAnswer} disabled={markLoad||!markSubj||!markQ||!markA}>
               {markLoad?'Marking…':'Mark my answer'}
             </button>
           </div>
           {markLoad&&<div className="loading-center" style={{marginTop:16}}><div className="spinner"/></div>}
           {markResult&&(
-            <div style={{marginTop:16,padding:14,background:'rgba(124,58,237,0.08)',border:'1px solid var(--border)',borderRadius:'var(--radius-md)',whiteSpace:'pre-wrap',fontSize:'0.875rem',lineHeight:1.8}}>
-              {markResult}
+            <div style={{marginTop:16}}>
+              <div style={{padding:14,background:'rgba(124,58,237,0.08)',border:'1px solid var(--border)',borderRadius:'var(--radius-md)',fontSize:'0.875rem',lineHeight:1.8}}>
+                {renderMD(markResult)}
+              </div>
+              <div style={{display:'flex',gap:8,marginTop:10,alignItems:'center',flexWrap:'wrap'}}>
+                <button className="btn btn-secondary btn-sm" onClick={handleMarkSummary} disabled={markSumLoad}>
+                  {markSumLoad ? 'Summarising…' : '⚡ Summarise feedback'}
+                </button>
+                {markSummary && (
+                  <span style={{fontSize:'0.8rem',color:'var(--text-muted)'}}>
+                    (scroll down for summary)
+                  </span>
+                )}
+              </div>
+              {markSummary && (
+                <div style={{marginTop:10,padding:12,background:'rgba(16,185,129,0.08)',border:'1px solid rgba(16,185,129,0.25)',borderRadius:'var(--radius-md)',fontSize:'0.875rem',lineHeight:1.7}}>
+                  <div style={{fontWeight:700,marginBottom:4,color:'var(--success)',fontSize:'0.78rem',textTransform:'uppercase',letterSpacing:'0.05em'}}>Summary</div>
+                  {markSummary}
+                </div>
+              )}
             </div>
           )}
         </div>
@@ -429,7 +562,7 @@ export default function AIAdvisor() {
                   {loadingRes===s.name?'Loading…':<><BookOpen size={13}/> Get resources</>}
                 </button>
               </div>
-              {resources[s.name]&&<div style={{whiteSpace:'pre-wrap',fontSize:'0.875rem',lineHeight:1.8,borderTop:'1px solid var(--border)',paddingTop:12}}>{resources[s.name]}</div>}
+              {resources[s.name]&&<div style={{fontSize:'0.875rem',lineHeight:1.8,borderTop:'1px solid var(--border)',paddingTop:12}}>{renderMD(resources[s.name])}</div>}
             </div>
           ))}
         </div>
@@ -522,7 +655,7 @@ export default function AIAdvisor() {
           )}
 
           {planLoading&&<div className="loading-center"><div className="spinner"/></div>}
-          {studyPlan&&!planLoading&&<div style={{whiteSpace:'pre-wrap',fontSize:'0.875rem',lineHeight:1.8}}>{studyPlan}</div>}
+          {studyPlan&&!planLoading&&<div style={{fontSize:'0.875rem',lineHeight:1.8}}>{renderMD(studyPlan)}</div>}
           {!studyPlan&&!planLoading&&!planPrefs.showForm&&(
             <div className="empty-state" style={{padding:'28px 0'}}>
               <TrendingUp size={36} style={{opacity:0.3}}/>
