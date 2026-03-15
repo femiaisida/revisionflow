@@ -5,6 +5,7 @@ import { collection, getDocs } from 'firebase/firestore'
 import { db } from '../firebase'
 import { getPaperAttempts, getMistakes } from '../utils/firestore'
 import { generateProgressReport } from '../utils/pdfReport'
+import { generateTimetablePDF } from '../utils/pdfTimetable'
 import { LEVELS, BADGES, SUBJECT_COLOURS } from '../data/subjects'
 import { gradeColour } from '../utils/calendar'
 import { Zap, Flame, Trophy, Copy, Check, Download, Loader } from 'lucide-react'
@@ -13,7 +14,8 @@ import toast from 'react-hot-toast'
 export default function Profile() {
   const { user, profile } = useAuth()
   const [copied, setCopied] = useState(false)
-  const [exporting, setExporting] = useState(false)
+  const [exporting,  setExporting]  = useState(false)
+  const [timetabling, setTimetabling] = useState(false)
 
   const lvl     = LEVELS[Math.min((profile?.level||1)-1, LEVELS.length-1)]
   const nextLvl = LEVELS[Math.min((profile?.level||1),   LEVELS.length-1)]
@@ -47,6 +49,21 @@ export default function Profile() {
       console.error(err)
       toast.error('Export failed — try again')
     } finally { setExporting(false) }
+  }
+
+  async function handleTimetablePDF() {
+    setTimetabling(true)
+    try {
+      const { collection: col, getDocs: gd } = await import('firebase/firestore')
+      const { db: fdb } = await import('../firebase')
+      const sessSnap = await gd(col(fdb, 'users', user.uid, 'sessions'))
+      const sessions = sessSnap.docs.map(d => ({ id: d.id, ...d.data() }))
+      await generateTimetablePDF(profile, sessions, profile?.examDates || [])
+      toast.success('Timetable PDF exported!')
+    } catch(err) {
+      console.error(err)
+      toast.error('Export failed — try again')
+    } finally { setTimetabling(false) }
   }
 
   return (
@@ -90,7 +107,13 @@ export default function Profile() {
           <button className="btn btn-primary btn-sm" onClick={handleExportPDF} disabled={exporting}>
             {exporting
               ? <><Loader size={13} style={{animation:'spin 0.7s linear infinite'}}/> Generating…</>
-              : <><Download size={13}/> Export PDF report</>
+              : <><Download size={13}/> Progress report</>
+            }
+          </button>
+          <button className="btn btn-secondary btn-sm" onClick={handleTimetablePDF} disabled={timetabling}>
+            {timetabling
+              ? <><Loader size={13} style={{animation:'spin 0.7s linear infinite'}}/> Generating…</>
+              : <><Download size={13}/> Timetable PDF</>
             }
           </button>
         </div>

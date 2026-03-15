@@ -3,6 +3,7 @@ import React, { useState } from 'react'
 import { useAuth } from '../context/AuthContext'
 import { useTheme } from '../context/ThemeContext'
 import { updateUserProfile } from '../utils/firestore'
+import { scheduleDailyReminder, clearDailyReminder } from '../utils/notifications'
 import { GCSE_SUBJECTS, ALEVEL_SUBJECTS, EXAM_BOARDS } from '../data/subjects'
 import { GRADE_BOUNDARIES, AVAILABLE_YEARS, getBoundaries } from '../data/paperDatabase'
 import { gradeColour } from '../utils/calendar'
@@ -52,7 +53,7 @@ export default function Settings() {
       <h2 style={{marginBottom:24}}>Settings</h2>
 
       <div className="tabs" style={{marginBottom:20}}>
-        {['profile','subjects','appearance','privacy','boundaries'].map(t=>(
+        {['profile','subjects','appearance','privacy','notifications','boundaries'].map(t=>(
           <button key={t} className={`tab${tab===t?' active':''}`} onClick={()=>setTab(t)}>
             {t==='boundaries'?'Grade Boundaries':t.charAt(0).toUpperCase()+t.slice(1)}
           </button>
@@ -116,6 +117,23 @@ export default function Settings() {
       )}
 
       {tab==='boundaries' && <BoundaryViewer profile={profile}/>}
+
+      {tab==='notifications' && (
+        <NotificationsSettings profile={profile} user={user} onSave={async(settings)=>{
+          await updateUserProfile(user.uid, { notificationSettings: settings })
+          if (settings.dailyReminder && settings.reminderTime) {
+            if (Notification.permission === 'granted') {
+              scheduleDailyReminder(settings.reminderTime, () => 0)
+            } else {
+              Notification.requestPermission().then(p => {
+                if (p === 'granted') scheduleDailyReminder(settings.reminderTime, () => 0)
+              })
+            }
+          } else {
+            clearDailyReminder()
+          }
+        }}/>
+      )}
 
       {tab==='privacy' && (
         <div className="card" style={{display:'flex',flexDirection:'column',gap:16}}>
@@ -206,6 +224,93 @@ function BoundaryViewer({ profile }) {
           <p>No boundary data for this combination. Select a subject to see its boundaries.</p>
         </div>
       )}
+    </div>
+  )
+}
+
+// ── Notifications Settings Panel ──────────────────────────────────────────────
+function NotificationsSettings({ profile, user, onSave }) {
+  const saved = profile?.notificationSettings || {}
+  const [dailyReminder, setDailyReminder] = useState(saved.dailyReminder ?? true)
+  const [reminderTime,  setReminderTime]  = useState(saved.reminderTime  || '17:00')
+  const [sessionAlerts, setSessionAlerts] = useState(saved.sessionAlerts ?? true)
+  const [saving, setSaving] = useState(false)
+  const [permission, setPermission] = useState(
+    'Notification' in window ? Notification.permission : 'unsupported'
+  )
+
+  async function requestPermission() {
+    if (!('Notification' in window)) return
+    const p = await Notification.requestPermission()
+    setPermission(p)
+  }
+
+  async function save() {
+    setSaving(true)
+    await onSave({ dailyReminder, reminderTime, sessionAlerts })
+    setSaving(false)
+  }
+
+  return (
+    <div className="card" style={{display:'flex',flexDirection:'column',gap:16}}>
+      <h4>Notification Settings</h4>
+
+      {permission === 'denied' && (
+        <div style={{padding:'10px 14px',background:'rgba(239,68,68,0.08)',border:'1px solid rgba(239,68,68,0.25)',borderRadius:'var(--radius-md)',fontSize:'0.82rem'}}>
+          Notifications are blocked in your browser. Go to your browser settings and allow notifications for this site.
+        </div>
+      )}
+      {permission === 'default' && (
+        <div style={{padding:'10px 14px',background:'rgba(245,158,11,0.08)',border:'1px solid rgba(245,158,11,0.25)',borderRadius:'var(--radius-md)',fontSize:'0.82rem',display:'flex',alignItems:'center',justifyContent:'space-between',gap:10}}>
+          <span>Browser notifications are not yet enabled.</span>
+          <button className="btn btn-primary btn-sm" onClick={requestPermission}>Enable</button>
+        </div>
+      )}
+      {permission === 'granted' && (
+        <div style={{padding:'8px 14px',background:'rgba(16,185,129,0.08)',border:'1px solid rgba(16,185,129,0.25)',borderRadius:'var(--radius-md)',fontSize:'0.82rem',color:'var(--success)',fontWeight:600}}>
+          ✓ Notifications enabled
+        </div>
+      )}
+
+      {[
+        {
+          key:'dailyReminder', label:'Daily revision reminder',
+          desc:'Get a notification each day at your chosen time',
+          val:dailyReminder, set:setDailyReminder,
+        },
+        {
+          key:'sessionAlerts', label:'Session start alerts',
+          desc:'Notified 5 minutes before a scheduled session',
+          val:sessionAlerts, set:setSessionAlerts,
+        },
+      ].map(s=>(
+        <div key={s.key} style={{display:'flex',alignItems:'center',justifyContent:'space-between',padding:'12px 16px',background:'var(--bg-surface)',borderRadius:'var(--radius-md)',border:'1px solid var(--border)'}}>
+          <div>
+            <div style={{fontWeight:600,fontSize:'0.9rem'}}>{s.label}</div>
+            <div style={{fontSize:'0.8rem',color:'var(--text-muted)'}}>{s.desc}</div>
+          </div>
+          <label style={{position:'relative',display:'inline-block',width:44,height:24,cursor:'pointer',flexShrink:0}}>
+            <input type="checkbox" checked={s.val} onChange={e=>s.set(e.target.checked)} style={{opacity:0,width:0,height:0}}/>
+            <span style={{position:'absolute',inset:0,background:s.val?'var(--accent)':'var(--bg-hover)',borderRadius:12,transition:'background 0.2s'}}/>
+            <span style={{position:'absolute',top:3,left:s.val?22:3,width:18,height:18,background:'#fff',borderRadius:'50%',transition:'left 0.2s'}}/>
+          </label>
+        </div>
+      ))}
+
+      {dailyReminder && (
+        <div>
+          <label className="label">Daily reminder time</label>
+          <input className="input" type="time" value={reminderTime}
+            onChange={e=>setReminderTime(e.target.value)} style={{maxWidth:160}}/>
+          <p style={{fontSize:'0.75rem',color:'var(--text-muted)',marginTop:4}}>
+            You'll get a notification at this time each day. The tab must be open for this to work — for always-on reminders, a push server is required.
+          </p>
+        </div>
+      )}
+
+      <button className="btn btn-primary" onClick={save} disabled={saving}>
+        {saving?'Saving…':'Save notification settings'}
+      </button>
     </div>
   )
 }

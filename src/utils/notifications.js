@@ -50,3 +50,44 @@ export function sendTimerNotification(label) {
     requireInteraction: true,
   })
 }
+
+// ── Daily revision reminder ────────────────────────────────────────────────────
+// Schedules a daily browser notification at a user-set time.
+// Uses setTimeout chained to a 24h loop — works while tab is open.
+// For true background notifications, a push server would be needed.
+
+let dailyReminderTimeout = null
+
+export function scheduleDailyReminder(timeStr, getSessionCount) {
+  // timeStr format: "HH:MM" e.g. "17:00"
+  clearDailyReminder()
+
+  function scheduleNext() {
+    const now = new Date()
+    const [hh, mm] = timeStr.split(':').map(Number)
+    const next = new Date()
+    next.setHours(hh, mm, 0, 0)
+    if (next <= now) next.setDate(next.getDate() + 1)
+
+    const delay = next.getTime() - now.getTime()
+    dailyReminderTimeout = setTimeout(async () => {
+      const count = await getSessionCount()
+      if ('Notification' in window && Notification.permission === 'granted') {
+        const body = count > 0
+          ? `You have ${count} revision session${count !== 1 ? 's' : ''} scheduled today. Keep the streak going! 🔥`
+          : "No sessions scheduled today — consider adding one to stay on track."
+        new Notification('RevisionFlow — Time to revise! 📚', { body, icon: '/icons/icon-192.png' })
+      }
+      scheduleNext() // reschedule for tomorrow
+    }, delay)
+  }
+
+  scheduleNext()
+}
+
+export function clearDailyReminder() {
+  if (dailyReminderTimeout) {
+    clearTimeout(dailyReminderTimeout)
+    dailyReminderTimeout = null
+  }
+}

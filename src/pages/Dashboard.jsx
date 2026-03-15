@@ -9,6 +9,7 @@ import { getDailyAdvice } from '../utils/ai'
 import { countdownLabel, countdownUrgency, gradeColour } from '../utils/calendar'
 import { LEVELS, BADGES, SUBJECT_COLOURS } from '../data/subjects'
 import { format } from 'date-fns'
+import { LineChart, Line, ResponsiveContainer, Tooltip } from 'recharts'
 import {
   Flame, Zap, Calendar, FileText, Brain,
   CheckSquare, MessageSquare, ArrowRight, Clock, TrendingUp, Trophy,
@@ -266,19 +267,57 @@ export default function Dashboard() {
               <p style={{fontSize:'0.875rem'}}>No papers logged yet</p>
               <Link to="/papers" className="btn btn-primary btn-sm">Log a paper</Link>
             </div>
-          ) : (
-            <div style={{display:'flex',flexDirection:'column',gap:6}}>
-              {recentPapers.map(p=>(
-                <div key={p.id} style={{display:'flex',alignItems:'center',justifyContent:'space-between',padding:'7px 10px',background:'var(--bg-surface)',borderRadius:'var(--radius-md)',border:'1px solid var(--border)'}}>
-                  <div>
-                    <div style={{fontWeight:600,fontSize:'0.82rem'}}>{p.subject} P{p.paper}</div>
-                    <div style={{fontSize:'0.7rem',color:'var(--text-muted)'}}>{p.board} {p.year} · {p.score}/{p.maxMarks}</div>
+          ) : (() => {
+            // Build sparkline for most-attempted subject
+            const subjectCounts = {}
+            recentPapers.forEach(p => { subjectCounts[p.subject] = (subjectCounts[p.subject]||0)+1 })
+            const topSubj = Object.entries(subjectCounts).sort((a,b)=>b[1]-a[1])[0]?.[0]
+            const sparkData = recentPapers
+              .filter(p=>p.subject===topSubj && p.percentage)
+              .sort((a,b)=>new Date(a.attemptDate||0)-new Date(b.attemptDate||0))
+              .slice(-8)
+              .map((p,i)=>({i, pct:p.percentage, label:`P${p.paper} ${p.year}`}))
+            const latest = recentPapers[0]
+            const trend = sparkData.length>=2
+              ? sparkData[sparkData.length-1].pct - sparkData[0].pct
+              : null
+            return (
+              <>
+                {sparkData.length>=2 && (
+                  <div style={{marginBottom:12,padding:'10px 12px',background:'var(--bg-surface)',borderRadius:'var(--radius-md)',border:'1px solid var(--border)'}}>
+                    <div style={{display:'flex',justifyContent:'space-between',alignItems:'flex-start',marginBottom:6}}>
+                      <div>
+                        <div style={{fontSize:'0.75rem',color:'var(--text-muted)'}}>Grade trend — {topSubj}</div>
+                        <div style={{fontWeight:800,fontSize:'1.3rem',color:gradeColour(recentPapers.find(p=>p.subject===topSubj)?.grade||'')}}>{sparkData[sparkData.length-1]?.pct}%</div>
+                      </div>
+                      {trend!==null && (
+                        <div style={{padding:'3px 8px',borderRadius:999,background:trend>=0?'rgba(16,185,129,0.12)':'rgba(239,68,68,0.12)',color:trend>=0?'var(--success)':'var(--danger)',fontWeight:700,fontSize:'0.78rem'}}>
+                          {trend>=0?'+':''}{trend}% trend
+                        </div>
+                      )}
+                    </div>
+                    <ResponsiveContainer width="100%" height={50}>
+                      <LineChart data={sparkData}>
+                        <Line type="monotone" dataKey="pct" stroke="var(--accent)" strokeWidth={2} dot={false}/>
+                        <Tooltip formatter={(v)=>[`${v}%`]} contentStyle={{background:'var(--bg-card)',border:'1px solid var(--border)',borderRadius:6,fontSize:'0.72rem'}} labelFormatter={(l)=>sparkData[l]?.label||''}/>
+                      </LineChart>
+                    </ResponsiveContainer>
                   </div>
-                  {p.grade&&<span style={{fontWeight:800,color:gradeColour(p.grade),fontSize:'1.05rem'}}>{p.grade}</span>}
+                )}
+                <div style={{display:'flex',flexDirection:'column',gap:6}}>
+                  {recentPapers.slice(0,4).map(p=>(
+                    <div key={p.id} style={{display:'flex',alignItems:'center',justifyContent:'space-between',padding:'7px 10px',background:'var(--bg-surface)',borderRadius:'var(--radius-md)',border:'1px solid var(--border)'}}>
+                      <div>
+                        <div style={{fontWeight:600,fontSize:'0.82rem'}}>{p.subject} P{p.paper}</div>
+                        <div style={{fontSize:'0.7rem',color:'var(--text-muted)'}}>{p.board} {p.year} · {p.score}/{p.maxMarks}</div>
+                      </div>
+                      {p.grade&&<span style={{fontWeight:800,color:gradeColour(p.grade),fontSize:'1.05rem'}}>{p.grade}</span>}
+                    </div>
+                  ))}
                 </div>
-              ))}
-            </div>
-          )}
+              </>
+            )
+          })()}
         </div>
 
         {/* Badges */}

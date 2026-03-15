@@ -4,10 +4,11 @@ import { Outlet, NavLink, useNavigate } from 'react-router-dom'
 import { useAuth } from '../context/AuthContext'
 import { useTheme } from '../context/ThemeContext'
 import { TimerWidget } from '../pages/Timer'
+import PWAInstallBanner from './PWAInstallBanner'
 import {
   LayoutDashboard, Calendar, FileText, Brain, AlertCircle,
   CheckSquare, Users, Trophy, User, MessageSquare, BookOpen,
-  Clock, Settings, LogOut, Menu, X, Sun, Moon, Zap, Timer, BarChart2
+  Clock, Settings, LogOut, Menu, X, Sun, Moon, Zap, Timer, BarChart2, Layers
 } from 'lucide-react'
 
 const NAV = [
@@ -21,6 +22,7 @@ const NAV = [
   { to:'/tasks',       label:'Tasks',       icon:CheckSquare },
   { to:'/timer',       label:'Timer',       icon:Timer },
   { to:'/analytics',   label:'Analytics',   icon:BarChart2 },
+  { to:'/mastery',     label:'Mastery',     icon:Layers },
   { to:'/ai',          label:'AI Advisor',  icon:MessageSquare },
   { to:'/friends',     label:'Friends',     icon:Users },
   { to:'/leaderboard', label:'Leaderboard', icon:Trophy },
@@ -33,6 +35,7 @@ const MOBILE_NAV = [
   { to:'/calendar',  label:'Calendar', icon:Calendar },
   { to:'/timer',     label:'Timer',    icon:Timer },
   { to:'/analytics', label:'Analytics', icon:BarChart2 },
+  { to:'/mastery',   label:'Mastery',   icon:Layers },
   { to:'/ai',        label:'AI',       icon:MessageSquare },
   { to:'/profile',   label:'Profile',  icon:User },
 ]
@@ -137,6 +140,7 @@ export default function Layout() {
 
       {/* Floating timer widget */}
       {showWidget && <TimerWidget onClose={()=>setShowWidget(false)} sound="chime"/>}
+      <PWAInstallBanner/>
 
       {/* Mobile bottom nav */}
       <nav className="mobile-nav">

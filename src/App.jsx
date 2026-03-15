@@ -29,6 +29,7 @@ const ExamDates    = lazy(() => import('./pages/ExamDates'))
 const Settings     = lazy(() => import('./pages/Settings'))
 const TimerPage    = lazy(() => import('./pages/Timer'))
 const Analytics    = lazy(() => import('./pages/Analytics'))
+const TopicMastery = lazy(() => import('./pages/TopicMastery'))
 
 function NotificationInit() {
   useEffect(() => {
@@ -95,6 +96,7 @@ export default function App() {
               <Route path="/tasks"       element={<Tasks />} />
               <Route path="/timer"       element={<TimerPage />} />
               <Route path="/analytics"   element={<Analytics />} />
+              <Route path="/mastery"    element={<TopicMastery />} />
               <Route path="/ai"          element={<AIAdvisor />} />
               <Route path="/friends"     element={<Friends />} />
               <Route path="/leaderboard" element={<Leaderboard />} />

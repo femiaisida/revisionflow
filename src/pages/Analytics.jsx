@@ -303,6 +303,42 @@ export default function Analytics() {
           ))}
         </div>
       </div>
+
+      {/* ── Session notes log ── */}
+      {(() => {
+        const withNotes = completedSessions
+          .filter(s => s.notes && s.notes.trim().length > 0)
+          .sort((a,b) => {
+            const da = a.startTime ? new Date(a.startTime) : new Date(a.date||0)
+            const db2 = b.startTime ? new Date(b.startTime) : new Date(b.date||0)
+            return db2 - da
+          })
+          .slice(0, 20)
+        if (!withNotes.length) return null
+        return (
+          <div className="card" style={{marginTop:16}}>
+            <h4 style={{marginBottom:14}}>Session Notes</h4>
+            <div style={{display:'flex',flexDirection:'column',gap:8}}>
+              {withNotes.map((s,i) => {
+                const d = s.startTime ? new Date(s.startTime) : s.date ? new Date(s.date) : null
+                return (
+                  <div key={s.id||i} style={{padding:'10px 14px',background:'var(--bg-surface)',borderRadius:'var(--radius-md)',border:'1px solid var(--border)'}}>
+                    <div style={{display:'flex',justifyContent:'space-between',marginBottom:4,flexWrap:'wrap',gap:6}}>
+                      <div style={{display:'flex',gap:8,alignItems:'center'}}>
+                        <div style={{width:7,height:7,borderRadius:'50%',background:SUBJECT_COLOURS[s.subject]||'var(--accent)',flexShrink:0}}/>
+                        <span style={{fontWeight:600,fontSize:'0.85rem'}}>{s.subject}</span>
+                        {s.type && <span className="badge badge-grey" style={{fontSize:'0.68rem'}}>{s.type}</span>}
+                      </div>
+                      {d && <span style={{fontSize:'0.72rem',color:'var(--text-muted)'}}>{format(d,'EEE d MMM')}</span>}
+                    </div>
+                    <div style={{fontSize:'0.82rem',color:'var(--text-secondary)',lineHeight:1.6}}>{s.notes}</div>
+                  </div>
+                )
+              })}
+            </div>
+          </div>
+        )
+      })()}
     </div>
   )
 }
