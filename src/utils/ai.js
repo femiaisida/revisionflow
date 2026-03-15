@@ -97,22 +97,39 @@ async function callAI(prompt, systemPrompt = SYSTEM, maxTokens = 8192) {
 // ── Exported functions ────────────────────────────────────────────────────────
 
 export async function generateStudyPlan(userData) {
-  const { subjects, examDates, weakTopics, availableHours, preferences } = userData
-  const prompt = `Generate a personalised GCSE/A-Level study plan for a student with these details:
+  const { subjects, examDates, weakTopics, availableHours, preferences, weeksUntilFirst, firstExamDate, lastExamDate } = userData
+
+  // Calculate actual revision window
+  const weeks = weeksUntilFirst || 12
+  const windowDesc = firstExamDate && lastExamDate
+    ? `from now until ${lastExamDate} (first exam: ${firstExamDate}, approximately ${weeks} weeks away)`
+    : `approximately ${weeks} weeks`
+
+  const prompt = `Generate a personalised GCSE/A-Level revision study plan for a student.
+
+STUDENT DETAILS:
 Subjects: ${subjects?.map(s => `${s.name} (${s.board}, current: ${s.currentGrade || '?'}, target: ${s.targetGrade || 9})`).join(', ')}
-Exam dates: ${examDates?.length ? examDates.map(e => `${e.subject} P${e.paper} on ${e.examDate}`).join(', ') : 'Not specified'}
-Weak topics: ${weakTopics?.join(', ') || 'Not specified'}
-Available revision hours per week: ${availableHours || 'Not specified'}
-Preferences: ${preferences || 'Standard'}
+Exam period: ${windowDesc}
+Upcoming exams: ${examDates?.filter(e => new Date(e.examDate) > new Date()).sort((a,b)=>new Date(a.examDate)-new Date(b.examDate)).slice(0,12).map(e => `${e.subject} P${e.paper} on ${e.examDate}`).join(', ') || 'Not specified'}
+Available hours per week: ${availableHours || 10}
+Focus preference: ${preferences || 'Balanced content and exam practice'}
 
-Create a structured weekly study plan with:
-1. Which subjects to prioritise and why
-2. Recommended session structure (content vs exam practice ratio)
-3. Specific resources for each subject
-4. Key topics to focus on first
-5. Tips for maintaining motivation
+IMPORTANT CONSTRAINTS:
+- The plan must cover EXACTLY ${weeks} weeks — no more
+- Do NOT repeat the same weekly structure endlessly — vary it by phase
+- Structure into 3 clear phases: Foundation (weeks 1-${Math.floor(weeks*0.4)}), Intensive (weeks ${Math.floor(weeks*0.4)+1}-${Math.floor(weeks*0.8)}), Final push (weeks ${Math.floor(weeks*0.8)+1}-${weeks})
+- In the final 2 weeks before each exam, prioritise that specific subject heavily
+- Keep each week's entry concise — one paragraph per phase, not per week
 
-Format clearly with headers and bullet points.`
+FORMAT:
+1. Subject priority order and reasoning (bullet list)
+2. Phase 1 — Foundation (what to do, which subjects, ratio)
+3. Phase 2 — Intensive revision (shift in focus, more past papers)
+4. Phase 3 — Final push (exam-specific focus, week by week for last 3 weeks only)
+5. Resources per subject (concise list)
+6. 3 practical motivation tips
+
+Keep the total response under 600 words. Be specific and actionable.`
   return callAI(prompt)
 }
 

@@ -6,7 +6,7 @@ import { db } from '../firebase'
 import { chatWithAI, getResourceRecommendations, generateStudyPlan, analyseWeaknesses } from '../utils/ai'
 import { checkAndAwardBadge } from '../utils/firestore'
 import { SUBJECT_COLOURS } from '../data/subjects'
-import { MessageSquare, Send, Zap, BookOpen, TrendingUp, X, Brain, Star, Target, FileText } from 'lucide-react'
+import { MessageSquare, Send, Zap, BookOpen, TrendingUp, X, Brain, Star, Target, FileText, Check } from 'lucide-react'
 
 const QUICK_PROMPTS = [
   'What should I revise today?',
@@ -43,6 +43,11 @@ export default function AIAdvisor() {
   const [loadingRes,  setLoadingRes]  = useState(null)
   const [studyPlan,   setStudyPlan]   = useState('')
   const [planLoading, setPlanLoading] = useState(false)
+  const [planPrefs,   setPlanPrefs]   = useState({
+    showForm: false, confirmed: false,
+    hoursPerWeek: 10, preferences: 'Balanced content and exam practice'
+  })
+  const [planCopied, setPlanCopied] = useState(false)
 
   // Grade predictor
   const [gradeSubj,   setGradeSubj]   = useState('')
@@ -141,13 +146,26 @@ export default function AIAdvisor() {
   }
 
   async function handleStudyPlan() {
+    if (!planPrefs.confirmed) { setPlanPrefs(p=>({...p, showForm:true})); return }
     setPlanLoading(true)
+    // Calculate weeks until first exam
+    const upcomingExams = (profile?.examDates||[])
+      .filter(e => new Date(e.examDate) > new Date())
+      .sort((a,b) => new Date(a.examDate) - new Date(b.examDate))
+    const firstExam = upcomingExams[0]
+    const lastExam  = upcomingExams[upcomingExams.length-1]
+    const weeksUntilFirst = firstExam
+      ? Math.max(1, Math.ceil((new Date(firstExam.examDate)-new Date())/(7*86400000)))
+      : 12
     const res = await generateStudyPlan({
-      subjects: profile?.subjects||[],
-      examDates: profile?.examDates||[],
-      weakTopics: [],
-      availableHours: 10,
-      preferences: 'Balanced content and exam practice',
+      subjects:       profile?.subjects||[],
+      examDates:      profile?.examDates||[],
+      weakTopics:     [],
+      availableHours: planPrefs.hoursPerWeek,
+      preferences:    planPrefs.preferences,
+      weeksUntilFirst,
+      firstExamDate:  firstExam?.examDate,
+      lastExamDate:   lastExam?.examDate,
     })
     setStudyPlan(res.text||res.error||'')
     if (res.text && user) await checkAndAwardBadge(user.uid, 'ai_plan').catch(()=>{})
@@ -380,15 +398,87 @@ export default function AIAdvisor() {
       {/* ── Study Plan ── */}
       {tab==='plan'&&(
         <div className="card">
-          <div style={{display:'flex',alignItems:'center',justifyContent:'space-between',marginBottom:14}}>
-            <div><h4>AI Study Plan</h4><p style={{fontSize:'0.875rem'}}>Personalised week-by-week plan based on your subjects and exam dates</p></div>
-            <button className="btn btn-primary" onClick={handleStudyPlan} disabled={planLoading}>
-              {planLoading?'Generating…':<><Zap size={15}/> Generate</>}
-            </button>
+          <div style={{display:'flex',alignItems:'center',justifyContent:'space-between',marginBottom:14,flexWrap:'wrap',gap:10}}>
+            <div>
+              <h4>AI Study Plan</h4>
+              <p style={{fontSize:'0.875rem'}}>Personalised plan based on your subjects, exam dates and preferences</p>
+            </div>
+            <div style={{display:'flex',gap:8,flexWrap:'wrap'}}>
+              {studyPlan && (
+                <>
+                  <button className="btn btn-secondary btn-sm" onClick={()=>{
+                    navigator.clipboard.writeText(studyPlan)
+                    setPlanCopied(true)
+                    setTimeout(()=>setPlanCopied(false),2000)
+                  }}>
+                    {planCopied ? <><Check size={13}/> Copied!</> : 'Copy'}
+                  </button>
+                  <button className="btn btn-secondary btn-sm" onClick={()=>{
+                    const blob = new Blob([studyPlan],{type:'text/plain'})
+                    const url  = URL.createObjectURL(blob)
+                    const a    = document.createElement('a')
+                    a.href=url; a.download='revision-study-plan.txt'; a.click()
+                    URL.revokeObjectURL(url)
+                  }}>
+                    Save
+                  </button>
+                </>
+              )}
+              <button className="btn btn-primary btn-sm" onClick={()=>setPlanPrefs(p=>({...p,showForm:true,confirmed:false}))} disabled={planLoading}>
+                {planLoading?'Generating…':<><Zap size={13}/> {studyPlan?'Regenerate':'Generate'}</>}
+              </button>
+            </div>
           </div>
+
+          {/* Preferences form */}
+          {planPrefs.showForm && (
+            <div style={{padding:14,background:'rgba(124,58,237,0.06)',border:'1px solid var(--border)',borderRadius:'var(--radius-md)',marginBottom:14}}>
+              <h4 style={{marginBottom:12,fontSize:'0.9rem'}}>Customise your plan</h4>
+              <div className="grid-2" style={{gap:10,marginBottom:12}}>
+                <div>
+                  <label className="label">Hours available per week</label>
+                  <select className="select" value={planPrefs.hoursPerWeek} onChange={e=>setPlanPrefs(p=>({...p,hoursPerWeek:parseInt(e.target.value)}))}>
+                    {[5,8,10,12,15,20].map(h=><option key={h} value={h}>{h} hours/week</option>)}
+                  </select>
+                </div>
+                <div>
+                  <label className="label">Focus preference</label>
+                  <select className="select" value={planPrefs.preferences} onChange={e=>setPlanPrefs(p=>({...p,preferences:e.target.value}))}>
+                    <option value="Balanced content and exam practice">Balanced (content + practice)</option>
+                    <option value="Heavy exam practice focus">Heavy exam practice</option>
+                    <option value="Content-heavy, build foundations first">Content-heavy (build foundations)</option>
+                    <option value="Weak topics priority">Focus on weak topics first</option>
+                  </select>
+                </div>
+              </div>
+              {(profile?.examDates||[]).length > 0 ? (
+                <div style={{padding:'6px 10px',background:'rgba(34,197,94,0.08)',border:'1px solid rgba(34,197,94,0.2)',borderRadius:'var(--radius-md)',fontSize:'0.8rem',marginBottom:10,display:'flex',alignItems:'center',gap:6}}>
+                  <Check size={13} color="var(--success)"/>
+                  {(profile.examDates||[]).filter(e=>new Date(e.examDate)>new Date()).length} upcoming exam dates found — plan will be capped to your exam period
+                </div>
+              ) : (
+                <div style={{padding:'6px 10px',background:'rgba(245,158,11,0.08)',border:'1px solid rgba(245,158,11,0.2)',borderRadius:'var(--radius-md)',fontSize:'0.8rem',marginBottom:10}}>
+                  ⚠ No exam dates set — add them in Exam Dates for a more accurate plan
+                </div>
+              )}
+              <div style={{display:'flex',gap:8,justifyContent:'flex-end'}}>
+                <button className="btn btn-secondary btn-sm" onClick={()=>setPlanPrefs(p=>({...p,showForm:false}))}>Cancel</button>
+                <button className="btn btn-primary btn-sm" onClick={()=>{setPlanPrefs(p=>({...p,showForm:false,confirmed:true}));handleStudyPlan()}}>
+                  <Zap size={13}/> Generate plan
+                </button>
+              </div>
+            </div>
+          )}
+
           {planLoading&&<div className="loading-center"><div className="spinner"/></div>}
-          {studyPlan&&<div style={{whiteSpace:'pre-wrap',fontSize:'0.875rem',lineHeight:1.8}}>{studyPlan}</div>}
-          {!studyPlan&&!planLoading&&<div className="empty-state" style={{padding:'28px 0'}}><TrendingUp size={36} style={{opacity:0.3}}/><p>Click Generate to get your personalised plan</p></div>}
+          {studyPlan&&!planLoading&&<div style={{whiteSpace:'pre-wrap',fontSize:'0.875rem',lineHeight:1.8}}>{studyPlan}</div>}
+          {!studyPlan&&!planLoading&&!planPrefs.showForm&&(
+            <div className="empty-state" style={{padding:'28px 0'}}>
+              <TrendingUp size={36} style={{opacity:0.3}}/>
+              <p>Click Generate to build your personalised revision plan</p>
+              <p style={{fontSize:'0.78rem',color:'var(--text-muted)'}}>Uses your exam dates, subjects, and grade targets</p>
+            </div>
+          )}
         </div>
       )}
 
