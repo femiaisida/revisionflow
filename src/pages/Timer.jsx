@@ -707,7 +707,7 @@ function MusicPanel({ onClose }) {
         <>
           <div style={{display:'flex',flexDirection:'column',gap:6,marginBottom:12}}>
             {PLAYLISTS.map(p=>(
-              <button key={p.id} onClick={()=>setSelected(selected===p.id?null:p.id)}
+              <button key={p.vid} onClick={()=>setSelected(selected===p.vid?null:p.vid)}
                 style={{
                   display:'flex',alignItems:'center',justifyContent:'space-between',
                   padding:'8px 12px',borderRadius:'var(--radius-md)',

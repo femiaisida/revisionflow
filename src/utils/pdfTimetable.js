@@ -3,7 +3,7 @@
 // Uses jsPDF + jsPDF-autotable
 
 import { jsPDF } from 'jspdf'
-import 'jspdf-autotable'
+import autoTable from 'jspdf-autotable'
 import { format, startOfWeek, addDays, eachDayOfInterval } from 'date-fns'
 import { SUBJECT_COLOURS } from '../data/subjects'
 

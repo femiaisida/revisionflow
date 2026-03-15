@@ -37,7 +37,13 @@ export default function Dashboard() {
         return d && d.toDateString()===today
       }))
       setTasks(taskList.filter(t=>!t.completed).slice(0,5))
-      setRecentPapers(papers.slice(0,5))
+      // Sort by date descending, load more for sparkline to work
+      const sorted = papers.sort((a,b) => {
+        const da = a.attemptDate ? new Date(a.attemptDate) : new Date(a.createdAt?.seconds*1000||0)
+        const db2 = b.attemptDate ? new Date(b.attemptDate) : new Date(b.createdAt?.seconds*1000||0)
+        return db2 - da
+      })
+      setRecentPapers(sorted.slice(0,20))
     })
     loadDailyBriefing()
   }, [user])
@@ -80,12 +86,20 @@ export default function Dashboard() {
     .slice(0,4)
 
   // Setup checklist for new users
+  const [setupSkipped, setSetupSkipped] = useState(
+    () => localStorage.getItem('setup-skipped') === '1'
+  )
+  function skipSetup() {
+    localStorage.setItem('setup-skipped', '1')
+    setSetupSkipped(true)
+  }
+
   const setupSteps = [
-    { id:'subjects',   label:'Add your subjects',    done: (profile?.subjects||[]).length > 0,  link:'/settings',   tab:'subjects' },
-    { id:'exams',      label:'Add exam dates',        done: (profile?.examDates||[]).length > 0, link:'/exams',      tab:'' },
-    { id:'calendar',   label:'Generate a revision schedule', done: (profile?.calendarGenerated||false)||(todaySessions.length>0), link:'/calendar', tab:'' },
+    { id:'subjects', label:'Add your subjects',         done: (profile?.subjects||[]).length > 0,  link:'/settings' },
+    { id:'exams',    label:'Add exam dates',             done: (profile?.examDates||[]).length > 0, link:'/exams' },
+    { id:'calendar', label:'Generate a revision schedule', done: (todaySessions||[]).length > 0 || (profile?.sessions||[]).length > 0, link:'/calendar' },
   ]
-  const setupDone = setupSteps.every(s => s.done)
+  const setupDone   = setupSteps.every(s => s.done)
   const setupProgress = setupSteps.filter(s => s.done).length
 
   const hour = new Date().getHours()
@@ -94,15 +108,20 @@ export default function Dashboard() {
   return (
     <div className="fade-in">
       {/* Setup banner — shown until all steps complete */}
-      {!setupDone && (
+      {!setupDone && !setupSkipped && (
         <div style={{marginBottom:20,padding:16,background:'linear-gradient(135deg,rgba(124,58,237,0.1),rgba(59,130,246,0.1))',border:'1px solid var(--accent)',borderRadius:'var(--radius-lg)'}}>
           <div style={{display:'flex',alignItems:'center',justifyContent:'space-between',marginBottom:12,flexWrap:'wrap',gap:8}}>
             <div style={{display:'flex',alignItems:'center',gap:8}}>
               <AlertCircle size={18} color="var(--accent-light)"/>
               <span style={{fontWeight:700,fontSize:'0.95rem'}}>Get started — {setupProgress}/{setupSteps.length} steps complete</span>
             </div>
-            <div style={{height:6,width:140,background:'var(--bg-hover)',borderRadius:3,overflow:'hidden'}}>
-              <div style={{height:'100%',width:`${(setupProgress/setupSteps.length)*100}%`,background:'var(--accent)',borderRadius:3,transition:'width 0.4s'}}/>
+            <div style={{display:'flex',alignItems:'center',gap:10}}>
+              <div style={{height:6,width:100,background:'var(--bg-hover)',borderRadius:3,overflow:'hidden'}}>
+                <div style={{height:'100%',width:`${(setupProgress/setupSteps.length)*100}%`,background:'var(--accent)',borderRadius:3,transition:'width 0.4s'}}/>
+              </div>
+              <button onClick={skipSetup} style={{background:'none',border:'none',fontSize:'0.75rem',color:'var(--text-muted)',cursor:'pointer',padding:'2px 6px',borderRadius:4}}>
+                Skip
+              </button>
             </div>
           </div>
           <div style={{display:'flex',flexDirection:'column',gap:7}}>

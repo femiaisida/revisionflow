@@ -3,7 +3,8 @@
 // Generates a full progress report for the user
 
 import { jsPDF } from 'jspdf'
-import 'jspdf-autotable'
+// jspdf-autotable patches jsPDF prototype — import must happen after jsPDF
+import autoTable from 'jspdf-autotable'
 import { gradeColour } from './calendar'
 import { format } from 'date-fns'
 
