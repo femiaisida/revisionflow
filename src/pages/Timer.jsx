@@ -85,7 +85,68 @@ export default function TimerPage({ isWidget = false, onClose }) {
   const [customBg, setCustomBg]     = useState(null)
   const [showAmbient, setShowAmbient] = useState(false)
   const [musicOpen, setMusicOpen]   = useState(false)
+  const [musicAutoStop, setMusicAutoStop] = useState(true)
   const bgFileRef = React.useRef()
+
+  // ── Shared countdown state (syncs main timer and pop-out widget) ──────────
+  const [timerHours,     setTimerHours]     = useState(0)
+  const [timerMinutes,   setTimerMinutes]   = useState(25)
+  const [timerSeconds,   setTimerSeconds]   = useState(0)
+  const [timerRemaining, setTimerRemaining] = useState(null)
+  const [timerRunning,   setTimerRunning]   = useState(false)
+  const [timerFinished,  setTimerFinished]  = useState(false)
+  const timerInterval = useRef(null)
+
+  const timerTotal = timerHours*3600 + timerMinutes*60 + timerSeconds
+
+  useEffect(() => {
+    if (timerRunning && (timerRemaining??timerTotal) > 0) {
+      timerInterval.current = setInterval(() => {
+        setTimerRemaining(r => {
+          const cur = r ?? timerTotal
+          if (cur <= 1) {
+            clearInterval(timerInterval.current)
+            setTimerRunning(false)
+            setTimerFinished(true)
+            playSound(sound)
+            sendTimerNotification('Countdown complete!')
+            return 0
+          }
+          return cur - 1
+        })
+      }, 1000)
+    }
+    return () => clearInterval(timerInterval.current)
+  }, [timerRunning])
+
+  function timerStart() {
+    if (timerRemaining === null) setTimerRemaining(timerTotal)
+    setTimerRunning(true)
+    setTimerFinished(false)
+  }
+  function timerPause() { setTimerRunning(false); clearInterval(timerInterval.current) }
+  function timerReset() {
+    setTimerRunning(false); clearInterval(timerInterval.current)
+    setTimerRemaining(null); setTimerFinished(false)
+  }
+  function timerSetPreset(totalSecs) {
+    setTimerRunning(false); clearInterval(timerInterval.current)
+    setTimerRemaining(totalSecs); setTimerFinished(false)
+    // Back-calculate H/M/S for display
+    setTimerHours(Math.floor(totalSecs/3600))
+    setTimerMinutes(Math.floor((totalSecs%3600)/60))
+    setTimerSeconds(totalSecs%60)
+  }
+
+  const sharedTimer = {
+    hours: timerHours, setHours: setTimerHours,
+    minutes: timerMinutes, setMinutes: setTimerMinutes,
+    seconds: timerSeconds, setSeconds: setTimerSeconds,
+    remaining: timerRemaining, total: timerTotal,
+    running: timerRunning, finished: timerFinished,
+    start: timerStart, pause: timerPause, reset: timerReset,
+    setPreset: timerSetPreset,
+  }
 
   return (
     <div className={isWidget ? '' : 'fade-in'} style={isWidget ? {} : {maxWidth:560,margin:'0 auto'}}>
@@ -137,12 +198,12 @@ export default function TimerPage({ isWidget = false, onClose }) {
         <button className={`tab${tab==='alarm'?' active':''}`} onClick={()=>setTab('alarm')}><Bell size={14}/> Alarm</button>
       </div>
 
-      {tab==='timer'    && <CountdownTimer sound={sound}/>}
+      {tab==='timer'    && <CountdownTimer sound={sound} shared={sharedTimer} musicAutoStop={musicAutoStop}/>}
       {tab==='stopwatch'&& <Stopwatch/>}
       {tab==='alarm'   && <AlarmClock sound={sound}/>}
 
       {/* Pop-out widget */}
-      {isPopped && <TimerWidget onClose={()=>setIsPopped(false)} sound={sound}/>}
+      {isPopped && <TimerWidget onClose={()=>setIsPopped(false)} sound={sound} shared={sharedTimer}/>}
 
       {/* ── Ambient background panel ── */}
       {showAmbient && (
@@ -157,7 +218,11 @@ export default function TimerPage({ isWidget = false, onClose }) {
 
       {/* ── Music panel ── */}
       {musicOpen && (
-        <MusicPanel onClose={()=>setMusicOpen(false)}/>
+        <MusicPanel
+          onClose={()=>setMusicOpen(false)}
+          autoStop={musicAutoStop}
+          onToggleAutoStop={()=>setMusicAutoStop(v=>!v)}
+          timerFinished={timerFinished}/>
       )}
 
       {/* ── Ambient background overlay ── */}
@@ -168,119 +233,94 @@ export default function TimerPage({ isWidget = false, onClose }) {
   )
 }
 
-// ── Countdown Timer ───────────────────────────────────────────────────────────
-function CountdownTimer({ sound }) {
-  const [hours,   setHours]   = useState(0)
-  const [minutes, setMinutes] = useState(25)
-  const [seconds, setSeconds] = useState(0)
-  const [remaining, setRemaining] = useState(null)
-  const [running,   setRunning]   = useState(false)
-  const [finished,  setFinished]  = useState(false)
-  const intervalRef = useRef(null)
+// ── Countdown Timer (uses shared state from TimerPage) ─────────────────────
+function CountdownTimer({ sound, shared, musicAutoStop }) {
+  const { hours, setHours, minutes, setMinutes, seconds, setSeconds,
+          remaining, total, running, finished,
+          start, pause, reset, setPreset } = shared
 
-  const totalSecs = hours*3600 + minutes*60 + seconds
-
-  useEffect(() => {
-    if (running && remaining > 0) {
-      intervalRef.current = setInterval(() => {
-        setRemaining(r => {
-          if (r <= 1) {
-            clearInterval(intervalRef.current)
-            setRunning(false)
-            setFinished(true)
-            playSound(sound)
-            sendTimerNotification('Countdown complete!')
-            return 0
-          }
-          return r - 1
-        })
-      }, 1000)
-    }
-    return () => clearInterval(intervalRef.current)
-  }, [running])
-
-  function start() {
-    if (remaining === null) setRemaining(totalSecs)
-    setRunning(true)
-    setFinished(false)
-  }
-
-  function pause()  { setRunning(false); clearInterval(intervalRef.current) }
-
-  function reset()  {
-    setRunning(false); clearInterval(intervalRef.current)
-    setRemaining(null); setFinished(false)
-  }
-
-  const display = remaining !== null ? remaining : totalSecs
-  const pct     = remaining !== null && totalSecs > 0 ? (1 - remaining/totalSecs)*100 : 0
+  const display = remaining !== null ? remaining : total
+  const pct     = remaining !== null && total > 0 ? (1 - remaining/total)*100 : 0
 
   const PRESETS = [
-    {label:'5 min',  m:5,  s:0},
-    {label:'10 min', m:10, s:0},
-    {label:'25 min', m:25, s:0},
-    {label:'45 min', m:45, s:0},
-    {label:'90 min', m:90, s:0},
+    {label:'5 min',  secs:300},
+    {label:'10 min', secs:600},
+    {label:'25 min', secs:1500},
+    {label:'45 min', secs:2700},
+    {label:'1 hr',   secs:3600},
+    {label:'1.5 hr', secs:5400},
   ]
 
+  const r = 54
+  const circ = 2 * Math.PI * r
+  const offset = circ - (pct/100)*circ
+
   return (
-    <div style={{display:'flex',flexDirection:'column',alignItems:'center',gap:20}}>
-      {/* Presets */}
-      <div style={{display:'flex',gap:6,flexWrap:'wrap',justifyContent:'center'}}>
-        {PRESETS.map(p=>(
-          <button key={p.label} className="btn btn-secondary btn-sm" disabled={running}
-            onClick={()=>{setMinutes(p.m>60?p.m%60:p.m);setHours(p.m>=60?Math.floor(p.m/60):0);setSeconds(p.s);setRemaining(null);setFinished(false)}}>
-            {p.label}
-          </button>
-        ))}
+    <div>
+      {/* Circular progress */}
+      <div style={{display:'flex',justifyContent:'center',marginBottom:20}}>
+        <div style={{position:'relative',width:140,height:140}}>
+          <svg width={140} height={140} style={{transform:'rotate(-90deg)'}}>
+            <circle cx={70} cy={70} r={r} fill="none" stroke="var(--bg-hover)" strokeWidth={8}/>
+            <circle cx={70} cy={70} r={r} fill="none"
+              stroke={finished?'var(--success)':running?'var(--accent-light)':'var(--accent)'}
+              strokeWidth={8} strokeLinecap="round"
+              strokeDasharray={circ} strokeDashoffset={offset}
+              style={{transition:'stroke-dashoffset 1s linear, stroke 0.3s'}}/>
+          </svg>
+          <div style={{position:'absolute',inset:0,display:'flex',flexDirection:'column',alignItems:'center',justifyContent:'center'}}>
+            <span style={{fontFamily:'var(--font-mono)',fontSize:'1.6rem',fontWeight:800,color:finished?'var(--success)':'var(--text-primary)'}}>
+              {fmtTime(display)}
+            </span>
+            {running && <span style={{fontSize:'0.65rem',color:'var(--text-muted)',marginTop:2}}>running</span>}
+            {finished && <span style={{fontSize:'0.7rem',color:'var(--success)',fontWeight:700,marginTop:2}}>Done! ✓</span>}
+          </div>
+        </div>
       </div>
 
-      {/* Circular progress */}
-      <div style={{position:'relative',width:200,height:200}}>
-        <svg width="200" height="200" style={{transform:'rotate(-90deg)'}}>
-          <circle cx="100" cy="100" r="88" fill="none" stroke="var(--bg-hover)" strokeWidth="12"/>
-          <circle cx="100" cy="100" r="88" fill="none"
-            stroke={finished?'var(--success)':running?'var(--accent-light)':'var(--accent)'}
-            strokeWidth="12" strokeLinecap="round"
-            strokeDasharray={`${2*Math.PI*88}`}
-            strokeDashoffset={`${2*Math.PI*88*(1-pct/100)}`}
-            style={{transition:'stroke-dashoffset 1s linear, stroke 0.3s'}}/>
-        </svg>
-        <div style={{position:'absolute',inset:0,display:'flex',flexDirection:'column',alignItems:'center',justifyContent:'center'}}>
-          <div style={{fontSize:'2.4rem',fontWeight:800,fontFamily:'var(--font-mono)',color:finished?'var(--success)':'var(--text-primary)'}}>
-            {fmtTime(display)}
-          </div>
-          {finished && <div style={{fontSize:'0.85rem',color:'var(--success)',fontWeight:600,marginTop:4}}>Done! 🎉</div>}
-        </div>
+      {/* Presets */}
+      <div style={{display:'flex',gap:6,flexWrap:'wrap',justifyContent:'center',marginBottom:14}}>
+        {PRESETS.map(p=>(
+          <button key={p.secs} className="btn btn-secondary btn-sm" disabled={running}
+            onClick={()=>setPreset(p.secs)}>{p.label}</button>
+        ))}
       </div>
 
       {/* Manual time input */}
       {!running && remaining===null && (
-        <div style={{display:'flex',gap:8,alignItems:'center'}}>
+        <div style={{display:'flex',gap:8,justifyContent:'center',marginBottom:14,alignItems:'center'}}>
           {[{val:hours,set:setHours,max:23,label:'h'},{val:minutes,set:setMinutes,max:59,label:'m'},{val:seconds,set:setSeconds,max:59,label:'s'}].map(({val,set,max,label})=>(
             <div key={label} style={{textAlign:'center'}}>
-              <input type="number" min={0} max={max} value={val}
-                onChange={e=>set(Math.min(max,Math.max(0,parseInt(e.target.value)||0)))}
-                style={{width:56,padding:'8px',textAlign:'center',fontSize:'1.1rem',fontFamily:'var(--font-mono)',background:'var(--bg-surface)',border:'1px solid var(--border)',borderRadius:'var(--radius-md)',color:'var(--text-primary)'}}/>
-              <div style={{fontSize:'0.72rem',color:'var(--text-muted)',marginTop:2}}>{label}</div>
+              <input className="input" type="number" min={0} max={max} value={val}
+                onChange={e=>set(Math.max(0,Math.min(max,parseInt(e.target.value)||0)))}
+                style={{width:52,textAlign:'center',fontFamily:'var(--font-mono)',fontSize:'1.1rem',padding:'6px 4px'}}/>
+              <div style={{fontSize:'0.68rem',color:'var(--text-muted)',marginTop:2}}>{label}</div>
             </div>
           ))}
         </div>
       )}
 
       {/* Controls */}
-      <div style={{display:'flex',gap:10}}>
+      <div style={{display:'flex',gap:10,justifyContent:'center',marginBottom:12}}>
         {!running ? (
-          <button className="btn btn-primary" onClick={start} disabled={display===0} style={{minWidth:80}}>
+          <button className="btn btn-primary" onClick={start} style={{minWidth:100}}
+            disabled={total===0&&remaining===null}>
             <Play size={16}/> {remaining!==null?'Resume':'Start'}
           </button>
         ) : (
-          <button className="btn btn-secondary" onClick={pause} style={{minWidth:80}}>
+          <button className="btn btn-secondary" onClick={pause} style={{minWidth:100}}>
             <Pause size={16}/> Pause
           </button>
         )}
         <button className="btn btn-secondary btn-icon" onClick={reset}><RotateCcw size={16}/></button>
       </div>
+
+      {/* Music auto-stop info */}
+      {musicAutoStop !== undefined && (
+        <p style={{fontSize:'0.72rem',color:'var(--text-muted)',textAlign:'center'}}>
+          {musicAutoStop ? '🎵 Music will stop when timer finishes' : ''}
+        </p>
+      )}
     </div>
   )
 }
@@ -484,100 +524,116 @@ function AlarmClock({ sound }) {
 }
 
 // ── Floating Widget ───────────────────────────────────────────────────────────
-export function TimerWidget({ onClose, sound }) {
-  const [running,   setRunning]   = useState(false)
-  const [remaining, setRemaining] = useState(25*60)
-  const [total,     setTotal]     = useState(25*60)
-  const [finished,  setFinished]  = useState(false)
-  const intervalRef = useRef(null)
+export function TimerWidget({ onClose, sound, shared }) {
+  // Uses shared state from TimerPage for full sync with main timer
+  const { remaining, total, running, finished, start, pause, reset, setPreset } = shared || {}
 
-  useEffect(() => {
-    if (running && remaining > 0) {
-      intervalRef.current = setInterval(()=>{
-        setRemaining(r=>{
-          if(r<=1){
-            clearInterval(intervalRef.current)
-            setRunning(false); setFinished(true)
-            playSound(sound||'chime')
-            sendTimerNotification('Timer complete!')
-            return 0
-          }
-          return r-1
-        })
-      },1000)
-    }
-    return ()=>clearInterval(intervalRef.current)
-  },[running])
+  const pct = (total??1500) > 0 ? ((total??1500) - (remaining??(total??1500))) / (total??1500) * 100 : 0
 
-  const pct = total>0 ? ((total-remaining)/total)*100 : 0
-
-  // Draggable state
-  const [pos, setPos] = React.useState({x: window.innerWidth - 220, y: window.innerHeight - 320})
+  // Draggable — position starts at bottom-right (safe CSS coords)
+  const [pos, setPos] = React.useState({ right: 24, bottom: 90 })
+  const [isDragging, setIsDragging] = React.useState(false)
+  const [absPos, setAbsPos] = React.useState(null) // switches to absolute once dragged
   const dragging = React.useRef(false)
-  const dragOffset = React.useRef({x:0, y:0})
+  const dragOffset = React.useRef({ x:0, y:0 })
 
   function onMouseDown(e) {
-    if (e.target.closest('button') || e.target.closest('select')) return
+    if (e.target.closest('button')) return
     dragging.current = true
-    dragOffset.current = { x: e.clientX - pos.x, y: e.clientY - pos.y }
+    setIsDragging(true)
+    // Convert to absolute position on first drag
+    const rect = e.currentTarget.getBoundingClientRect()
+    dragOffset.current = { x: e.clientX - rect.left, y: e.clientY - rect.top }
+    if (!absPos) setAbsPos({ x: rect.left, y: rect.top })
     e.preventDefault()
   }
 
   React.useEffect(() => {
     function onMove(e) {
       if (!dragging.current) return
-      setPos({
-        x: Math.max(0, Math.min(window.innerWidth-220, e.clientX - dragOffset.current.x)),
-        y: Math.max(0, Math.min(window.innerHeight-300, e.clientY - dragOffset.current.y)),
+      const newX = e.clientX - dragOffset.current.x
+      const newY = e.clientY - dragOffset.current.y
+      setAbsPos({
+        x: Math.max(0, Math.min(window.innerWidth  - 220, newX)),
+        y: Math.max(0, Math.min(window.innerHeight - 280, newY)),
       })
     }
-    function onUp() { dragging.current = false }
+    function onUp() { dragging.current = false; setIsDragging(false) }
     window.addEventListener('mousemove', onMove)
     window.addEventListener('mouseup', onUp)
-    return () => { window.removeEventListener('mousemove', onMove); window.removeEventListener('mouseup', onUp) }
+    return () => {
+      window.removeEventListener('mousemove', onMove)
+      window.removeEventListener('mouseup', onUp)
+    }
   }, [])
+
+  const posStyle = absPos
+    ? { left: absPos.x, top: absPos.y }
+    : { right: pos.right, bottom: pos.bottom }
 
   return (
     <div
       onMouseDown={onMouseDown}
       style={{
-        position:'fixed', left:pos.x, top:pos.y, zIndex:500,
-        background:'var(--bg-card)', border:'1px solid var(--border)',
-        borderRadius:'var(--radius-xl)', padding:16, width:210,
-        boxShadow:'var(--shadow-lg)', cursor:'grab', userSelect:'none',
+        position: 'fixed',
+        ...posStyle,
+        zIndex: 500,
+        background: 'var(--bg-card)',
+        border: '1px solid var(--accent)',
+        borderRadius: 'var(--radius-xl)',
+        padding: 14,
+        width: 210,
+        boxShadow: '0 8px 32px rgba(124,58,237,0.3)',
+        cursor: isDragging ? 'grabbing' : 'grab',
+        userSelect: 'none',
       }}>
-      <div style={{display:'flex',alignItems:'center',justifyContent:'space-between',marginBottom:10}}>
-        <span style={{fontWeight:700,fontSize:'0.82rem',color:'var(--text-muted)'}}>⏱ Timer</span>
+      {/* Header */}
+      <div style={{display:'flex',alignItems:'center',justifyContent:'space-between',marginBottom:8}}>
+        <span style={{fontWeight:700,fontSize:'0.82rem',color:'var(--accent-light)',display:'flex',alignItems:'center',gap:5}}>
+          ⏱ Timer <span style={{fontSize:'0.65rem',color:'var(--text-muted)',fontWeight:400}}>(synced)</span>
+        </span>
         <button className="btn btn-ghost btn-icon btn-sm" onClick={onClose}><X size={14}/></button>
       </div>
 
-      <div className="progress-bar" style={{marginBottom:8}}>
-        <div className="progress-fill xp-bar-fill" style={{width:`${pct}%`,transition:'width 1s linear'}}/>
+      {/* Progress bar */}
+      <div style={{height:4,background:'var(--bg-hover)',borderRadius:2,marginBottom:10,overflow:'hidden'}}>
+        <div style={{height:'100%',width:`${pct}%`,background:finished?'var(--success)':'var(--accent)',borderRadius:2,transition:'width 1s linear'}}/>
       </div>
 
-      <div style={{textAlign:'center',fontSize:'1.8rem',fontWeight:800,fontFamily:'var(--font-mono)',marginBottom:10,color:finished?'var(--success)':'var(--text-primary)'}}>
-        {fmtTime(remaining)}
+      {/* Time display */}
+      <div style={{textAlign:'center',fontFamily:'var(--font-mono)',fontSize:'2rem',fontWeight:800,marginBottom:10,
+        color:finished?'var(--success)':'var(--text-primary)'}}>
+        {fmtTime(remaining ?? (total ?? 1500))}
       </div>
+      {finished && <div style={{textAlign:'center',fontSize:'0.75rem',color:'var(--success)',fontWeight:700,marginBottom:6}}>Done! ✓</div>}
 
       {/* Quick presets */}
-      <div style={{display:'flex',gap:4,marginBottom:8,justifyContent:'center'}}>
-        {[5,10,25,45].map(m=>(
-          <button key={m} style={{padding:'2px 6px',fontSize:'0.7rem',borderRadius:4,background:'var(--bg-hover)',border:'1px solid var(--border)',color:'var(--text-secondary)',cursor:'pointer'}}
-            onClick={()=>{setRemaining(m*60);setTotal(m*60);setRunning(false);setFinished(false)}}>
-            {m}m
+      <div style={{display:'flex',gap:4,marginBottom:10,justifyContent:'center',flexWrap:'wrap'}}>
+        {[{l:'5m',s:300},{l:'10m',s:600},{l:'25m',s:1500},{l:'45m',s:2700}].map(p=>(
+          <button key={p.s}
+            style={{padding:'2px 7px',fontSize:'0.7rem',borderRadius:4,background:'var(--bg-hover)',border:'1px solid var(--border)',color:'var(--text-secondary)',cursor:'pointer'}}
+            onClick={()=>setPreset?.(p.s)} disabled={running}>
+            {p.l}
           </button>
         ))}
       </div>
 
+      {/* Controls */}
       <div style={{display:'flex',gap:6,justifyContent:'center'}}>
-        <button className="btn btn-primary btn-sm" onClick={()=>{setRunning(!running);setFinished(false)}} style={{flex:1}}>
-          {running?<><Pause size={13}/> Pause</>:<><Play size={13}/> {remaining<total&&remaining>0?'Resume':'Start'}</>}
+        <button className="btn btn-primary btn-sm" style={{flex:1}}
+          onClick={()=>{ if(running) pause?.(); else start?.(); }}>
+          {running
+            ? <><Pause size={13}/> Pause</>
+            : <><Play  size={13}/> {remaining != null && remaining < (total??1500) && remaining > 0 ? 'Resume' : 'Start'}</>}
         </button>
-        <button className="btn btn-secondary btn-icon btn-sm" onClick={()=>{setRunning(false);setRemaining(total);setFinished(false)}}><RotateCcw size={13}/></button>
+        <button className="btn btn-secondary btn-icon btn-sm" onClick={()=>reset?.()}>
+          <RotateCcw size={13}/>
+        </button>
       </div>
     </div>
   )
 }
+
 
 // ── Ambient Background Overlay ────────────────────────────────────────────────
 const AMBIENT_PRESETS = {
@@ -683,9 +739,16 @@ const PLAYLISTS = [
   { label:'Calm Ambient',        vid:'2gliGzb2_1I', type:'video' },
 ]
 
-function MusicPanel({ onClose }) {
+function MusicPanel({ onClose, autoStop, onToggleAutoStop, timerFinished }) {
   const [selected, setSelected] = useState(null)
   const [spotifyOpen, setSpotifyOpen] = useState(false)
+
+  // Auto-stop: remove the iframe (stops playback) when timer finishes
+  React.useEffect(() => {
+    if (timerFinished && autoStop && selected) {
+      setSelected(null)
+    }
+  }, [timerFinished])
 
   return (
     <div className="card" style={{marginBottom:16}}>
@@ -702,6 +765,14 @@ function MusicPanel({ onClose }) {
           Spotify
         </button>
       </div>
+
+      {/* Auto-stop toggle */}
+      <label style={{display:'flex',alignItems:'center',gap:8,marginBottom:10,cursor:'pointer',fontSize:'0.82rem'}}>
+        <input type="checkbox" checked={autoStop??true}
+          onChange={onToggleAutoStop}
+          style={{width:14,height:14,accentColor:'var(--accent)'}}/>
+        <span>Auto-stop music when timer finishes</span>
+      </label>
 
       {!spotifyOpen ? (
         <>
