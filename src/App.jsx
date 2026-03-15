@@ -1,11 +1,12 @@
 // src/App.jsx
-import React, { Suspense, lazy } from 'react'
+import React, { Suspense, lazy, useEffect } from 'react'
 import { Routes, Route, Navigate } from 'react-router-dom'
 import { Toaster } from 'react-hot-toast'
 import { AuthProvider, useAuth } from './context/AuthContext'
 import { ThemeProvider } from './context/ThemeContext'
 import Layout from './components/Layout'
 import LoadingScreen from './components/LoadingScreen'
+import { requestNotificationPermission } from './utils/notifications'
 
 const Landing      = lazy(() => import('./pages/Landing'))
 const Login        = lazy(() => import('./pages/Login'))
@@ -25,6 +26,21 @@ const AIAdvisor    = lazy(() => import('./pages/AIAdvisor'))
 const Notes        = lazy(() => import('./pages/Notes'))
 const ExamDates    = lazy(() => import('./pages/ExamDates'))
 const Settings     = lazy(() => import('./pages/Settings'))
+const TimerPage    = lazy(() => import('./pages/Timer'))
+
+function NotificationInit() {
+  useEffect(() => {
+    const asked = localStorage.getItem('rf-notif-asked')
+    if (!asked) {
+      setTimeout(() => {
+        requestNotificationPermission().then(granted => {
+          localStorage.setItem('rf-notif-asked', '1')
+        })
+      }, 3000)
+    }
+  }, [])
+  return null
+}
 
 function PrivateRoute({ children }) {
   const { user, loading, profile } = useAuth()
@@ -52,35 +68,33 @@ export default function App() {
   return (
     <ThemeProvider>
       <AuthProvider>
+        <NotificationInit />
         <Toaster
           position="top-right"
-          toastOptions={{ className: 'toast-custom', duration: 3500 }}
+          toastOptions={{ className:'toast-custom', duration:3500 }}
         />
         <Suspense fallback={<LoadingScreen />}>
           <Routes>
-            {/* Public */}
-            <Route path="/" element={<Landing />} />
+            <Route path="/"    element={<Landing />} />
             <Route path="/login"  element={<PublicOnlyRoute><Login /></PublicOnlyRoute>} />
             <Route path="/signup" element={<PublicOnlyRoute><Signup /></PublicOnlyRoute>} />
             <Route path="/u/:username" element={<PublicProfile />} />
-
-            {/* Onboarding */}
             <Route path="/onboarding" element={<OnboardingRoute><Onboarding /></OnboardingRoute>} />
 
-            {/* App */}
             <Route element={<PrivateRoute><Layout /></PrivateRoute>}>
               <Route path="/dashboard"   element={<Dashboard />} />
               <Route path="/calendar"    element={<Calendar />} />
+              <Route path="/exams"       element={<ExamDates />} />
               <Route path="/papers"      element={<PastPapers />} />
               <Route path="/topics"      element={<Topics />} />
               <Route path="/mistakes"    element={<Mistakes />} />
+              <Route path="/notes"       element={<Notes />} />
               <Route path="/tasks"       element={<Tasks />} />
+              <Route path="/timer"       element={<TimerPage />} />
+              <Route path="/ai"          element={<AIAdvisor />} />
               <Route path="/friends"     element={<Friends />} />
               <Route path="/leaderboard" element={<Leaderboard />} />
               <Route path="/profile"     element={<Profile />} />
-              <Route path="/ai"          element={<AIAdvisor />} />
-              <Route path="/notes"       element={<Notes />} />
-              <Route path="/exams"       element={<ExamDates />} />
               <Route path="/settings"    element={<Settings />} />
             </Route>
 
