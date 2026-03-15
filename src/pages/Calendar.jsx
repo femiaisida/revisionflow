@@ -72,52 +72,56 @@ export default function Calendar() {
 
   // ── Clear calendar ────────────────────────────────────────────────────────
   async function clearCalendar(mode) {
+    if (!user) { toast.error('Not logged in'); return }
+    const uid = user.uid
     setClearing(true)
+    setShowClear(false)
+    console.log('[clearCalendar] starting, mode:', mode, 'uid:', uid)
     try {
-      // Always fetch fresh from Firestore to guarantee we have real doc IDs
-      const snap = await getDocs(collection(db, 'users', user.uid, 'sessions'))
-      const allDocs = snap.docs
-
-      let toDelete
-      if (mode === 'all') {
-        toDelete = allDocs
-      } else {
-        // 'generated' mode — match by source field OR by title pattern
-        toDelete = allDocs.filter(d => {
-          const data = d.data()
-          return data.source === 'generated' ||
-                 data.source === 'import' ||
-                 (data.title && (
-                   data.title.includes('Content Revision') ||
-                   data.title.includes('Exam Practice') ||
-                   data.title.includes('EMERGENCY')
-                 ))
-        })
-      }
-
-      if (!toDelete.length) {
-        toast('Nothing to clear')
-        setShowClear(false)
+      const colRef = collection(db, 'users', uid, 'sessions')
+      const snap   = await getDocs(colRef)
+      console.log('[clearCalendar] fetched', snap.docs.length, 'docs')
+      if (snap.empty) {
+        toast('Calendar is already empty')
         setClearing(false)
         return
       }
-
-      // Delete in batches of 500 (Firestore limit)
+      let toDelete = snap.docs
+      if (mode !== 'all') {
+        toDelete = snap.docs.filter(d => {
+          const data = d.data()
+          return (
+            data.source === 'generated' ||
+            data.source === 'import' ||
+            (typeof data.title === 'string' && (
+              data.title.includes('Content Revision') ||
+              data.title.includes('Exam Practice') ||
+              data.title.includes('EMERGENCY')
+            ))
+          )
+        })
+      }
+      console.log('[clearCalendar] toDelete count:', toDelete.length)
+      if (!toDelete.length) {
+        toast("No generated sessions found — try 'Clear everything'")
+        setClearing(false)
+        return
+      }
       const BATCH_SIZE = 400
+      let deleted = 0
       for (let i = 0; i < toDelete.length; i += BATCH_SIZE) {
         const batch = writeBatch(db)
-        toDelete.slice(i, i + BATCH_SIZE).forEach(d => {
-          batch.delete(doc(db, 'users', user.uid, 'sessions', d.id))
-        })
+        const chunk = toDelete.slice(i, i + BATCH_SIZE)
+        chunk.forEach(d => batch.delete(doc(db, 'users', uid, 'sessions', d.id)))
         await batch.commit()
+        deleted += chunk.length
+        console.log('[clearCalendar] deleted so far:', deleted)
       }
-
       await loadSessions()
-      setShowClear(false)
-      toast.success(`Cleared ${toDelete.length} session${toDelete.length !== 1 ? 's' : ''}`)
+      toast.success(`Cleared ${deleted} session${deleted !== 1 ? 's' : ''}`)
     } catch (err) {
+      console.error('[clearCalendar] ERROR:', err)
       toast.error('Clear failed: ' + err.message)
-      console.error(err)
     } finally {
       setClearing(false)
     }
