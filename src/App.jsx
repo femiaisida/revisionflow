@@ -1,3 +1,4 @@
+import PrivacyPolicy from './pages/PrivacyPolicy'
 // src/App.jsx
 import React, { Suspense, lazy, useEffect } from 'react'
 import { Routes, Route, Navigate } from 'react-router-dom'
@@ -104,7 +105,8 @@ export default function App() {
               <Route path="/settings"    element={<Settings />} />
             </Route>
 
-            <Route path="*" element={<Navigate to="/" replace />} />
+            <Route path="/privacy" element={<PrivacyPolicy />} />
+        <Route path="*" element={<Navigate to="/" replace />} />
           </Routes>
         </Suspense>
         </BadgeProvider>

@@ -3,7 +3,6 @@ import React, { useState } from 'react'
 import { Outlet, NavLink, useNavigate } from 'react-router-dom'
 import { useAuth } from '../context/AuthContext'
 import { useTheme } from '../context/ThemeContext'
-import { TimerWidget } from '../pages/Timer'
 import PWAInstallBanner from './PWAInstallBanner'
 import {
   LayoutDashboard, Calendar, FileText, Brain, AlertCircle,
@@ -139,7 +138,7 @@ export default function Layout() {
       </main>
 
       {/* Floating timer widget */}
-      {showWidget && <TimerWidget onClose={()=>setShowWidget(false)} sound="chime"/>}
+      
       <PWAInstallBanner/>
 
       {/* Mobile bottom nav */}
