@@ -8,6 +8,7 @@ import { GCSE_SUBJECTS, ALEVEL_SUBJECTS, EXAM_BOARDS } from '../data/subjects'
 import { GRADE_BOUNDARIES, AVAILABLE_YEARS, getBoundaries } from '../data/paperDatabase'
 import { gradeColour } from '../utils/calendar'
 import toast from 'react-hot-toast'
+import { auth } from '../firebase'
 import { Sun, Moon, User, Bell, Shield, BookOpen, Plus, X, Trash2 } from 'lucide-react'
 
 export default function Settings() {
@@ -46,6 +47,12 @@ export default function Settings() {
     if (!newSubj.name) return
     setSubjects(s=>[...s,{...newSubj,id:Date.now().toString()}])
     setNewSubj({ name:'', board:'AQA', tier:'Higher', currentGrade:'', targetGrade:'9' })
+  }
+
+  async function handleDeleteAccount() {
+    if (!window.confirm('Delete your account and all data permanently? This cannot be undone.')) return
+    try { await auth.currentUser.delete(); window.location.href = '/' }
+    catch(e) { alert('Please sign out and sign back in first.') }
   }
 
   return (
@@ -153,6 +160,8 @@ export default function Settings() {
           ))}
           <button className="btn btn-primary" onClick={saveProfile} disabled={saving}>{saving?'Saving…':'Save privacy settings'}</button>
           <div className="divider"/>
+          <a href="/privacy" target="_blank" rel="noreferrer" className="btn btn-primary" style={{display:'block',textAlign:'center',textDecoration:'none',marginBottom:'0.5rem'}}>📄 Privacy Policy</a>
+          <button className="btn btn-danger" onClick={handleDeleteAccount} style={{marginBottom:'0.5rem'}}>🗑 Delete Account</button>
           <button className="btn btn-danger" onClick={logout}>Sign out</button>
         </div>
       )}

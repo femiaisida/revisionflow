@@ -18,6 +18,7 @@ import {
 
 export default function Dashboard() {
   const { profile, user } = useAuth()
+  const [gdprConsent, setGdprConsent] = useState(localStorage.getItem('gdpr_consent') === 'true')
   const [todaySessions, setTodaySessions] = useState([])
   const [tasks,         setTasks]         = useState([])
   const [recentPapers,  setRecentPapers]  = useState([])
@@ -31,10 +32,14 @@ export default function Dashboard() {
       getTasks(user.uid),
       getPaperAttempts(user.uid, null),
     ]).then(([sessions, taskList, papers]) => {
+      const todayStr = new Date().toISOString().split('T')[0]
       const today = new Date().toDateString()
       setTodaySessions(sessions.filter(s=>{
-        const d = s.startTime ? new Date(s.startTime) : s.date ? new Date(s.date) : null
-        return d && d.toDateString()===today
+        // Check all possible date fields used by different calendar generators
+        if (s.date && s.date.substring(0,10) === todayStr) return true
+        if (s.start && s.start.substring(0,10) === todayStr) return true
+        const d = s.startTime ? new Date(s.startTime) : null
+        return d && d.toDateString() === today
       }))
       setTasks(taskList.filter(t=>!t.completed).slice(0,5))
       // Sort by date descending, load more for sparkline to work
@@ -106,7 +111,19 @@ export default function Dashboard() {
   const greeting = hour<12?'morning':hour<17?'afternoon':'evening'
 
   return (
-    <div className="fade-in">
+    <>
+      {!gdprConsent && (
+        <div style={{position:'fixed',bottom:0,left:0,right:0,zIndex:9999,background:'var(--surface)',borderTop:'2px solid var(--accent)',padding:'1rem 1.5rem',display:'flex',alignItems:'center',justifyContent:'space-between',flexWrap:'wrap',gap:'0.75rem',boxShadow:'0 -4px 20px rgba(0,0,0,0.3)'}}>
+          <p style={{margin:0,color:'var(--text-secondary)',fontSize:'0.9rem',maxWidth:600}}>
+            🍪 RevisionFlow stores your revision data to power your study features. By continuing, you agree to our{' '}
+            <a href="/privacy" style={{color:'var(--accent)'}}>Privacy Policy</a>.
+          </p>
+          <button onClick={()=>{localStorage.setItem('gdpr_consent','true');setGdprConsent(true)}} style={{background:'var(--accent)',color:'white',border:'none',borderRadius:8,padding:'0.5rem 1.25rem',cursor:'pointer',fontWeight:700,whiteSpace:'nowrap'}}>
+            I Agree
+          </button>
+        </div>
+      )}
+      <div className="fade-in">
       {/* Setup banner — shown until all steps complete */}
       {!setupDone && !setupSkipped && (
         <div style={{marginBottom:20,padding:16,background:'linear-gradient(135deg,rgba(124,58,237,0.1),rgba(59,130,246,0.1))',border:'1px solid var(--accent)',borderRadius:'var(--radius-lg)'}}>
@@ -365,5 +382,6 @@ export default function Dashboard() {
         </div>
       </div>
     </div>
+    </>
   )
 }

@@ -34,7 +34,7 @@ export default function PrivacyPolicy() {
       </section>
       <section style={{ marginBottom: '2rem' }}>
         <h2 style={{ color: 'var(--text-primary)', fontSize: '1.15rem' }}>6. Your Rights (GDPR)</h2>
-        <p style={{ color: 'var(--text-secondary)', lineHeight: 1.7 }}>You have the right to access, correct, or delete your data. Go to <strong>Settings &rarr; Delete Account</strong> to remove all your data. For requests: <strong>revisionflow.app@gmail.com</strong></p>
+        <p style={{ color: 'var(--text-secondary)', lineHeight: 1.7 }}>You have the right to access, correct, or delete your data. Go to <strong>Settings &rarr; Delete Account</strong> to remove all your data. For requests: <strong>femiaisida1@gmail.com</strong></p>
       </section>
       <section style={{ marginBottom: '2rem' }}>
         <h2 style={{ color: 'var(--text-primary)', fontSize: '1.15rem' }}>7. Cookies</h2>

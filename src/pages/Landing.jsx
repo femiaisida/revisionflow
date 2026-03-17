@@ -104,7 +104,7 @@ export default function Landing() {
               F
             </div>
             <div style={{textAlign:'left'}}>
-              <div style={{fontWeight:700,fontSize:'1.05rem'}}>Oluwafemi Aisida</div>
+              <div style={{fontWeight:700,fontSize:'1.05rem'}}>Oluwafemi Aisida · <a href="/privacy" style={{color:"inherit",opacity:0.6,textDecoration:"underline"}}>Privacy Policy</a></div>
               <div style={{fontSize:'0.82rem',color:'var(--text-muted)'}}>GCSE student · Aspiring CS @ Oxford/Cambridge</div>
             </div>
           </div>
@@ -136,7 +136,7 @@ export default function Landing() {
           <span style={{fontWeight:700,fontSize:'0.88rem'}}>RevisionFlow</span>
         </div>
         <p style={{fontSize:'0.78rem',margin:0,color:'var(--text-muted)'}}>
-          Built by <strong style={{color:'var(--accent-light)'}}>Oluwafemi Aisida</strong> · GCSE & A-Level students · Free · AI-powered
+          Built by <strong style={{color:'var(--accent-light)'}}>Oluwafemi Aisida · <a href="/privacy" style={{color:"inherit",opacity:0.6,textDecoration:"underline"}}>Privacy Policy</a></strong> · GCSE & A-Level students · Free · AI-powered
         </p>
         <div style={{display:'flex',gap:14}}>
           <Link to="/login"  style={{fontSize:'0.8rem',color:'var(--text-secondary)'}}>Sign in</Link>
