@@ -33,13 +33,11 @@ export default function Dashboard() {
       getPaperAttempts(user.uid, null),
     ]).then(([sessions, taskList, papers]) => {
       const todayStr = new Date().toISOString().split('T')[0]
-      const today = new Date().toDateString()
-      setTodaySessions(sessions.filter(s=>{
-        // Check all possible date fields used by different calendar generators
-        if (s.date && s.date.substring(0,10) === todayStr) return true
-        if (s.start && s.start.substring(0,10) === todayStr) return true
-        const d = s.startTime ? new Date(s.startTime) : null
-        return d && d.toDateString() === today
+      setTodaySessions(sessions.filter(s => {
+        if (s.date && typeof s.date === 'string' && s.date.substring(0,10) === todayStr) return true
+        if (s.start && typeof s.start === 'string' && s.start.substring(0,10) === todayStr) return true
+        if (s.startTime) { try { return new Date(s.startTime).toISOString().split('T')[0] === todayStr } catch(e) {} }
+        return false
       }))
       setTasks(taskList.filter(t=>!t.completed).slice(0,5))
       // Sort by date descending, load more for sparkline to work
