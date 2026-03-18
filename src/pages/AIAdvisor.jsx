@@ -7,56 +7,7 @@ import { collection, getDocs, doc, getDoc, setDoc, serverTimestamp } from 'fireb
 import { db } from '../firebase'
 import { chatWithAI, getResourceRecommendations, generateStudyPlan, analyseWeaknesses } from '../utils/ai'
 import { checkAndAwardBadge } from '../utils/firestore'
-
-// ── Lightweight markdown renderer ────────────────────────────────────────────
-// Converts **bold**, *italic*, # headings, - bullets to JSX without a library
-function renderMD(text) {
-  if (!text) return null
-  return text.split('\n').map((line, i) => {
-    // Heading
-    const h3 = line.match(/^### (.+)/)
-    const h2 = line.match(/^## (.+)/)
-    const h1 = line.match(/^# (.+)/)
-    if (h1) return <div key={i} style={{fontWeight:800,fontSize:'1.05rem',marginTop:12,marginBottom:4}}>{inlineFormat(h1[1])}</div>
-    if (h2) return <div key={i} style={{fontWeight:700,fontSize:'0.95rem',marginTop:10,marginBottom:3}}>{inlineFormat(h2[1])}</div>
-    if (h3) return <div key={i} style={{fontWeight:700,fontSize:'0.875rem',marginTop:8,marginBottom:2,color:'var(--accent-light)'}}>{inlineFormat(h3[1])}</div>
-    // Bullet
-    const bullet = line.match(/^[-*•]\s+(.+)/)
-    if (bullet) return (
-      <div key={i} style={{display:'flex',gap:8,marginTop:3}}>
-        <span style={{flexShrink:0,color:'var(--accent-light)',marginTop:1}}>•</span>
-        <span>{inlineFormat(bullet[1])}</span>
-      </div>
-    )
-    // Numbered list
-    const num = line.match(/^(\d+)[.)]\s+(.+)/)
-    if (num) return (
-      <div key={i} style={{display:'flex',gap:8,marginTop:3}}>
-        <span style={{flexShrink:0,color:'var(--accent-light)',fontWeight:600,minWidth:16}}>{num[1]}.</span>
-        <span>{inlineFormat(num[2])}</span>
-      </div>
-    )
-    // Blank line = spacer
-    if (!line.trim()) return <div key={i} style={{height:6}}/>
-    // Normal line
-    return <div key={i} style={{marginTop:2}}>{inlineFormat(line)}</div>
-  })
-}
-
-function inlineFormat(text) {
-  if (!text) return text
-  // Split on **bold**, *italic*, `code`
-  const parts = text.split(/(\*\*[^*]+\*\*|\*[^*]+\*|`[^`]+`)/)
-  return parts.map((part, i) => {
-    if (part.startsWith('**') && part.endsWith('**'))
-      return <strong key={i}>{part.slice(2,-2)}</strong>
-    if (part.startsWith('*') && part.endsWith('*'))
-      return <em key={i}>{part.slice(1,-1)}</em>
-    if (part.startsWith('`') && part.endsWith('`'))
-      return <code key={i} style={{background:'var(--bg-hover)',padding:'1px 4px',borderRadius:3,fontSize:'0.85em',fontFamily:'var(--font-mono)'}}>{part.slice(1,-1)}</code>
-    return part
-  })
-}
+import AIOutput from '../components/AIOutput'
 import { SUBJECT_COLOURS } from '../data/subjects'
 import { MessageSquare, Send, Zap, BookOpen, TrendingUp, X, Brain, Star, Target, FileText, Check } from 'lucide-react'
 
@@ -121,8 +72,6 @@ export default function AIAdvisor() {
   const [markQ,       setMarkQ]       = useState('')
   const [markA,       setMarkA]       = useState('')
   const [markResult,  setMarkResult]  = useState('')
-  const [markSummary, setMarkSummary] = useState('')
-  const [markSumLoad, setMarkSumLoad] = useState(false)
   const [markMarks,   setMarkMarks]   = useState('')
   const [markIsPaper, setMarkIsPaper] = useState(false)
   const [markYear,    setMarkYear]    = useState('2024')
@@ -285,7 +234,6 @@ export default function AIAdvisor() {
     if (!markSubj||!markQ||!markA) return
     setMarkLoad(true)
     setMarkResult('')
-    setMarkSummary('')
     const marksCtx = markMarks ? `This question is worth ${markMarks} marks.` : 'Determine the likely mark allocation from the question.'
     const paperCtx = markIsPaper ? `This is from a real past paper: ${markSubj} ${markYear}, Paper ${markPaperNum}.` : ''
     const prompt = `You are a strict but fair ${markSubj} GCSE examiner marking a student's response.
@@ -303,18 +251,9 @@ Provide a detailed marking breakdown with ALL of the following:
 5. **Improvements needed**: exactly what to add/change to gain the missing marks
 6. **Model answer elements**: what a full-mark response would include
 7. **Exam technique tip**: one actionable tip for this question type`
-    const res = await callAI(prompt)
+    const res = await callGemini(prompt)
     setMarkResult(res.text||res.error||'')
     setMarkLoad(false)
-  }
-
-  async function handleMarkSummary() {
-    if (!markResult) return
-    setMarkSumLoad(true)
-    const prompt = `Summarise this marking feedback in exactly 2-3 plain sentences. State the mark, the single best thing done, and the single most important thing to improve. No bullet points, no markdown formatting, just plain sentences:\n\n${markResult}`
-    const res = await callAI(prompt)
-    setMarkSummary(res.text||res.error||'')
-    setMarkSumLoad(false)
   }
 
   async function handleFlashcards() {
@@ -367,9 +306,15 @@ Provide a detailed marking breakdown with ALL of the following:
                 <div style={{width:30,height:30,borderRadius:'50%',flexShrink:0,display:'flex',alignItems:'center',justifyContent:'center',background:m.role==='user'?'var(--accent)':'rgba(124,58,237,0.2)'}}>
                   {m.role==='user'?'👤':<Zap size={14} color="var(--accent-light)"/>}
                 </div>
-                <div style={{maxWidth:'78%',padding:'9px 13px',borderRadius:'var(--radius-lg)',background:m.role==='user'?'var(--accent)':'var(--bg-surface)',border:m.role==='user'?'none':'1px solid var(--border)',fontSize:'0.875rem',lineHeight:1.7,borderBottomRightRadius:m.role==='user'?4:undefined,borderBottomLeftRadius:m.role==='assistant'?4:undefined}}>
-                  {m.role==='user' ? m.content : renderMD(m.content)}
-                </div>
+                {m.role==='user' ? (
+                  <div style={{maxWidth:'78%',padding:'9px 13px',borderRadius:'var(--radius-lg)',background:'var(--accent)',fontSize:'0.875rem',lineHeight:1.7,borderBottomRightRadius:4}}>
+                    {m.content}
+                  </div>
+                ) : (
+                  <div style={{maxWidth:'88%'}}>
+                    <AIOutput text={m.content} label="AI Reponse" />
+                  </div>
+                )}
               </div>
             ))}
             {loading&&(
@@ -407,7 +352,7 @@ Provide a detailed marking breakdown with ALL of the following:
             </button>
           </div>
           {gradeLoad&&<div className="loading-center"><div className="spinner"/></div>}
-          {gradePred&&<div style={{fontSize:'0.875rem',lineHeight:1.8}}>{renderMD(gradePred)}</div>}
+          {gradePred&&<div style={{marginTop:16}}><AIOutput text={gradePred} label="Grade Prediction" /></div>}
         </div>
       )}
 
@@ -426,7 +371,7 @@ Provide a detailed marking breakdown with ALL of the following:
             </button>
           </div>
           {nextLoad&&<div className="loading-center"><div className="spinner"/></div>}
-          {nextTopic&&<div style={{fontSize:'0.875rem',lineHeight:1.8}}>{renderMD(nextTopic)}</div>}
+          {nextTopic&&<div style={{marginTop:16}}><AIOutput text={nextTopic} label="Topic Suggestion" /></div>}
         </div>
       )}
 
@@ -484,25 +429,15 @@ Provide a detailed marking breakdown with ALL of the following:
           {markLoad&&<div className="loading-center" style={{marginTop:16}}><div className="spinner"/></div>}
           {markResult&&(
             <div style={{marginTop:16}}>
-              <div style={{padding:14,background:'rgba(124,58,237,0.08)',border:'1px solid var(--border)',borderRadius:'var(--radius-md)',fontSize:'0.875rem',lineHeight:1.8}}>
-                {renderMD(markResult)}
-              </div>
-              <div style={{display:'flex',gap:8,marginTop:10,alignItems:'center',flexWrap:'wrap'}}>
-                <button className="btn btn-secondary btn-sm" onClick={handleMarkSummary} disabled={markSumLoad}>
-                  {markSumLoad ? 'Summarising…' : '⚡ Summarise feedback'}
-                </button>
-                {markSummary && (
-                  <span style={{fontSize:'0.8rem',color:'var(--text-muted)'}}>
-                    (scroll down for summary)
-                  </span>
-                )}
-              </div>
-              {markSummary && (
-                <div style={{marginTop:10,padding:12,background:'rgba(16,185,129,0.08)',border:'1px solid rgba(16,185,129,0.25)',borderRadius:'var(--radius-md)',fontSize:'0.875rem',lineHeight:1.7}}>
-                  <div style={{fontWeight:700,marginBottom:4,color:'var(--success)',fontSize:'0.78rem',textTransform:'uppercase',letterSpacing:'0.05em'}}>Summary</div>
-                  {markSummary}
-                </div>
-              )}
+              <AIOutput 
+                text={markResult} 
+                label="Marking Feedback" 
+                onSummarise={async (text) => {
+                  const prompt = `Summarise this marking feedback in exactly 2-3 plain sentences. State the mark, the single best thing done, and the single most important thing to improve. No bullet points, no markdown formatting, just plain sentences:\n\n${text}`
+                  const res = await callGemini(prompt)
+                  return res.text || res.error || 'Could not summarise.'
+                }}
+              />
             </div>
           )}
         </div>
@@ -565,7 +500,7 @@ Provide a detailed marking breakdown with ALL of the following:
                   {loadingRes===s.name?'Loading…':<><BookOpen size={13}/> Get resources</>}
                 </button>
               </div>
-              {resources[s.name]&&<div style={{fontSize:'0.875rem',lineHeight:1.8,borderTop:'1px solid var(--border)',paddingTop:12}}>{renderMD(resources[s.name])}</div>}
+              {resources[s.name]&&<div style={{marginTop:12}}><AIOutput text={resources[s.name]} label={`Resources for ${s.name}`} /></div>}
             </div>
           ))}
         </div>
@@ -658,7 +593,7 @@ Provide a detailed marking breakdown with ALL of the following:
           )}
 
           {planLoading&&<div className="loading-center"><div className="spinner"/></div>}
-          {studyPlan&&!planLoading&&<div style={{fontSize:'0.875rem',lineHeight:1.8}}>{renderMD(studyPlan)}</div>}
+          {studyPlan&&!planLoading&&<div style={{marginTop:14}}><AIOutput text={studyPlan} label="Generated Study Plan" /></div>}
           {!studyPlan&&!planLoading&&!planPrefs.showForm&&(
             <div className="empty-state" style={{padding:'28px 0'}}>
               <TrendingUp size={36} style={{opacity:0.3}}/>

@@ -39,6 +39,7 @@ export default function Onboarding() {
 
   const subjectList  = qual==='A-Level' ? ALEVEL_SUBJECTS : qual==='BTEC-L2' ? BTEC_L2_SUBJECTS : qual==='BTEC-L3' ? BTEC_L3_SUBJECTS : GCSE_SUBJECTS
   const gradeOptions = getGradeOptions(newSubj.name, qual, newSubj.tier)
+  const globalGradeOptions = getGradeOptions('', qual, 'N/A')
 
   function onSubjName(name) {
     setNewSubj(s => ({ ...s, name, tier: isTiered(name) ? 'Higher' : 'N/A' }))
@@ -46,7 +47,9 @@ export default function Onboarding() {
 
   function addSubject() {
     if (!newSubj.name) return
-    setSubjects(s => [...s, { ...newSubj, targetGrade: newSubj.targetGrade||globalTarget, id: Date.now().toString() }])
+    const opts = getGradeOptions(newSubj.name, qual, newSubj.tier)
+    const target = newSubj.targetGrade || (opts.includes(globalTarget) ? globalTarget : opts[0])
+    setSubjects(s => [...s, { ...newSubj, targetGrade: target, id: Date.now().toString() }])
     setNewSubj({ name:'', board:'AQA', tier:'N/A', currentGrade:'', targetGrade:'' })
   }
 
@@ -221,8 +224,16 @@ export default function Onboarding() {
               <p style={{marginBottom:14}}>The AI uses these to prioritise your revision.</p>
               <div style={{padding:12,background:'rgba(124,58,237,0.08)',borderRadius:'var(--radius-md)',border:'1px solid var(--border)',marginBottom:14}}>
                 <label className="label">Global target</label>
-                <select className="select" value={globalTarget} onChange={e=>{setGlobalTarget(e.target.value);setSubjects(s=>s.map(x=>({...x,targetGrade:e.target.value})))}}>
-                  {gradeOptions.map(g=><option key={g} value={g}>Grade {g}</option>)}
+                <select className="select" value={globalTarget} onChange={e=>{
+                  const val = e.target.value;
+                  setGlobalTarget(val);
+                  setSubjects(s=>s.map(x=>{
+                    const opts = getGradeOptions(x.name, qual, x.tier);
+                    const target = opts.includes(val) ? val : (opts[0] || val);
+                    return {...x, targetGrade: target};
+                  }));
+                }}>
+                  {globalGradeOptions.map(g=><option key={g} value={g}>Grade {g}</option>)}
                 </select>
                 <p style={{fontSize:'0.75rem',color:'var(--text-muted)',marginTop:4}}>Applied to all subjects — override individually below</p>
               </div>
@@ -233,7 +244,7 @@ export default function Onboarding() {
                     <div style={{display:'flex',alignItems:'center',gap:6}}>
                       <span style={{fontSize:'0.78rem',color:'var(--text-muted)'}}>→</span>
                       <select className="select" style={{width:'auto'}} value={s.targetGrade||globalTarget} onChange={e=>updateSubj(s.id,'targetGrade',e.target.value)}>
-                        {gradeOptions.map(g=><option key={g} value={g}>{g}</option>)}
+                        {getGradeOptions(s.name, qual, s.tier).map(g=><option key={g} value={g}>{g}</option>)}
                       </select>
                     </div>
                   </div>

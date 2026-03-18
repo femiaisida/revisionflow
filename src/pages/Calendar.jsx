@@ -1,7 +1,8 @@
 // src/pages/Calendar.jsx
 import React, { useState, useEffect, useRef } from 'react'
+import Skeleton from '../components/Skeleton'
 import { useAuth } from '../context/AuthContext'
-import { completeSession } from '../utils/firestore'
+import { completeSession, completeTask } from '../utils/firestore'
 import { collection, getDocs, deleteDoc, doc, addDoc, serverTimestamp, writeBatch } from 'firebase/firestore'
 import { db } from '../firebase'
 import { getMonthDays, getWeekDays, sessionsForDay, downloadICS, parseICS, parseCSV } from '../utils/calendar'
@@ -30,6 +31,7 @@ export default function Calendar() {
   const [importParsed, setImportParsed] = useState([])
   const [importing,    setImporting]    = useState(false)
   const [clearing,     setClearing]     = useState(false)
+  const [loading,      setLoading]      = useState(true)
   const fileRef = useRef()
 
   useEffect(() => { loadSessions() }, [user])
@@ -39,31 +41,55 @@ export default function Calendar() {
     try {
       const snap = await getDocs(collection(db, 'users', user.uid, 'sessions'))
       // Use the Firestore document ID (snap.id) — not any field inside the document
-      setSessions(snap.docs.map(d => ({
-        _docId: d.id,          // always valid Firestore document ID
+      const sessionsData = snap.docs.map(d => ({
+        _docId: d.id,
         ...d.data(),
-        id: d.id,              // keep id consistent for other uses
-      })))
+        id: d.id,
+      }))
+      
+      const tSnap = await getDocs(collection(db, 'users', user.uid, 'tasks'))
+      const tasksData = tSnap.docs.filter(d => d.data().dueDate && !d.data().completed).map(d => ({
+        _docId: d.id,
+        ...d.data(),
+        id: d.id,
+        isTask: true,
+        date: d.data().dueDate,
+        title: `Task: ${d.data().title}`,
+        type: 'Task'
+      }))
+      
+      setSessions([...sessionsData, ...tasksData])
     } catch (err) {
       console.error('Failed to load sessions:', err)
+    } finally {
+      setLoading(false)
     }
   }
 
-  async function handleComplete(sessionId, notes) {
-    await completeSession(user.uid, sessionId, notes)
+  async function handleComplete(session, notes) {
+    if (session.isTask) {
+      await completeTask(user.uid, session.id, true)
+      toast.success('Task completed!')
+    } else {
+      await completeSession(user.uid, session.id, notes)
+      toast.success('Session completed! +50 XP 🎉')
+    }
     await loadSessions()
     setShowComplete(null)
-    toast.success('Session completed! +50 XP 🎉')
   }
 
   // ── Delete a single session ───────────────────────────────────────────────
   async function handleDeleteSession(session) {
     try {
       const docId = session._docId || session.id
-      if (!docId) { toast.error('Cannot delete: missing session ID'); return }
-      await deleteDoc(doc(db, 'users', user.uid, 'sessions', docId))
+      if (!docId) { toast.error('Cannot delete: missing ID'); return }
+      if (session.isTask) {
+        await deleteDoc(doc(db, 'users', user.uid, 'tasks', docId))
+      } else {
+        await deleteDoc(doc(db, 'users', user.uid, 'sessions', docId))
+      }
       setSessions(s => s.filter(x => (x._docId || x.id) !== docId))
-      toast.success('Session deleted')
+      toast.success(session.isTask ? 'Task deleted' : 'Session deleted')
     } catch (err) {
       toast.error('Delete failed: ' + err.message)
       console.error(err)
@@ -249,7 +275,7 @@ export default function Calendar() {
         <button className="btn btn-ghost btn-icon" onClick={()=>navigate(1)}><ChevronRight size={18}/></button>
         <button className="btn btn-ghost btn-sm" onClick={()=>setCurrent(new Date())}>Today</button>
         <span style={{fontSize:'0.75rem',color:'var(--text-muted)',marginLeft:'auto'}}>
-          {sessions.length} session{sessions.length!==1?'s':''}
+          {loading ? <Skeleton width={60} height={14} /> : `${sessions.length} session${sessions.length!==1?'s':''}`}
         </span>
       </div>
 
@@ -303,7 +329,11 @@ export default function Calendar() {
                   <Plus size={13}/> Add
                 </button>
               </div>
-              {selectedSessions.length===0 ? (
+              {loading ? (
+                <div style={{display:'flex',flexDirection:'column',gap:8}}>
+                  {[1,2,3].map(i => <Skeleton key={i} height={60} />)}
+                </div>
+              ) : selectedSessions.length===0 ? (
                 <div className="empty-state" style={{padding:'28px 0'}}>
                   <p style={{fontSize:'0.875rem'}}>No sessions on this day</p>
                   <button className="btn btn-primary btn-sm" onClick={()=>setShowAdd(true)}>Add session</button>
@@ -312,7 +342,7 @@ export default function Calendar() {
                 <div style={{display:'flex',flexDirection:'column',gap:8}}>
                   {selectedSessions.map(s=>(
                     <SessionCard key={s._docId||s.id} session={s}
-                      onComplete={()=>setShowComplete(s)}
+                      onComplete={()=>s.isTask ? handleComplete(s, '') : setShowComplete(s)}
                       onDelete={()=>handleDeleteSession(s)}/>
                   ))}
                 </div>
@@ -340,7 +370,7 @@ export default function Calendar() {
       {showComplete&&(
         <CompleteModal session={showComplete}
           onClose={()=>setShowComplete(null)}
-          onComplete={handleComplete}/>
+          onComplete={(notes)=>handleComplete(showComplete, notes)}/>
       )}
       {showGen&&(
         <CalendarGenerator
@@ -615,7 +645,7 @@ function CompleteModal({ session, onClose, onComplete }) {
         </div>
         <div style={{display:'flex',gap:8,justifyContent:'flex-end'}}>
           <button className="btn btn-secondary" onClick={onClose}>Cancel</button>
-          <button className="btn btn-primary" onClick={()=>onComplete(session._docId||session.id,notes)}>
+          <button className="btn btn-primary" onClick={()=>onComplete(notes)}>
             <CheckCircle2 size={15}/> Complete +50 XP
           </button>
         </div>

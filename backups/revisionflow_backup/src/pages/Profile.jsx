@@ -1,0 +1,191 @@
+// src/pages/Profile.jsx
+import React, { useState, useEffect } from 'react'
+import { useAuth } from '../context/AuthContext'
+import { collection, getDocs } from 'firebase/firestore'
+import { db } from '../firebase'
+import { getPaperAttempts, getMistakes } from '../utils/firestore'
+import { generateProgressReport } from '../utils/pdfReport'
+import { generateTimetablePDF } from '../utils/pdfTimetable'
+import { LEVELS, BADGES, SUBJECT_COLOURS } from '../data/subjects'
+import { gradeColour } from '../utils/calendar'
+import { Zap, Flame, Trophy, Copy, Check, Download, Loader } from 'lucide-react'
+import toast from 'react-hot-toast'
+
+export default function Profile() {
+  const { user, profile } = useAuth()
+  const [copied, setCopied] = useState(false)
+  const [exporting,  setExporting]  = useState(false)
+  const [timetabling, setTimetabling] = useState(false)
+
+  const lvl     = LEVELS[Math.min((profile?.level||1)-1, LEVELS.length-1)]
+  const nextLvl = LEVELS[Math.min((profile?.level||1),   LEVELS.length-1)]
+  const xpPct   = profile ? Math.min(100,((profile.xp||0)/(nextLvl?.xpRequired||100))*100) : 0
+  const unlockedBadges = (profile?.badges||[]).map(id=>BADGES.find(b=>b.id===id)).filter(Boolean)
+  const profileUrl = `${window.location.origin}/u/${profile?.username||user?.uid}`
+
+  function copyLink() {
+    navigator.clipboard.writeText(profileUrl)
+    setCopied(true)
+    setTimeout(()=>setCopied(false),2000)
+    toast.success('Profile link copied!')
+  }
+
+  async function handleExportPDF() {
+    if (!user) return
+    setExporting(true)
+    try {
+      // Fetch all data needed for the report
+      const [papers, mistakes, topicsSnap] = await Promise.all([
+        getPaperAttempts(user.uid, null),
+        getMistakes(user.uid, null),
+        getDocs(collection(db,'users',user.uid,'topics')),
+      ])
+      const topics = topicsSnap.docs.map(d=>({id:d.id,...d.data()}))
+      const examDates = profile?.examDates || []
+
+      const filename = await generateProgressReport(profile, papers, topics, mistakes, examDates)
+      toast.success(`Report exported: ${filename}`)
+    } catch(err) {
+      console.error(err)
+      toast.error('Export failed — try again')
+    } finally { setExporting(false) }
+  }
+
+  async function handleTimetablePDF() {
+    setTimetabling(true)
+    try {
+      const { collection: col, getDocs: gd } = await import('firebase/firestore')
+      const { db: fdb } = await import('../firebase')
+      const sessSnap = await gd(col(fdb, 'users', user.uid, 'sessions'))
+      const sessions = sessSnap.docs.map(d => ({ id: d.id, ...d.data() }))
+      await generateTimetablePDF(profile, sessions, profile?.examDates || [])
+      toast.success('Timetable PDF exported!')
+    } catch(err) {
+      console.error(err)
+      toast.error('Export failed — try again')
+    } finally { setTimetabling(false) }
+  }
+
+  return (
+    <div className="fade-in" style={{maxWidth:720,margin:'0 auto'}}>
+      {/* Header card */}
+      <div className="card accent-card" style={{marginBottom:20,padding:28,textAlign:'center'}}>
+        <div style={{width:72,height:72,borderRadius:'50%',background:'linear-gradient(135deg,#7c3aed,#a855f7)',display:'flex',alignItems:'center',justifyContent:'center',fontWeight:800,fontSize:'1.8rem',margin:'0 auto 14px'}}>
+          {(profile?.displayName||'U')[0].toUpperCase()}
+        </div>
+        <h2 style={{marginBottom:4}}>{profile?.displayName}</h2>
+        {profile?.username&&<p style={{fontSize:'0.875rem',marginBottom:14}}>@{profile.username}</p>}
+
+        {/* Stats row */}
+        <div style={{display:'flex',gap:20,justifyContent:'center',flexWrap:'wrap',marginBottom:18}}>
+          {[
+            {label:'XP', val:(profile?.xp||0).toLocaleString(), col:'var(--accent-light)'},
+            {label:'Streak', val:<><span className="streak-fire">🔥</span>{profile?.streak||0}</>, col:'var(--warning)'},
+            {label:'Level', val:`Lv.${profile?.level||1}`, col:'var(--purple-300)'},
+            {label:'Badges', val:unlockedBadges.length, col:'var(--success)'},
+          ].map(s=>(
+            <div key={s.label} style={{textAlign:'center'}}>
+              <div style={{fontSize:'1.4rem',fontWeight:800,color:s.col,display:'flex',alignItems:'center',gap:4}}>{s.val}</div>
+              <div style={{fontSize:'0.72rem',color:'var(--text-muted)'}}>{s.label}</div>
+            </div>
+          ))}
+        </div>
+
+        {/* XP bar */}
+        <div className="progress-bar" style={{maxWidth:360,margin:'0 auto 6px'}}>
+          <div className="progress-fill xp-bar-fill" style={{width:`${xpPct}%`}}/>
+        </div>
+        <div style={{fontSize:'0.75rem',color:'var(--text-muted)',marginBottom:16}}>
+          {profile?.xp||0} / {nextLvl?.xpRequired} XP to Level {(profile?.level||1)+1} — {lvl?.title}
+        </div>
+
+        {/* Action buttons */}
+        <div style={{display:'flex',gap:8,justifyContent:'center',flexWrap:'wrap'}}>
+          <button className="btn btn-secondary btn-sm" onClick={copyLink}>
+            {copied?<><Check size={13}/> Copied!</>:<><Copy size={13}/> Share profile</>}
+          </button>
+          <button className="btn btn-primary btn-sm" onClick={handleExportPDF} disabled={exporting}>
+            {exporting
+              ? <><Loader size={13} style={{animation:'spin 0.7s linear infinite'}}/> Generating…</>
+              : <><Download size={13}/> Progress report</>
+            }
+          </button>
+          <button className="btn btn-secondary btn-sm" onClick={handleTimetablePDF} disabled={timetabling}>
+            {timetabling
+              ? <><Loader size={13} style={{animation:'spin 0.7s linear infinite'}}/> Generating…</>
+              : <><Download size={13}/> Timetable PDF</>
+            }
+          </button>
+        </div>
+      </div>
+
+      {/* Subjects */}
+      <div className="card" style={{marginBottom:20}}>
+        <h4 style={{marginBottom:14}}>Your subjects</h4>
+        {(profile?.subjects||[]).length===0 ? (
+          <p>No subjects added. Go to Settings to add subjects.</p>
+        ) : (
+          <div style={{display:'flex',flexDirection:'column',gap:7}}>
+            {(profile?.subjects||[]).map(s=>(
+              <div key={s.name} style={{display:'flex',alignItems:'center',justifyContent:'space-between',padding:'9px 14px',background:'var(--bg-surface)',borderRadius:'var(--radius-md)',border:'1px solid var(--border)'}}>
+                <div style={{display:'flex',alignItems:'center',gap:8}}>
+                  <div style={{width:10,height:10,borderRadius:'50%',background:SUBJECT_COLOURS[s.name]||'var(--accent)',flexShrink:0}}/>
+                  <span style={{fontWeight:600}}>{s.name}</span>
+                  <span className="badge badge-grey">{s.board}</span>
+                  {s.tier&&s.tier!=='N/A'&&<span className="badge badge-purple">{s.tier}</span>}
+                </div>
+                <div style={{display:'flex',gap:10,alignItems:'center'}}>
+                  {profile?.startingGrades?.[s.name]&&(
+                    <span style={{fontSize:'0.75rem',color:'var(--text-muted)'}}>
+                      Start: <strong>{profile.startingGrades[s.name]}</strong>
+                    </span>
+                  )}
+                  {s.currentGrade&&(
+                    <span style={{fontWeight:800,color:gradeColour(s.currentGrade),fontSize:'1rem'}}>{s.currentGrade}</span>
+                  )}
+                  <span style={{color:'var(--text-muted)'}}>→</span>
+                  <span style={{fontWeight:800,color:'var(--success)',fontSize:'1rem'}}>{s.targetGrade||profile?.targetGrades?.[s.name]||9}</span>
+                </div>
+              </div>
+            ))}
+          </div>
+        )}
+      </div>
+
+      {/* Badges */}
+      <div className="card">
+        <div style={{display:'flex',alignItems:'center',justifyContent:'space-between',marginBottom:12}}>
+          <h4>Badges ({unlockedBadges.length}/{BADGES.length})</h4>
+          <span style={{fontSize:'0.78rem',color:'var(--text-muted)'}}>
+            {BADGES.length - unlockedBadges.length} remaining
+          </span>
+        </div>
+        <p style={{fontSize:'0.8rem',marginBottom:14}}>Complete sessions, maintain streaks, and hit milestones to earn badges and XP</p>
+        <div style={{display:'grid',gridTemplateColumns:'repeat(auto-fill,minmax(130px,1fr))',gap:8}}>
+          {BADGES.map(b=>{
+            const unlocked = (profile?.badges||[]).includes(b.id)
+            return (
+              <div key={b.id} style={{
+                padding:10,borderRadius:'var(--radius-md)',textAlign:'center',
+                border:`1px solid ${unlocked?'var(--accent)':'var(--border)'}`,
+                background:unlocked?'rgba(124,58,237,0.1)':'var(--bg-surface)',
+                opacity:unlocked?1:0.4,
+                transition:'all 0.2s',
+              }}
+                title={b.desc}
+                onMouseEnter={e=>e.currentTarget.style.transform='translateY(-2px)'}
+                onMouseLeave={e=>e.currentTarget.style.transform='translateY(0)'}>
+                <div style={{fontSize:'1.5rem',marginBottom:4}}>{b.icon}</div>
+                <div style={{fontWeight:600,fontSize:'0.78rem',lineHeight:1.2}}>{b.name}</div>
+                <div style={{fontSize:'0.68rem',color:'var(--text-muted)',marginTop:3,lineHeight:1.3}}>{b.desc}</div>
+                {unlocked&&<div style={{marginTop:4,fontSize:'0.68rem',color:'var(--accent-light)',fontWeight:600}}>+{b.xp} XP ✓</div>}
+              </div>
+            )
+          })}
+        </div>
+      </div>
+
+      <style>{`@keyframes spin{to{transform:rotate(360deg)}}`}</style>
+    </div>
+  )
+}

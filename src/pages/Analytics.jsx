@@ -1,5 +1,6 @@
 // src/pages/Analytics.jsx
 import React, { useState, useEffect, useMemo } from 'react'
+import Skeleton from '../components/Skeleton'
 import { useAuth } from '../context/AuthContext'
 import { collection, getDocs } from 'firebase/firestore'
 import { db } from '../firebase'
@@ -155,8 +156,6 @@ export default function Analytics() {
     return 'rgba(124,58,237,0.95)'
   }
 
-  if (loading) return <div className="loading-center"><div className="spinner"/></div>
-
   return (
     <div className="fade-in">
       <div style={{display:'flex',alignItems:'center',justifyContent:'space-between',marginBottom:24,flexWrap:'wrap',gap:12}}>
@@ -181,8 +180,12 @@ export default function Analytics() {
         ].map(s=>(
           <div key={s.label} className="card" style={{textAlign:'center',padding:'14px 10px'}}>
             <div style={{color:s.c,marginBottom:4}}>{s.icon}</div>
-            <div style={{fontWeight:800,fontSize:'1.4rem',color:s.c}}>{s.val}</div>
-            <div style={{fontSize:'0.7rem',color:'var(--text-muted)',marginTop:2}}>{s.label}</div>
+            <div style={{fontWeight:800,fontSize:'1.4rem',color:s.c}}>
+              {loading ? <Skeleton height={28} width={60} style={{margin:'0 auto'}} /> : s.val}
+            </div>
+            <div style={{fontSize:'0.7rem',color:'var(--text-muted)',marginTop:2}}>
+              {loading ? <Skeleton height={12} width={80} style={{margin:'4px auto 0'}} /> : s.label}
+            </div>
           </div>
         ))}
       </div>
@@ -190,7 +193,9 @@ export default function Analytics() {
       {/* ── Daily study hours ── */}
       <div className="card" style={{marginBottom:16}}>
         <h4 style={{marginBottom:14}}>Daily Study Hours</h4>
-        {dailyData.every(d=>d.total===0) ? (
+        {loading ? (
+          <Skeleton height={200} />
+        ) : dailyData.every(d=>d.total===0) ? (
           <div className="empty-state" style={{padding:'20px 0'}}><p>No completed sessions in this period</p></div>
         ) : (
           <ResponsiveContainer width="100%" height={200}>
@@ -205,11 +210,12 @@ export default function Analytics() {
         )}
       </div>
 
-      {/* ── Subject distribution + Grade trajectory ── */}
       <div className="grid-2" style={{gap:16,marginBottom:16}}>
         <div className="card">
           <h4 style={{marginBottom:14}}>Subject Distribution</h4>
-          {subjectDist.length === 0 ? (
+          {loading ? (
+            <Skeleton height={200} />
+          ) : subjectDist.length === 0 ? (
             <div className="empty-state" style={{padding:'20px 0'}}><p>No sessions yet</p></div>
           ) : (
             <>
@@ -239,11 +245,15 @@ export default function Analytics() {
         <div className="card">
           <div style={{display:'flex',alignItems:'center',justifyContent:'space-between',marginBottom:14,flexWrap:'wrap',gap:8}}>
             <h4>Grade Trajectory</h4>
-            <select className="select" style={{fontSize:'0.78rem',padding:'3px 6px'}} value={gradeSub} onChange={e=>setGradeSub(e.target.value)}>
-              {subjects.map(s=><option key={s} value={s}>{s}</option>)}
-            </select>
+            {!loading && (
+              <select className="select" style={{fontSize:'0.78rem',padding:'3px 6px'}} value={gradeSub} onChange={e=>setGradeSub(e.target.value)}>
+                {subjects.map(s=><option key={s} value={s}>{s}</option>)}
+              </select>
+            )}
           </div>
-          {gradeTrajectory.length < 2 ? (
+          {loading ? (
+            <Skeleton height={200} />
+          ) : gradeTrajectory.length < 2 ? (
             <div className="empty-state" style={{padding:'20px 0'}}><p>Log at least 2 papers for {gradeSub} to see trajectory</p></div>
           ) : (
             <ResponsiveContainer width="100%" height={200}>
@@ -262,6 +272,9 @@ export default function Analytics() {
       {/* ── Consistency heatmap ── */}
       <div className="card" style={{marginBottom:16}}>
         <h4 style={{marginBottom:14}}>Revision Consistency — Last 12 Weeks</h4>
+        {loading ? (
+          <Skeleton height={80} />
+        ) : (
         <div style={{overflowX:'auto'}}>
           <div style={{display:'grid',gridTemplateColumns:'repeat(84,1fr)',gap:2,minWidth:500}}>
             {heatmapData.map((d,i)=>(
@@ -282,6 +295,7 @@ export default function Analytics() {
             <span>More</span>
           </div>
         </div>
+        )}
       </div>
 
       {/* ── Personal records ── */}
@@ -298,7 +312,9 @@ export default function Analytics() {
           ].map(r=>(
             <div key={r.label} style={{padding:'10px 12px',background:'var(--bg-surface)',borderRadius:'var(--radius-md)',border:'1px solid var(--border)'}}>
               <div style={{fontSize:'0.68rem',color:'var(--text-muted)',marginBottom:3}}>{r.label}</div>
-              <div style={{fontWeight:700,fontSize:'0.95rem'}}>{r.val}</div>
+              <div style={{fontWeight:700,fontSize:'0.95rem'}}>
+                {loading ? <Skeleton height={20} width={60} /> : r.val}
+              </div>
             </div>
           ))}
         </div>

@@ -24,6 +24,7 @@ export default function Settings() {
   })
   const [subjects, setSubjects] = useState(profile?.subjects||[])
   const [newSubj, setNewSubj] = useState({ name:'', board:'AQA', tier:'Higher', currentGrade:'', targetGrade:'9' })
+  const [newQualFlow, setNewQualFlow] = useState(null)
 
   const [qual, setQual] = useState(profile?.qualification || 'GCSE')
   // Keep qual in sync with profile
@@ -80,27 +81,21 @@ export default function Settings() {
           <div className="form-group" style={{marginBottom:0}}><label className="label">Email</label><input className="input" value={user?.email||''} disabled style={{opacity:0.6}}/></div>
           <div className="form-group" style={{marginBottom:0}}>
             <label className="label">Qualification</label>
-            <select className="select" value={qual} onChange={e=>{setQual(e.target.value); setTab('subjects')}}>
-              <option value="GCSE">GCSE</option>
-              <option value="A-Level">A-Level</option>
-              <option value="BTEC-L2">BTEC Tech Award (Level 2)</option>
-              <option value="BTEC-L3">BTEC National (Level 3)</option>
-            </select>
-          </div>
-          <div className="form-group" style={{marginBottom:0}}>
-            <label className="label">Qualification</label>
             <div style={{display:'flex',gap:'0.5rem',alignItems:'center',flexWrap:'wrap'}}>
               <span style={{fontWeight:600,color:'var(--text-primary)'}}>{profile?.qualification||'GCSE'}</span>
               {(!profile?.qualification||profile?.qualification==='GCSE')&&(
-                <button className="btn btn-secondary btn-sm" onClick={async()=>{if(window.confirm('Switch to A-Level? Please update your subjects after.')){await updateUserProfile(user.uid,{qualification:'A-Level'});await refreshProfile();setQual('A-Level');toast.success('Switched to A-Level — update your subjects!');setTab('subjects')}}}>Switch to A-Level →</button>
+                <button className="btn btn-secondary btn-sm" onClick={() => setNewQualFlow('A-Level')}>Switch to A-Level →</button>
               )}
               {profile?.qualification==='A-Level'&&(
-                <button className="btn btn-secondary btn-sm" onClick={async()=>{if(window.confirm('Switch back to GCSE?')){await updateUserProfile(user.uid,{qualification:'GCSE'});await refreshProfile();setQual('GCSE');toast.success('Switched to GCSE')}}}>Switch to GCSE →</button>
+                <button className="btn btn-secondary btn-sm" onClick={() => setNewQualFlow('GCSE')}>Switch to GCSE →</button>
               )}
               {(profile?.qualification==='GCSE'||!profile?.qualification)&&(
-                <button className="btn btn-secondary btn-sm" onClick={async()=>{if(window.confirm('Switch to BTEC?')){await updateUserProfile(user.uid,{qualification:'BTEC-L3'});await refreshProfile();setQual('BTEC-L3');toast.success('Switched to BTEC National')}}}>Switch to BTEC →</button>
+                <button className="btn btn-secondary btn-sm" onClick={() => setNewQualFlow('BTEC-L3')}>Switch to BTEC →</button>
               )}
             </div>
+            <p style={{fontSize:'0.75rem',color:'var(--text-muted)',marginTop:8}}>
+              Switching qualifications will open a setup flow to pick your new subjects.
+            </p>
           </div>
           <div style={{display:'flex',gap:10,justifyContent:'flex-end'}}>
             <button className="btn btn-primary" onClick={saveProfile} disabled={saving}>{saving?'Saving…':'Save changes'}</button>
@@ -214,6 +209,118 @@ export default function Settings() {
           <button className="btn btn-danger" onClick={logout}>Sign out</button>
         </div>
       )}
+
+      {newQualFlow && (
+        <QualChangeModal 
+          user={user} 
+          profile={profile} 
+          newQual={newQualFlow} 
+          onClose={() => setNewQualFlow(null)} 
+          onComplete={async (newSubjects) => {
+            setSaving(true)
+            await updateUserProfile(user.uid, { qualification: newQualFlow, subjects: newSubjects })
+            await refreshProfile()
+            setQual(newQualFlow)
+            setSubjects(newSubjects)
+            setNewQualFlow(null)
+            setTab('subjects')
+            toast.success(`Switched to ${newQualFlow}`)
+            setSaving(false)
+          }} 
+        />
+      )}
+    </div>
+  )
+}
+
+// ── Qualification Change Modal ────────────────────────────────────────────────
+function QualChangeModal({ user, profile, newQual, onClose, onComplete }) {
+  const [step, setStep] = useState(1) // 1: Warning, 2: Subjects
+  const [subjects, setSubjects] = useState([])
+  const [newSubj, setNewSubj] = useState({ name:'', board:'AQA', tier:'Higher', currentGrade:'', targetGrade:'9' })
+
+  const subjectList = getSubjectList(newQual)
+
+  function addSubj() {
+    if (!newSubj.name) return
+    setSubjects(s => [...s, { ...newSubj, id: Date.now().toString() }])
+    setNewSubj({ name:'', board:'AQA', tier:'Higher', currentGrade:'', targetGrade:'9' })
+  }
+
+  return (
+    <div className="modal-overlay" onClick={onClose}>
+      <div className="modal" style={{maxWidth:600}} onClick={e=>e.stopPropagation()}>
+        <div className="modal-header">
+          <span className="modal-title">Switch to {newQual}</span>
+          <button className="btn btn-ghost btn-icon" onClick={onClose}><X size={18}/></button>
+        </div>
+
+        {step === 1 && (
+          <div>
+            <p style={{marginBottom:16}}>
+              You are switching your qualification to <strong>{newQual}</strong>.
+            </p>
+            <div style={{padding:12, background:'var(--bg-surface)', border:'1px solid var(--danger)', borderRadius:8, marginBottom:16}}>
+              <p style={{color:'var(--danger)', fontWeight:600, fontSize:'0.9rem', marginBottom:4}}>Action required</p>
+              <p style={{fontSize:'0.85rem'}}>
+                Your current subjects will be replaced. You need to pick your new {newQual} subjects to continue.
+              </p>
+            </div>
+            <div style={{display:'flex', gap:8, justifyContent:'flex-end'}}>
+              <button className="btn btn-secondary" onClick={onClose}>Cancel</button>
+              <button className="btn btn-primary" onClick={() => setStep(2)}>Continue</button>
+            </div>
+          </div>
+        )}
+
+        {step === 2 && (
+          <div>
+            <p style={{fontSize:'0.85rem', marginBottom:16}}>
+              Select your new subjects for {newQual}.
+            </p>
+            
+            <div style={{display:'flex',flexDirection:'column',gap:8,marginBottom:16}}>
+              {subjects.map((s,i)=>(
+                <div key={s.id} style={{display:'flex',alignItems:'center',gap:8,padding:'8px 12px',background:'var(--bg-surface)',borderRadius:'var(--radius-md)',border:'1px solid var(--border)'}}>
+                  <span style={{flex:1,fontWeight:500,fontSize:'0.875rem'}}>{s.name}</span>
+                  <span className="badge badge-grey">{s.board}</span>
+                  <span className="badge badge-grey">{s.tier}</span>
+                  <div style={{display:'flex',gap:4,alignItems:'center'}}>
+                    <select style={{padding:'2px 4px',borderRadius:4,border:'1px solid var(--border)',background:'var(--bg-input)',color:'var(--text-primary)',fontSize:'0.82rem'}} value={s.targetGrade} onChange={e=>setSubjects(ss=>ss.map((x,j)=>j===i?{...x,targetGrade:e.target.value}:x))}>
+                      {getGradeOptions(s.name,newQual,s.tier).map(g=><option key={g} value={g}>{g}</option>)}
+                    </select>
+                  </div>
+                  <button className="btn btn-ghost btn-icon btn-sm" style={{color:'var(--danger)'}} onClick={()=>setSubjects(ss=>ss.filter((_,j)=>j!==i))}><Trash2 size={14}/></button>
+                </div>
+              ))}
+            </div>
+
+            <div style={{padding:12,background:'var(--bg-surface)',borderRadius:'var(--radius-md)',border:'1px solid var(--border)',display:'flex',flexDirection:'column',gap:10,marginBottom:16}}>
+              <div className="grid-2" style={{gap:8}}>
+                <select className="select" value={newSubj.name} onChange={e=>setNewSubj(s=>({...s,name:e.target.value}))}><option value="">Subject…</option>{subjectList.map(s=><option key={s} value={s}>{s}</option>)}</select>
+                <select className="select" value={newSubj.board} onChange={e=>setNewSubj(s=>({...s,board:e.target.value}))}>{EXAM_BOARDS.map(b=><option key={b} value={b}>{b}</option>)}</select>
+                <select className="select" value={newSubj.tier} onChange={e=>setNewSubj(s=>({...s,tier:e.target.value}))}>
+                  <option value="Higher">Higher</option>
+                  <option value="Foundation">Foundation</option>
+                  <option value="N/A">N/A</option>
+                </select>
+              </div>
+              <div style={{display:'flex',gap:8,alignItems:'center'}}>
+                <label style={{fontSize:'0.78rem',color:'var(--text-muted)'}}>Target:</label>
+                <select className="select" style={{flex:1}} value={newSubj.targetGrade} onChange={e=>setNewSubj(s=>({...s,targetGrade:e.target.value}))}>
+                  {getGradeOptions(newSubj.name,newQual,newSubj.tier).map(g=><option key={g} value={g}>{g}</option>)}
+                </select>
+              </div>
+              <button className="btn btn-secondary btn-sm" onClick={addSubj} disabled={!newSubj.name}><Plus size={14}/> Add subject</button>
+            </div>
+
+            <div style={{display:'flex', gap:8, justifyContent:'flex-end'}}>
+              <button className="btn btn-secondary" onClick={() => setStep(1)}>Back</button>
+              <button className="btn btn-primary" onClick={() => onComplete(subjects)} disabled={subjects.length===0}>Complete setup</button>
+            </div>
+          </div>
+        )}
+      </div>
     </div>
   )
 }

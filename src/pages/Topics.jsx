@@ -17,6 +17,7 @@ const CONF_COLOURS = ['','var(--danger)','#f97316','var(--warning)','#84cc16','v
 export default function Topics() {
   const { user, profile } = useAuth()
   const [topics, setTopics] = useState([])
+  const [allTopics, setAllTopics] = useState([])
   const [selSubj, setSelSubj] = useState('')
   const [showAdd, setShowAdd] = useState(false)
   const [aiAdvice, setAiAdvice] = useState({})
@@ -36,6 +37,7 @@ export default function Topics() {
   async function loadTopics() {
     const snap = await getDocs(collection(db,'users',user.uid,'topics'))
     const all = snap.docs.map(d=>({id:d.id,...d.data()}))
+    setAllTopics(all)
     setTopics(all.filter(t=>t.subjectId===selSubj))
   }
 
@@ -73,6 +75,7 @@ export default function Topics() {
   async function updateConf(topicId, conf) {
     await updateDoc(doc(db,'users',user.uid,'topics',topicId), { confidence:conf, updatedAt:serverTimestamp() })
     setTopics(ts=>ts.map(t=>t.id===topicId?{...t,confidence:conf}:t))
+    setAllTopics(ts=>ts.map(t=>t.id===topicId?{...t,confidence:conf}:t))
   }
 
   async function handleDelete(id) {
@@ -134,6 +137,7 @@ export default function Topics() {
             <div className="tabs" style={{padding:3}}>
               <button className={`tab${view==='list'?' active':''}`} onClick={()=>setView('list')}><BarChart2 size={14}/> List</button>
               <button className={`tab${view==='heat'?' active':''}`} onClick={()=>setView('heat')}><Grid size={14}/> Heatmap</button>
+              <button className={`tab${view==='priority'?' active':''}`} onClick={()=>setView('priority')}><Star size={14} style={{marginLeft: 4}}/> Priority</button>
             </div>
           </div>
 
@@ -146,6 +150,9 @@ export default function Topics() {
                 <button className="btn btn-secondary" onClick={()=>setShowAdd(true)}>Add manually</button>
               </div>
             </div>
+          ) : view==='priority' ? (
+            // ── Priority view ──
+            <PriorityList topics={allTopics} profile={profile} />
           ) : view==='heat' ? (
             // ── Heatmap view ──
             <div>

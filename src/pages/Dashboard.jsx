@@ -1,5 +1,7 @@
 // src/pages/Dashboard.jsx
 import React, { useEffect, useState } from 'react'
+import Skeleton from '../components/Skeleton'
+import AIOutput from '../components/AIOutput'
 import TooltipTour from '../components/TooltipTour'
 import { Link } from 'react-router-dom'
 import { useAuth } from '../context/AuthContext'
@@ -25,9 +27,11 @@ export default function Dashboard() {
   const [recentPapers,  setRecentPapers]  = useState([])
   const [aiAdvice,      setAiAdvice]      = useState('')
   const [aiLoading,     setAiLoading]     = useState(false)
+  const [dataLoading,   setDataLoading]   = useState(true)
 
   useEffect(() => {
     if (!user) return
+    setDataLoading(true)
     Promise.all([
       getSessions(user.uid, { limit:50 }),
       getTasks(user.uid),
@@ -48,6 +52,7 @@ export default function Dashboard() {
         return db2 - da
       })
       setRecentPapers(sorted.slice(0,20))
+      setDataLoading(false)
     })
     loadDailyBriefing()
   }, [user])
@@ -174,8 +179,12 @@ export default function Dashboard() {
         ].map(s=>(
           <div key={s.label} className="card stat-card">
             <div style={{fontSize:'0.72rem',color:'var(--text-muted)',fontWeight:600,textTransform:'uppercase',letterSpacing:'0.05em'}}>{s.label}</div>
-            <div style={{fontSize:'1.4rem',fontWeight:800,color:s.col,display:'flex',alignItems:'center',gap:5}}>{s.val}</div>
-            <div style={{fontSize:'0.75rem',color:'var(--text-muted)'}}>{s.sub}</div>
+            <div style={{fontSize:'1.4rem',fontWeight:800,color:s.col,display:'flex',alignItems:'center',gap:5}}>
+              {dataLoading ? <Skeleton width={60} height={24} /> : s.val}
+            </div>
+            <div style={{fontSize:'0.75rem',color:'var(--text-muted)'}}>
+              {dataLoading ? <Skeleton width={80} height={12} style={{marginTop:4}} /> : s.sub}
+            </div>
           </div>
         ))}
       </div>
@@ -196,7 +205,11 @@ export default function Dashboard() {
             <h4 style={{display:'flex',alignItems:'center',gap:7}}><Calendar size={17} color="var(--accent-light)"/> Today</h4>
             <Link to="/calendar" className="btn btn-ghost btn-sm">View all</Link>
           </div>
-          {todaySessions.length===0 ? (
+          {dataLoading ? (
+            <div style={{display:'flex',flexDirection:'column',gap:7}}>
+              {[1,2,3].map(i => <Skeleton key={i} height={48} />)}
+            </div>
+          ) : todaySessions.length===0 ? (
             <div className="empty-state" style={{padding:'20px 0'}}>
               <Calendar size={28} style={{opacity:0.3}}/>
               <p style={{fontSize:'0.875rem'}}>No sessions today</p>
@@ -226,9 +239,13 @@ export default function Dashboard() {
             <span style={{fontSize:'0.68rem',color:'var(--text-muted)',marginLeft:'auto'}}>Updates daily</span>
           </div>
           {aiLoading ? (
-            <div style={{display:'flex',alignItems:'center',justifyContent:'center',minHeight:80}}><div className="spinner"/></div>
+            <div style={{display:'flex',flexDirection:'column',gap:8}}>
+              <Skeleton height={14} width="90%" />
+              <Skeleton height={14} width="100%" />
+              <Skeleton height={14} width="80%" />
+            </div>
           ) : aiAdvice ? (
-            <p style={{fontSize:'0.85rem',lineHeight:1.7,whiteSpace:'pre-wrap'}}>{aiAdvice}</p>
+            <AIOutput text={aiAdvice} label="AI Briefing" />
           ) : (
             <p style={{fontSize:'0.85rem',color:'var(--text-muted)'}}>Loading your daily briefing…</p>
           )}
@@ -271,7 +288,11 @@ export default function Dashboard() {
             <h4 style={{display:'flex',alignItems:'center',gap:7}}><CheckSquare size={17} color="var(--accent-light)"/> Tasks</h4>
             <Link to="/tasks" className="btn btn-ghost btn-sm">All</Link>
           </div>
-          {tasks.length===0 ? (
+          {dataLoading ? (
+            <div style={{display:'flex',flexDirection:'column',gap:6}}>
+              {[1,2,3].map(i => <Skeleton key={i} height={42} />)}
+            </div>
+          ) : tasks.length===0 ? (
             <div className="empty-state" style={{padding:'20px 0'}}>
               <p style={{fontSize:'0.875rem'}}>No pending tasks</p>
               <Link to="/tasks" className="btn btn-primary btn-sm">Add task</Link>
@@ -299,7 +320,12 @@ export default function Dashboard() {
             <h4 style={{display:'flex',alignItems:'center',gap:7}}><TrendingUp size={17} color="var(--accent-light)"/> Recent Papers</h4>
             <Link to="/papers" className="btn btn-ghost btn-sm">All</Link>
           </div>
-          {recentPapers.length===0 ? (
+          {dataLoading ? (
+            <div style={{display:'flex',flexDirection:'column',gap:6}}>
+              <Skeleton height={80} style={{marginBottom:6}} />
+              {[1,2,3].map(i => <Skeleton key={i} height={46} />)}
+            </div>
+          ) : recentPapers.length===0 ? (
             <div className="empty-state" style={{padding:'20px 0'}}>
               <p style={{fontSize:'0.875rem'}}>No papers logged yet</p>
               <Link to="/papers" className="btn btn-primary btn-sm">Log a paper</Link>

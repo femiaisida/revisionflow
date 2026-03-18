@@ -62,20 +62,23 @@ export default function Layout() {
 
       <aside className={`sidebar ${open?'open':''}`} style={{width:collapsed?52:undefined,minWidth:collapsed?52:undefined,transition:'width 0.2s,min-width 0.2s',overflow:'hidden'}}>
         {/* Logo + collapse toggle */}
-        <div style={{display:'flex',alignItems:'center',gap:8,marginBottom:20,padding:'0 4px'}}>
-          <div style={{width:32,height:32,borderRadius:8,background:'linear-gradient(135deg,#7c3aed,#a855f7)',display:'flex',alignItems:'center',justifyContent:'center',flexShrink:0}}>
-            <Zap size={18} color="#fff"/>
-          </div>
+        <div style={{display:'flex',alignItems:'center',gap:8,marginBottom:20,padding:'0 4px', justifyContent: collapsed ? 'center' : 'flex-start'}}>
           {!collapsed && (
-            <span style={{fontWeight:800,fontSize:'1.05rem',letterSpacing:'-0.02em',flex:1}}>
-              Revision<span style={{color:'var(--accent-light)'}}>Flow</span>
-            </span>
+            <>
+              <div style={{width:32,height:32,borderRadius:8,background:'linear-gradient(135deg,#7c3aed,#a855f7)',display:'flex',alignItems:'center',justifyContent:'center',flexShrink:0}}>
+                <Zap size={18} color="#fff"/>
+              </div>
+              <span style={{fontWeight:800,fontSize:'1.05rem',letterSpacing:'-0.02em',flex:1}}>
+                Revision<span style={{color:'var(--accent-light)'}}>Flow</span>
+              </span>
+            </>
           )}
           <button
             onClick={()=>setCollapsed(x=>!x)}
             title={collapsed?'Expand sidebar':'Collapse sidebar'}
             style={{
-              marginLeft:'auto',flexShrink:0,
+              marginLeft: collapsed ? 0 : 'auto',
+              flexShrink:0,
               background:'var(--bg-surface)',
               border:'1px solid var(--border)',
               borderRadius:6,cursor:'pointer',

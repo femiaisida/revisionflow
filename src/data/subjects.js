@@ -79,7 +79,12 @@ export const GRADE_OPTIONS = {
 }
 
 export function getGradeOptions(subjectName, qualification, tier) {
-  if (!subjectName) return GRADE_OPTIONS.GCSE
+  if (!subjectName) {
+    if (qualification === 'A-Level') return GRADE_OPTIONS['A-Level']
+    if (qualification === 'BTEC-L3') return GRADE_OPTIONS['BTEC-L3']
+    if (qualification === 'BTEC-L2') return GRADE_OPTIONS['BTEC-L2']
+    return GRADE_OPTIONS.GCSE
+  }
   if (subjectName.startsWith('BTEC National')) return GRADE_OPTIONS['BTEC-L3']
   if (subjectName.startsWith('BTEC Tech Award')) return GRADE_OPTIONS['BTEC-L2']
   if (subjectName.includes('Combined Science')) {

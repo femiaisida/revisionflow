@@ -26,8 +26,10 @@ export default function ExamDates() {
   // Auto-lookup when subject/board/tier changes in single-subject panel
   useEffect(() => {
     if (!autoSubj.name) { setAutoMatches([]); return }
-    setAutoMatches(getExamDates(autoSubj.name, autoSubj.board, autoSubj.tier))
-  }, [autoSubj.name, autoSubj.board, autoSubj.tier])
+    const qualMap = { 'BTEC-L2': 'Level 2', 'BTEC-L3': 'Level 3', 'Both': null }
+    const levelMatch = qualMap[profile?.qualification] !== undefined ? qualMap[profile?.qualification] : profile?.qualification
+    setAutoMatches(getExamDates(autoSubj.name, autoSubj.board, autoSubj.tier, levelMatch))
+  }, [autoSubj.name, autoSubj.board, autoSubj.tier, profile?.qualification])
 
   async function handleAutoFillAdd() {
     if (!autoMatches.length) return
@@ -205,6 +207,7 @@ export default function ExamDates() {
       {showFillAll && (
         <FillAllModal
           subjects={subjects}
+          qual={profile?.qualification}
           onClose={() => setShowFillAll(false)}
           onConfirm={async (newDates) => {
             const existing = profile?.examDates || []
@@ -256,10 +259,12 @@ export default function ExamDates() {
 }
 
 // ── Fill All Modal ────────────────────────────────────────────────────────────
-function FillAllModal({ subjects, onClose, onConfirm }) {
+function FillAllModal({ subjects, qual, onClose, onConfirm }) {
   // Build initial list: all exam dates for all user subjects using their profile board
+  const qualMap = { 'BTEC-L2': 'Level 2', 'BTEC-L3': 'Level 3', 'Both': null }
+  const levelMatch = qualMap[qual] !== undefined ? qualMap[qual] : qual
   const initialRows = subjects.flatMap(s => {
-    const matches = getExamDates(s.name, s.board, s.tier||'N/A')
+    const matches = getExamDates(s.name, s.board, s.tier||'N/A', levelMatch)
     return matches.map(m => ({
       id:        `fill-${s.name}-P${m.paper}-${Math.random().toString(36).slice(2)}`,
       subject:   m.subject,
@@ -275,7 +280,7 @@ function FillAllModal({ subjects, onClose, onConfirm }) {
   const [rows, setRows] = useState(initialRows)
 
   const notFound = subjects.filter(s =>
-    !getExamDates(s.name, s.board, s.tier||'N/A').length
+    !getExamDates(s.name, s.board, s.tier||'N/A', levelMatch).length
   )
 
   function toggleRow(id) {

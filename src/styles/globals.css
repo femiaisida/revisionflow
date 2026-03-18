@@ -354,3 +354,13 @@ tr:hover td { background: var(--bg-hover); }
 .conf-dot.filled-3 { background: #eab308; border-color: #eab308; }
 .conf-dot.filled-4 { background: #84cc16; border-color: #84cc16; }
 .conf-dot.filled-5 { background: var(--success); border-color: var(--success); }
+
+/* Skeleton */
+@keyframes skeletonPulse {
+  0% { opacity: 0.6; }
+  50% { opacity: 1; }
+  100% { opacity: 0.6; }
+}
+.skeleton-pulse {
+  animation: skeletonPulse 1.5s ease-in-out infinite;
+}

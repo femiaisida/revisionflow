@@ -8,7 +8,7 @@ import { analyseWeaknesses } from '../utils/ai'
 import { gradeColour } from '../utils/calendar'
 import { getPaperSpec, getBoundaries, calculateGradeFromBoundaries, AVAILABLE_YEARS, GRADE_BOUNDARIES } from '../data/paperDatabase'
 import { isTiered } from '../data/examDates2026'
-import { SUBJECT_COLOURS } from '../data/subjects'
+import { SUBJECT_COLOURS, getGradeOptions } from '../data/subjects'
 import toast from 'react-hot-toast'
 import { LineChart, Line, XAxis, YAxis, Tooltip, ResponsiveContainer, CartesianGrid } from 'recharts'
 import { Plus, X, Brain, TrendingUp, FileText, Trash2, Edit2, Check } from 'lucide-react'
@@ -285,7 +285,9 @@ function AddAttemptModal({ user, profile, structures, onClose, onSave }) {
     const score   = useQ ? totalScored : parseInt(form.score)
     const max     = parseInt(form.maxMarks)
     const pct     = Math.round((score/max)*100)
-    const bounds  = useCustom ? { boundaries:customBoundaries.map(Number), maxMarks:max } : autoBoundary
+    const qual    = profile?.qualification || 'GCSE'
+    const grades  = autoBoundary?.grades || getGradeOptions(form.subject, qual, form.tier)
+    const bounds  = useCustom ? { boundaries:customBoundaries.map(Number), maxMarks:max, grades } : autoBoundary
     const grade   = bounds ? calculateGradeFromBoundaries(score, bounds) : null
     await onSave({ ...form, score, maxMarks:max, percentage:pct, grade, questionMarks: useQ?questionMarks:[] }, !!autoSpec?.questions)
   }
@@ -353,13 +355,13 @@ function AddAttemptModal({ user, profile, structures, onClose, onSave }) {
 
               {!useCustom && autoBoundary ? (
                 <div style={{display:'grid',gridTemplateColumns:'repeat(auto-fill,minmax(60px,1fr))',gap:4}}>
-                  {['9','8','7','6','5','4','3','2','1'].map((g,i)=>{
+                  {(autoBoundary.grades || ['9','8','7','6','5','4','3','2','1']).map((g,i)=>{
                     const marks = autoBoundary.boundaries[i]
                     if (marks === null || marks === undefined) return null
                     const pct = Math.round((marks / autoBoundary.maxMarks)*100)
                     return (
                       <div key={g} style={{textAlign:'center',padding:'4px 2px',background:'var(--bg-surface)',borderRadius:'var(--radius-md)',border:'1px solid var(--border)'}}>
-                        <div style={{fontWeight:800,color:gradeColour(g),fontSize:'0.9rem'}}>G{g}</div>
+                        <div style={{fontWeight:800,color:gradeColour(g),fontSize:'0.9rem'}}>{g.startsWith('G') || g.includes('-') || g.includes('*') || /^[A-Z]$/.test(g) ? g : `G${g}`}</div>
                         <div style={{fontSize:'0.72rem',fontWeight:600}}>{marks}/{autoBoundary.maxMarks}</div>
                         <div style={{fontSize:'0.68rem',color:'var(--text-muted)'}}>{pct}%</div>
                       </div>
@@ -371,10 +373,10 @@ function AddAttemptModal({ user, profile, structures, onClose, onSave }) {
                   <p style={{fontSize:'0.75rem',color:'var(--text-muted)',marginBottom:6}}>
                     Enter the minimum marks needed for each grade (out of {form.maxMarks||autoSpec?.maxMarks||80}):
                   </p>
-                  <div style={{display:'grid',gridTemplateColumns:'repeat(9,1fr)',gap:4}}>
-                    {['G9','G8','G7','G6','G5','G4','G3','G2','G1'].map((g,i)=>(
+                  <div style={{display:'grid',gridTemplateColumns:'repeat(auto-fill,minmax(60px,1fr))',gap:4}}>
+                    {(autoBoundary?.grades || getGradeOptions(form.subject, profile?.qualification || 'GCSE', form.tier)).map((g,i)=>(
                       <div key={g} style={{textAlign:'center'}}>
-                        <div style={{fontSize:'0.68rem',color:gradeColour(g.slice(1)),fontWeight:700,marginBottom:2}}>{g}</div>
+                        <div style={{fontSize:'0.68rem',color:gradeColour(g),fontWeight:700,marginBottom:2}}>{g}</div>
                         <input className="input" type="number" min={0} max={form.maxMarks||80}
                           style={{padding:'3px',textAlign:'center',fontSize:'0.75rem'}}
                           value={customBoundaries[i]||''} onChange={e=>{const b=[...customBoundaries];b[i]=e.target.value;setCustomBoundaries(b)}}/>
@@ -495,8 +497,8 @@ function BoundaryEditorModal({ profile, onClose }) {
         {bounds ? (
           <div>
             <div style={{fontSize:'0.82rem',color:'var(--text-muted)',marginBottom:10}}>Total marks: {bounds.maxMarks}</div>
-            <div style={{display:'grid',gridTemplateColumns:'repeat(9,1fr)',gap:6,textAlign:'center'}}>
-              {['9','8','7','6','5','4','3','2','1'].map((g,i)=>(
+            <div style={{display:'grid',gridTemplateColumns:'repeat(auto-fill,minmax(60px,1fr))',gap:6,textAlign:'center'}}>
+              {(bounds.grades || ['9','8','7','6','5','4','3','2','1']).map((g,i)=>(
                 <div key={g} style={{padding:8,background:'rgba(124,58,237,0.08)',borderRadius:'var(--radius-md)',border:'1px solid var(--border)'}}>
                   <div style={{fontWeight:800,color:gradeColour(g),fontSize:'1.1rem'}}>{g}</div>
                   <div style={{fontSize:'0.75rem',marginTop:2}}>{bounds.boundaries[i]??'–'}</div>
@@ -575,7 +577,7 @@ function EditEntryModal({ attempt, onClose, onSave }) {
           </div>
           {form.score && form.maxMarks && (
             <div style={{padding:'6px 12px',background:'rgba(124,58,237,0.08)',borderRadius:'var(--radius-md)',fontSize:'0.82rem'}}>
-              {Math.round((form.score/form.maxMarks)*100)}% — this will update the grade automatically
+              {Math.round((form.score/form.maxMarks)*100)}% — this will update the percentage. The grade will remain unless the paper had grade boundaries set during entry.
             </div>
           )}
           <div style={{display:'flex',gap:8,justifyContent:'flex-end'}}>

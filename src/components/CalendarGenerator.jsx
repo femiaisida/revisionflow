@@ -2,7 +2,7 @@
 import React, { useState } from 'react'
 import { Link } from 'react-router-dom'
 import { useAuth } from '../context/AuthContext'
-import { addDoc, collection, serverTimestamp, getDocs, query, where, deleteDoc, doc } from 'firebase/firestore'
+import { addDoc, collection, serverTimestamp, getDocs, query, where, deleteDoc, doc, getDoc, setDoc } from 'firebase/firestore'
 import { db } from '../firebase'
 import { generateSchedule, buildSubjectsFromProfile } from '../utils/scheduler'
 import { downloadICS } from '../utils/calendar'
@@ -75,6 +75,29 @@ export default function CalendarGenerator({ onClose, onGenerated }) {
   )
   const [prioritySubjects, setPrioritySubjects] = useState([])
 
+  // Load saved preferences
+  React.useEffect(() => {
+    if (!user) return
+    const loadPrefs = async () => {
+      try {
+        const snap = await getDoc(doc(db, 'users', user.uid, 'settings', 'calendarPrefs'))
+        if (snap.exists()) {
+          const d = snap.data()
+          if (d.contentRatio !== undefined) setContentRatio(d.contentRatio)
+          if (d.examRatio !== undefined) setExamRatio(d.examRatio)
+          if (d.sessionGap !== undefined) setSessionGap(d.sessionGap)
+          if (d.emergencySessions !== undefined) setEmergency(d.emergencySessions)
+          if (d.dayCap !== undefined) setDayCap(d.dayCap)
+          if (d.dayCapCount !== undefined) setDayCapCount(d.dayCapCount)
+          if (d.subjectRatios) setSubjectRatios(d.subjectRatios)
+          if (d.subjectRatioValues) setSubjectRatioValues(d.subjectRatioValues)
+          if (d.prioritySubjects) setPrioritySubjects(d.prioritySubjects)
+        }
+      } catch (err) { console.error('Failed to load prefs', err) }
+    }
+    loadPrefs()
+  }, [user])
+
   // ── Step 5: Replace mode ─────────────────────────────────────────────────
   const [replaceChoice, setReplaceChoice] = useState(null)
 
@@ -127,6 +150,14 @@ export default function CalendarGenerator({ onClose, onGenerated }) {
           ...s, createdAt: serverTimestamp(),
         })
       }
+
+      try {
+        await setDoc(doc(db, 'users', user.uid, 'settings', 'calendarPrefs'), {
+          contentRatio, examRatio, sessionGap, emergencySessions, dayCap, dayCapCount,
+          subjectRatios, subjectRatioValues, prioritySubjects: prioritySubjects || []
+        }, { merge: true })
+      } catch (err) { console.error('Failed to save prefs', err) }
+
       toast.success(`Added ${batch.length} sessions to your calendar!`)
       onGenerated?.()
       onClose()

@@ -48,9 +48,8 @@ async function callMistral(prompt, systemPrompt = SYSTEM, maxTokens = 8192) {
 
     if (!res.ok) {
       const err = await res.json().catch(() => ({}))
-      // Rate limited — return specific message
-      if (res.status === 429) return { error: 'AI rate limit reached. Please wait a minute and try again.' }
-      return null  // Other error — try fallback
+      console.warn('[AI] Mistral error:', res.status, err)
+      return null  // Try fallback for any error (including 429 rate limit)
     }
 
     const data = await res.json()
