@@ -17,7 +17,6 @@ const CONF_COLOURS = ['','var(--danger)','#f97316','var(--warning)','#84cc16','v
 export default function Topics() {
   const { user, profile } = useAuth()
   const [topics, setTopics] = useState([])
-  const [allTopics, setAllTopics] = useState([])
   const [selSubj, setSelSubj] = useState('')
   const [showAdd, setShowAdd] = useState(false)
   const [aiAdvice, setAiAdvice] = useState({})
@@ -28,14 +27,6 @@ export default function Topics() {
   const [loading, setLoading] = useState(false)
 
   const subjects = profile?.subjects?.map(s=>s.name) || []
-
-  useEffect(() => {
-    if (!user) return
-    // Load all topics for priority view
-    getDocs(collection(db,'users',user.uid,'topics')).then(snap => {
-      setAllTopics(snap.docs.map(d=>({id:d.id,...d.data()})))
-    })
-  }, [user])
 
   useEffect(() => {
     if (!user || !selSubj) return
@@ -52,7 +43,7 @@ export default function Topics() {
     if (!selSubj) return
     setLoading(true)
     const subj = profile?.subjects?.find(s=>s.name===selSubj)
-    const topicList = getAllTopicsFlat(subj?.board||'AQA', selSubj, profile?.qualification || 'GCSE')
+    const topicList = getAllTopicsFlat(subj?.board||'AQA', selSubj)
     if (!topicList.length) { toast.error('No topics found for this subject/board'); setLoading(false); return }
     for (const t of topicList) {
       const id = `${selSubj}_${t.name}`.replace(/[^a-zA-Z0-9_]/g,'_').slice(0,100)
@@ -121,24 +112,12 @@ export default function Topics() {
         </div>
       </div>
 
-      {/* View toggle - Priority always visible */}
-      <div style={{display:'flex',gap:6,marginBottom:12}}>
-        <button className={`btn btn-sm ${view!=='priority'?'btn-secondary':'btn-primary'}`} onClick={()=>setView(view==='priority'?'list':'priority')}>
-          {view==='priority'?'← Back to Topics':'🎯 Priority List'}
-        </button>
-      </div>
-      {/* Priority toggle */}
-      <div style={{marginBottom:8}}>
-        <button className={`btn btn-sm ${view==='priority'?'btn-primary':'btn-secondary'}`} onClick={()=>setView(view==='priority'?'list':'priority')}>🎯 {view==='priority'?'Back to Topics':'Priority List'}</button>
-      </div>
       {/* Subject picker */}
       <div style={{display:'flex',gap:6,flexWrap:'wrap',marginBottom:20}}>
         {subjects.map(s=><button key={s} className={`btn btn-sm ${selSubj===s?'btn-primary':'btn-secondary'}`} onClick={()=>{setSelSubj(s);setSelected([])}}>{s}</button>)}
       </div>
 
-      {view==='priority' ? (
-        <PriorityList topics={allTopics} profile={profile} />
-      ) : !selSubj ? (
+      {!selSubj ? (
         <div className="empty-state"><div className="empty-icon">📚</div><p>Select a subject to view topics</p></div>
       ) : (
         <>
@@ -155,7 +134,6 @@ export default function Topics() {
             <div className="tabs" style={{padding:3}}>
               <button className={`tab${view==='list'?' active':''}`} onClick={()=>setView('list')}><BarChart2 size={14}/> List</button>
               <button className={`tab${view==='heat'?' active':''}`} onClick={()=>setView('heat')}><Grid size={14}/> Heatmap</button>
-              <button className={`tab${view==='priority'?' active':''}`} onClick={()=>setView('priority')}>⚡ Priority</button>
             </div>
           </div>
 
@@ -199,8 +177,6 @@ export default function Topics() {
                 ))}
               </div>
             </div>
-          ) : view==='priority' ? (
-            <PriorityList topics={allTopics} profile={profile} />
           ) : (
             // ── List view ──
             <div style={{display:'flex',flexDirection:'column',gap:8}}>

@@ -67,7 +67,7 @@ export default function Layout() {
             <Zap size={18} color="#fff"/>
           </div>
           {!collapsed && <span style={{fontWeight:800,fontSize:'1.05rem',letterSpacing:'-0.02em',flex:1}}>Revision<span style={{color:'var(--accent-light)'}}>Flow</span></span>}
-          <button onClick={()=>setCollapsed(x=>!x)} title={collapsed?'Expand':'Collapse'} style={{marginLeft:'auto',background:'transparent',border:'none',cursor:'pointer',color:'var(--text-muted)',padding:4,borderRadius:6,display:'flex',alignItems:'center'}}>{collapsed?'▶':'◀'}</button>
+          <button onClick={()=>setCollapsed(x=>!x)} title={collapsed?'Expand sidebar':'Collapse sidebar'} style={{marginLeft:'auto',background:'var(--bg-surface)',border:'1px solid var(--border)',cursor:'pointer',color:'var(--text-secondary)',padding:'4px 6px',borderRadius:6,display:'flex',alignItems:'center',justifyContent:'center',flexShrink:0}}>{collapsed?'»':'«'}</button>
         </div>
 
         {/* User card */}
