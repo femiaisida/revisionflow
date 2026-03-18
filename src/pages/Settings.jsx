@@ -26,6 +26,8 @@ export default function Settings() {
   const [newSubj, setNewSubj] = useState({ name:'', board:'AQA', tier:'Higher', currentGrade:'', targetGrade:'9' })
 
   const [qual, setQual] = useState(profile?.qualification || 'GCSE')
+  // Keep qual in sync with profile
+  React.useEffect(()=>{ if(profile?.qualification) setQual(profile.qualification) },[profile?.qualification])
 
   const subjectList = getSubjectList(qual)
   function getGradeOpts(subjName) { return getGradeOptions(subjName, qual) }
@@ -90,13 +92,13 @@ export default function Settings() {
             <div style={{display:'flex',gap:'0.5rem',alignItems:'center',flexWrap:'wrap'}}>
               <span style={{fontWeight:600,color:'var(--text-primary)'}}>{profile?.qualification||'GCSE'}</span>
               {(!profile?.qualification||profile?.qualification==='GCSE')&&(
-                <button className="btn btn-secondary btn-sm" onClick={async()=>{if(window.confirm('Switch to A-Level? Please update your subjects after.')){await updateUserProfile(user.uid,{qualification:'A-Level'});await refreshProfile();toast.success('Switched to A-Level — update your subjects!');setTab('subjects')}}}>Switch to A-Level →</button>
+                <button className="btn btn-secondary btn-sm" onClick={async()=>{if(window.confirm('Switch to A-Level? Please update your subjects after.')){await updateUserProfile(user.uid,{qualification:'A-Level'});await refreshProfile();setQual('A-Level');toast.success('Switched to A-Level — update your subjects!');setTab('subjects')}}}>Switch to A-Level →</button>
               )}
               {profile?.qualification==='A-Level'&&(
-                <button className="btn btn-secondary btn-sm" onClick={async()=>{if(window.confirm('Switch back to GCSE?')){await updateUserProfile(user.uid,{qualification:'GCSE'});await refreshProfile();toast.success('Switched to GCSE')}}}>Switch to GCSE →</button>
+                <button className="btn btn-secondary btn-sm" onClick={async()=>{if(window.confirm('Switch back to GCSE?')){await updateUserProfile(user.uid,{qualification:'GCSE'});await refreshProfile();setQual('GCSE');toast.success('Switched to GCSE')}}}>Switch to GCSE →</button>
               )}
               {(profile?.qualification==='GCSE'||!profile?.qualification)&&(
-                <button className="btn btn-secondary btn-sm" onClick={async()=>{if(window.confirm('Switch to BTEC?')){await updateUserProfile(user.uid,{qualification:'BTEC-L3'});await refreshProfile();toast.success('Switched to BTEC National')}}}>Switch to BTEC →</button>
+                <button className="btn btn-secondary btn-sm" onClick={async()=>{if(window.confirm('Switch to BTEC?')){await updateUserProfile(user.uid,{qualification:'BTEC-L3'});await refreshProfile();setQual('BTEC-L3');toast.success('Switched to BTEC National')}}}>Switch to BTEC →</button>
               )}
             </div>
           </div>

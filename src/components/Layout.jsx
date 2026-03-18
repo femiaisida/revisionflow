@@ -60,7 +60,7 @@ export default function Layout() {
     <div className="app-layout">
       {open && <div style={{position:'fixed',inset:0,zIndex:99,background:'rgba(0,0,0,0.5)'}} onClick={()=>setOpen(false)}/>}
 
-      <aside className={`sidebar ${open?'open':''}`} style={{width:collapsed?'60px':'240px',minWidth:collapsed?'60px':'240px',overflow:'hidden',transition:'width 0.25s ease, min-width 0.25s ease'}}>
+      <aside className={`sidebar ${open?'open':''}`} style={{width:collapsed?60:240,minWidth:collapsed?60:240,overflow:'hidden',transition:'width 0.25s, min-width 0.25s',position:'relative'}}>
         {/* Logo */}
         <div style={{display:'flex',alignItems:'center',gap:10,marginBottom:20,padding:'0 4px'}}>
           <div style={{width:32,height:32,borderRadius:8,background:'linear-gradient(135deg,#7c3aed,#a855f7)',display:'flex',alignItems:'center',justifyContent:'center',flexShrink:0}}>
@@ -107,7 +107,7 @@ export default function Layout() {
                 background:isActive?'var(--accent)':'transparent',
                 textDecoration:'none',transition:'all var(--transition)',
               })}>
-              <Icon size={16}/>{!collapsed && label}
+              <Icon size={16}/><span style={{display:collapsed?'none':'inline'}}>{label}</span>
             </NavLink>
           ))}
         </nav>
@@ -151,7 +151,7 @@ export default function Layout() {
         <div className="mobile-nav-items">
           {MOBILE_NAV.map(({to,label,icon:Icon})=>(
             <NavLink key={to} to={to} className={({isActive})=>`mobile-nav-item${isActive?' active':''}`}>
-              <Icon size={20}/><span>{!collapsed && label}</span>
+              <Icon size={20}/><span><span style={{display:collapsed?'none':'inline'}}>{label}</span></span>
             </NavLink>
           ))}
         </div>

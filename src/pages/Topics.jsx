@@ -17,6 +17,7 @@ const CONF_COLOURS = ['','var(--danger)','#f97316','var(--warning)','#84cc16','v
 export default function Topics() {
   const { user, profile } = useAuth()
   const [topics, setTopics] = useState([])
+  const [allTopics, setAllTopics] = useState([])
   const [selSubj, setSelSubj] = useState('')
   const [showAdd, setShowAdd] = useState(false)
   const [aiAdvice, setAiAdvice] = useState({})
@@ -27,6 +28,14 @@ export default function Topics() {
   const [loading, setLoading] = useState(false)
 
   const subjects = profile?.subjects?.map(s=>s.name) || []
+
+  useEffect(() => {
+    if (!user) return
+    // Load all topics for priority view
+    getDocs(collection(db,'users',user.uid,'topics')).then(snap => {
+      setAllTopics(snap.docs.map(d=>({id:d.id,...d.data()})))
+    })
+  }, [user])
 
   useEffect(() => {
     if (!user || !selSubj) return
@@ -179,7 +188,7 @@ export default function Topics() {
               </div>
             </div>
           ) : view==='priority' ? (
-            <PriorityList topics={Object.values(topics||{}).flatMap(arr=>Array.isArray(arr)?arr:Object.values(arr||{}).flat())} profile={profile} />
+            <PriorityList topics={allTopics} profile={profile} />
           ) : (
             // ── List view ──
             <div style={{display:'flex',flexDirection:'column',gap:8}}>
