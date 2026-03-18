@@ -74,6 +74,7 @@ export default function App() {
   return (
     <ThemeProvider>
       <AuthProvider>
+        <PriorityProvider>
         <BadgeProvider>
         <NotificationInit />
         <Toaster
@@ -113,7 +114,8 @@ export default function App() {
           </Routes>
         </Suspense>
         </BadgeProvider>
-      </AuthProvider>
+      </PriorityProvider>
+        </AuthProvider>
     </ThemeProvider>
   )
 }
