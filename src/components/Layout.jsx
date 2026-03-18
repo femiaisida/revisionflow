@@ -69,9 +69,7 @@ export default function Layout() {
           <span style={{fontWeight:800,fontSize:'1.05rem',letterSpacing:'-0.02em',flex:1}}>
             {!collapsed && <>Revision<span style={{color:'var(--accent-light)'}}>Flow</span></>}
           </span>
-          <button onClick={()=>{setCollapsed(x=>!x); if(open) setOpen(false)}} title={collapsed?'Expand sidebar':'Collapse sidebar'} style={{background:'transparent',border:'none',cursor:'pointer',color:'var(--text-muted)',padding:'4px',borderRadius:6,display:'flex',alignItems:'center',justifyContent:'center',flexShrink:0}}>
-            {collapsed ? '→' : '←'}
-          </button>
+
         </div>
 
         {/* User card */}
@@ -114,12 +112,12 @@ export default function Layout() {
 
         {/* Bottom */}
         <div style={{display:'flex',flexDirection:'column',gap:3,marginTop:10,paddingTop:10,borderTop:'1px solid var(--border)'}}>
-          <button className="btn btn-ghost" onClick={toggle} style={{justifyContent:'flex-start',gap:9,fontSize:'0.85rem'}}>
+          <button className="btn btn-ghost" onClick={toggle} style={{justifyContent:'flex-start',gap:9,fontSize:'0.85rem'}} title={!collapsed && (theme==='dark'?'Light mode':'Dark mode')}>
             {theme==='dark'?<Sun size={16}/>:<Moon size={16}/>}
-            {theme==='dark'?'Light mode':'Dark mode'}
+            {!collapsed && (theme==='dark'?'Light mode':'Dark mode')}
           </button>
-          <button className="btn btn-ghost" onClick={handleLogout} style={{justifyContent:'flex-start',gap:9,fontSize:'0.85rem',color:'var(--danger)'}}>
-            <LogOut size={16}/> Sign out
+          <button className="btn btn-ghost" onClick={handleLogout} style={{justifyContent:'flex-start',gap:9,fontSize:'0.85rem',color:'var(--danger)'}} title="Sign out">
+            <LogOut size={16}/>{!collapsed && ' Sign out'}
           </button>
         </div>
       </aside>

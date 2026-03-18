@@ -121,12 +121,20 @@ export default function Topics() {
         </div>
       </div>
 
+      {/* View toggle - Priority always visible */}
+      <div style={{display:'flex',gap:6,marginBottom:12}}>
+        <button className={`btn btn-sm ${view!=='priority'?'btn-secondary':'btn-primary'}`} onClick={()=>setView(view==='priority'?'list':'priority')}>
+          {view==='priority'?'← Back to Topics':'🎯 Priority List'}
+        </button>
+      </div>
       {/* Subject picker */}
       <div style={{display:'flex',gap:6,flexWrap:'wrap',marginBottom:20}}>
         {subjects.map(s=><button key={s} className={`btn btn-sm ${selSubj===s?'btn-primary':'btn-secondary'}`} onClick={()=>{setSelSubj(s);setSelected([])}}>{s}</button>)}
       </div>
 
-      {!selSubj ? (
+      {view==='priority' ? (
+        <PriorityList topics={allTopics} profile={profile} />
+      ) : !selSubj ? (
         <div className="empty-state"><div className="empty-icon">📚</div><p>Select a subject to view topics</p></div>
       ) : (
         <>
