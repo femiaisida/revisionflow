@@ -61,13 +61,30 @@ export default function Layout() {
       {open && <div style={{position:'fixed',inset:0,zIndex:99,background:'rgba(0,0,0,0.5)'}} onClick={()=>setOpen(false)}/>}
 
       <aside className={`sidebar ${open?'open':''}`} style={{width:collapsed?52:undefined,minWidth:collapsed?52:undefined,transition:'width 0.2s,min-width 0.2s',overflow:'hidden'}}>
-        {/* Logo */}
-        <div style={{display:'flex',alignItems:'center',gap:10,marginBottom:20,padding:'0 4px'}}>
+        {/* Logo + collapse toggle */}
+        <div style={{display:'flex',alignItems:'center',gap:8,marginBottom:20,padding:'0 4px'}}>
           <div style={{width:32,height:32,borderRadius:8,background:'linear-gradient(135deg,#7c3aed,#a855f7)',display:'flex',alignItems:'center',justifyContent:'center',flexShrink:0}}>
             <Zap size={18} color="#fff"/>
           </div>
-          {!collapsed && <span style={{fontWeight:800,fontSize:'1.05rem',letterSpacing:'-0.02em',flex:1}}>Revision<span style={{color:'var(--accent-light)'}}>Flow</span></span>}
-          <button onClick={()=>setCollapsed(x=>!x)} title={collapsed?'Expand sidebar':'Collapse sidebar'} style={{marginLeft:'auto',background:'var(--bg-surface)',border:'1px solid var(--border)',cursor:'pointer',color:'var(--text-secondary)',padding:'4px 6px',borderRadius:6,display:'flex',alignItems:'center',justifyContent:'center',flexShrink:0}}>{collapsed?'»':'«'}</button>
+          {!collapsed && (
+            <span style={{fontWeight:800,fontSize:'1.05rem',letterSpacing:'-0.02em',flex:1}}>
+              Revision<span style={{color:'var(--accent-light)'}}>Flow</span>
+            </span>
+          )}
+          <button
+            onClick={()=>setCollapsed(x=>!x)}
+            title={collapsed?'Expand sidebar':'Collapse sidebar'}
+            style={{
+              marginLeft:'auto',flexShrink:0,
+              background:'var(--bg-surface)',
+              border:'1px solid var(--border)',
+              borderRadius:6,cursor:'pointer',
+              color:'var(--text-secondary)',
+              padding:'4px 7px',fontSize:'0.8rem',fontWeight:700,
+              display:'flex',alignItems:'center',justifyContent:'center',
+            }}>
+            {collapsed ? '»' : '«'}
+          </button>
         </div>
 
         {/* User card */}
