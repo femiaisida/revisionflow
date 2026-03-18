@@ -90,6 +90,7 @@ export default function Dashboard() {
     .slice(0,4)
 
   // Setup checklist for new users
+  const [showTour, setShowTour] = useState(!localStorage.getItem('tour_complete'))
   const [setupSkipped, setSetupSkipped] = useState(
     () => localStorage.getItem('setup-skipped') === '1'
   )
