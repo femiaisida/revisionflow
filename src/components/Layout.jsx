@@ -60,7 +60,7 @@ export default function Layout() {
     <div className="app-layout">
       {open && <div style={{position:'fixed',inset:0,zIndex:99,background:'rgba(0,0,0,0.5)'}} onClick={()=>setOpen(false)}/>}
 
-      <aside className={`sidebar ${open?'open':''} ${collapsed?'collapsed':''}`} style={{width:collapsed?60:undefined,minWidth:collapsed?60:undefined,overflow:'hidden'}}>
+      <aside className={`sidebar ${open?'open':''}`} style={{width:collapsed?'60px':'240px',minWidth:collapsed?'60px':'240px',overflow:'hidden',transition:'width 0.25s ease, min-width 0.25s ease'}}>
         {/* Logo */}
         <div style={{display:'flex',alignItems:'center',gap:10,marginBottom:20,padding:'0 4px'}}>
           <div style={{width:32,height:32,borderRadius:8,background:'linear-gradient(135deg,#7c3aed,#a855f7)',display:'flex',alignItems:'center',justifyContent:'center',flexShrink:0}}>
@@ -69,7 +69,7 @@ export default function Layout() {
           <span style={{fontWeight:800,fontSize:'1.05rem',letterSpacing:'-0.02em',flex:1}}>
             {!collapsed && <>Revision<span style={{color:'var(--accent-light)'}}>Flow</span></>}
           </span>
-          <button onClick={()=>setCollapsed(c=>!c)} title={collapsed?'Expand sidebar':'Collapse sidebar'} style={{background:'transparent',border:'none',cursor:'pointer',color:'var(--text-muted)',padding:'4px',borderRadius:6,display:'flex',alignItems:'center',justifyContent:'center',flexShrink:0}}>
+          <button onClick={()=>{setCollapsed(x=>!x); if(open) setOpen(false)}} title={collapsed?'Expand sidebar':'Collapse sidebar'} style={{background:'transparent',border:'none',cursor:'pointer',color:'var(--text-muted)',padding:'4px',borderRadius:6,display:'flex',alignItems:'center',justifyContent:'center',flexShrink:0}}>
             {collapsed ? '→' : '←'}
           </button>
         </div>

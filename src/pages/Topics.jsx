@@ -179,7 +179,7 @@ export default function Topics() {
               </div>
             </div>
           ) : view==='priority' ? (
-            <PriorityList topics={topics} profile={profile} />
+            <PriorityList topics={Object.values(topics||{}).flatMap(arr=>Array.isArray(arr)?arr:Object.values(arr||{}).flat())} profile={profile} />
           ) : (
             // ── List view ──
             <div style={{display:'flex',flexDirection:'column',gap:8}}>

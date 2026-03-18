@@ -85,6 +85,21 @@ export default function Settings() {
               <option value="BTEC-L3">BTEC National (Level 3)</option>
             </select>
           </div>
+          <div className="form-group" style={{marginBottom:0}}>
+            <label className="label">Qualification</label>
+            <div style={{display:'flex',gap:'0.5rem',alignItems:'center',flexWrap:'wrap'}}>
+              <span style={{fontWeight:600,color:'var(--text-primary)'}}>{profile?.qualification||'GCSE'}</span>
+              {(!profile?.qualification||profile?.qualification==='GCSE')&&(
+                <button className="btn btn-secondary btn-sm" onClick={async()=>{if(window.confirm('Switch to A-Level? Please update your subjects after.')){await updateUserProfile(user.uid,{qualification:'A-Level'});await refreshProfile();toast.success('Switched to A-Level — update your subjects!');setTab('subjects')}}}>Switch to A-Level →</button>
+              )}
+              {profile?.qualification==='A-Level'&&(
+                <button className="btn btn-secondary btn-sm" onClick={async()=>{if(window.confirm('Switch back to GCSE?')){await updateUserProfile(user.uid,{qualification:'GCSE'});await refreshProfile();toast.success('Switched to GCSE')}}}>Switch to GCSE →</button>
+              )}
+              {(profile?.qualification==='GCSE'||!profile?.qualification)&&(
+                <button className="btn btn-secondary btn-sm" onClick={async()=>{if(window.confirm('Switch to BTEC?')){await updateUserProfile(user.uid,{qualification:'BTEC-L3'});await refreshProfile();toast.success('Switched to BTEC National')}}}>Switch to BTEC →</button>
+              )}
+            </div>
+          </div>
           <div style={{display:'flex',gap:10,justifyContent:'flex-end'}}>
             <button className="btn btn-primary" onClick={saveProfile} disabled={saving}>{saving?'Saving…':'Save changes'}</button>
           </div>
