@@ -67,7 +67,7 @@ export default function Onboarding() {
 
   async function seedTopics(uid) {
     for (const s of subjects) {
-      const topics = getAllTopicsFlat(s.board, s.name)
+      const topics = getAllTopicsFlat(s.board, s.name, qual)
       for (const t of topics) {
         const id = `${s.name}_${t.name}`.replace(/[^a-zA-Z0-9_]/g,'_').slice(0,100)
         await setDoc(doc(db,'users',uid,'topics',id), {

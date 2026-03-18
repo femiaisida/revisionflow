@@ -59,19 +59,22 @@ export default function Layout() {
     <div className="app-layout">
       {open && <div style={{position:'fixed',inset:0,zIndex:99,background:'rgba(0,0,0,0.5)'}} onClick={()=>setOpen(false)}/>}
 
-      <aside className={`sidebar ${open?'open':''}`}>
+      <aside className={`sidebar ${open?'open':''} ${collapsed?'collapsed':''}`} style={{width:collapsed?60:undefined,minWidth:collapsed?60:undefined,overflow:'hidden'}}>
         {/* Logo */}
         <div style={{display:'flex',alignItems:'center',gap:10,marginBottom:20,padding:'0 4px'}}>
           <div style={{width:32,height:32,borderRadius:8,background:'linear-gradient(135deg,#7c3aed,#a855f7)',display:'flex',alignItems:'center',justifyContent:'center',flexShrink:0}}>
             <Zap size={18} color="#fff"/>
           </div>
-          <span style={{fontWeight:800,fontSize:'1.05rem',letterSpacing:'-0.02em'}}>
-            Revision<span style={{color:'var(--accent-light)'}}>Flow</span>
+          <span style={{fontWeight:800,fontSize:'1.05rem',letterSpacing:'-0.02em',flex:1}}>
+            {!collapsed && <>Revision<span style={{color:'var(--accent-light)'}}>Flow</span></>}
           </span>
+          <button onClick={()=>setCollapsed(c=>!c)} title={collapsed?'Expand sidebar':'Collapse sidebar'} style={{background:'transparent',border:'none',cursor:'pointer',color:'var(--text-muted)',padding:'4px',borderRadius:6,display:'flex',alignItems:'center',justifyContent:'center',flexShrink:0}}>
+            {collapsed ? '→' : '←'}
+          </button>
         </div>
 
         {/* User card */}
-        {profile && (
+        {profile && !collapsed && (
           <div className="card accent-card" style={{marginBottom:14,padding:10}}>
             <div style={{display:'flex',alignItems:'center',gap:8,marginBottom:6}}>
               <div style={{width:30,height:30,borderRadius:'50%',background:'linear-gradient(135deg,var(--purple-700),var(--purple-400))',display:'flex',alignItems:'center',justifyContent:'center',fontSize:'0.8rem',fontWeight:700,flexShrink:0}}>
@@ -103,7 +106,7 @@ export default function Layout() {
                 background:isActive?'var(--accent)':'transparent',
                 textDecoration:'none',transition:'all var(--transition)',
               })}>
-              <Icon size={16}/>{label}
+              <Icon size={16}/>{!collapsed && label}
             </NavLink>
           ))}
         </nav>
@@ -147,7 +150,7 @@ export default function Layout() {
         <div className="mobile-nav-items">
           {MOBILE_NAV.map(({to,label,icon:Icon})=>(
             <NavLink key={to} to={to} className={({isActive})=>`mobile-nav-item${isActive?' active':''}`}>
-              <Icon size={20}/><span>{label}</span>
+              <Icon size={20}/><span>{!collapsed && label}</span>
             </NavLink>
           ))}
         </div>

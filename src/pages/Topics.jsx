@@ -43,7 +43,7 @@ export default function Topics() {
     if (!selSubj) return
     setLoading(true)
     const subj = profile?.subjects?.find(s=>s.name===selSubj)
-    const topicList = getAllTopicsFlat(subj?.board||'AQA', selSubj)
+    const topicList = getAllTopicsFlat(subj?.board||'AQA', selSubj, profile?.qualification || 'GCSE')
     if (!topicList.length) { toast.error('No topics found for this subject/board'); setLoading(false); return }
     for (const t of topicList) {
       const id = `${selSubj}_${t.name}`.replace(/[^a-zA-Z0-9_]/g,'_').slice(0,100)
@@ -134,6 +134,7 @@ export default function Topics() {
             <div className="tabs" style={{padding:3}}>
               <button className={`tab${view==='list'?' active':''}`} onClick={()=>setView('list')}><BarChart2 size={14}/> List</button>
               <button className={`tab${view==='heat'?' active':''}`} onClick={()=>setView('heat')}><Grid size={14}/> Heatmap</button>
+              <button className={`tab${view==='priority'?' active':''}`} onClick={()=>setView('priority')}>⚡ Priority</button>
             </div>
           </div>
 
@@ -177,6 +178,8 @@ export default function Topics() {
                 ))}
               </div>
             </div>
+          ) : view==='priority' ? (
+            <PriorityList topics={topics} profile={profile} />
           ) : (
             // ── List view ──
             <div style={{display:'flex',flexDirection:'column',gap:8}}>

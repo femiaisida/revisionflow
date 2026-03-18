@@ -10,8 +10,8 @@ import { ThemeProvider } from './context/ThemeContext'
 import { BadgeProvider } from './context/BadgeContext'
 import Layout from './components/Layout'
 import LoadingScreen from './components/LoadingScreen'
-import { requestNotificationPermission } from './utils/notifications'
-
+import ErrorBoundary from './components/ErrorBoundary'
+import { usePushNotifications } from './hooks/usePushNotifications'
 const Landing      = lazy(() => import('./pages/Landing'))
 const Login        = lazy(() => import('./pages/Login'))
 const Signup       = lazy(() => import('./pages/Signup'))
@@ -34,19 +34,7 @@ const TimerPage    = lazy(() => import('./pages/Timer'))
 const Analytics    = lazy(() => import('./pages/Analytics'))
 const TopicMastery = lazy(() => import('./pages/TopicMastery'))
 
-function NotificationInit() {
-  useEffect(() => {
-    const asked = localStorage.getItem('rf-notif-asked')
-    if (!asked) {
-      setTimeout(() => {
-        requestNotificationPermission().then(granted => {
-          localStorage.setItem('rf-notif-asked', '1')
-        })
-      }, 3000)
-    }
-  }, [])
-  return null
-}
+
 
 function PrivateRoute({ children }) {
   const { user, loading, profile } = useAuth()
@@ -71,17 +59,19 @@ function OnboardingRoute({ children }) {
 }
 
 export default function App() {
+  usePushNotifications()
+
   return (
     <ThemeProvider>
       <AuthProvider>
         <PriorityProvider>
         <BadgeProvider>
-        <NotificationInit />
         <Toaster
           position="top-right"
           toastOptions={{ className:'toast-custom', duration:3500 }}
         />
-        <Suspense fallback={<LoadingScreen />}>
+        <ErrorBoundary>
+          <Suspense fallback={<LoadingScreen />}>
           <Routes>
             <Route path="/"    element={<Landing />} />
             <Route path="/login"  element={<PublicOnlyRoute><Login /></PublicOnlyRoute>} />
@@ -113,6 +103,7 @@ export default function App() {
         <Route path="*" element={<Navigate to="/" replace />} />
           </Routes>
         </Suspense>
+        </ErrorBoundary>
         </BadgeProvider>
       </PriorityProvider>
         </AuthProvider>

@@ -25,12 +25,14 @@ export default function Settings() {
   const [subjects, setSubjects] = useState(profile?.subjects||[])
   const [newSubj, setNewSubj] = useState({ name:'', board:'AQA', tier:'Higher', currentGrade:'', targetGrade:'9' })
 
-  const subjectList = getSubjectList(profile?.qualification || 'GCSE')
-  function getGradeOpts(subjName) { return getGradeOptions(subjName, profile?.qualification || 'GCSE') }
+  const [qual, setQual] = useState(profile?.qualification || 'GCSE')
+
+  const subjectList = getSubjectList(qual)
+  function getGradeOpts(subjName) { return getGradeOptions(subjName, qual) }
 
   async function saveProfile() {
     setSaving(true)
-    await updateUserProfile(user.uid, { displayName, username: username.toLowerCase().replace(/\s/g,''), settings: { ...profile?.settings, ...privacy } })
+    await updateUserProfile(user.uid, { displayName, username: username.toLowerCase().replace(/\s/g,''), qualification: qual, settings: { ...profile?.settings, ...privacy } })
     await refreshProfile()
     toast.success('Settings saved')
     setSaving(false)
@@ -74,6 +76,15 @@ export default function Settings() {
           <div className="form-group" style={{marginBottom:0}}><label className="label">Display name</label><input className="input" value={displayName} onChange={e=>setDisplayName(e.target.value)}/></div>
           <div className="form-group" style={{marginBottom:0}}><label className="label">Username</label><input className="input" value={username} onChange={e=>setUsername(e.target.value.toLowerCase().replace(/\s/g,''))} placeholder="your-username"/><span style={{fontSize:'0.78rem',color:'var(--text-muted)',marginTop:4}}>Profile URL: {window.location.origin}/u/{username||'yourname'}</span></div>
           <div className="form-group" style={{marginBottom:0}}><label className="label">Email</label><input className="input" value={user?.email||''} disabled style={{opacity:0.6}}/></div>
+          <div className="form-group" style={{marginBottom:0}}>
+            <label className="label">Qualification</label>
+            <select className="select" value={qual} onChange={e=>{setQual(e.target.value); setTab('subjects')}}>
+              <option value="GCSE">GCSE</option>
+              <option value="A-Level">A-Level</option>
+              <option value="BTEC-L2">BTEC Tech Award (Level 2)</option>
+              <option value="BTEC-L3">BTEC National (Level 3)</option>
+            </select>
+          </div>
           <div style={{display:'flex',gap:10,justifyContent:'flex-end'}}>
             <button className="btn btn-primary" onClick={saveProfile} disabled={saving}>{saving?'Saving…':'Save changes'}</button>
           </div>
@@ -91,9 +102,13 @@ export default function Settings() {
                 <span className="badge badge-grey">{s.tier}</span>
                 <div style={{display:'flex',gap:4,alignItems:'center'}}>
                   <span style={{fontSize:'0.78rem',color:'var(--text-muted)'}}>Grade:</span>
-                  <input style={{width:40,padding:'2px 4px',borderRadius:4,border:'1px solid var(--border)',background:'var(--bg-input)',color:'var(--text-primary)',fontSize:'0.82rem',textAlign:'center'}} value={s.currentGrade} onChange={e=>setSubjects(ss=>ss.map((x,j)=>j===i?{...x,currentGrade:e.target.value}:x))}/>
+                  <select style={{padding:'2px 4px',borderRadius:4,border:'1px solid var(--border)',background:'var(--bg-input)',color:'var(--text-primary)',fontSize:'0.82rem'}} value={s.currentGrade} onChange={e=>setSubjects(ss=>ss.map((x,j)=>j===i?{...x,currentGrade:e.target.value}:x))}>
+                    {getGradeOptions(s.name,qual,s.tier).map(g=><option key={g} value={g}>{g}</option>)}
+                  </select>
                   <span style={{fontSize:'0.78rem',color:'var(--text-muted)'}}>→</span>
-                  <input style={{width:40,padding:'2px 4px',borderRadius:4,border:'1px solid var(--border)',background:'var(--bg-input)',color:'var(--text-primary)',fontSize:'0.82rem',textAlign:'center'}} value={s.targetGrade} onChange={e=>setSubjects(ss=>ss.map((x,j)=>j===i?{...x,targetGrade:e.target.value}:x))}/>
+                  <select style={{padding:'2px 4px',borderRadius:4,border:'1px solid var(--border)',background:'var(--bg-input)',color:'var(--text-primary)',fontSize:'0.82rem'}} value={s.targetGrade} onChange={e=>setSubjects(ss=>ss.map((x,j)=>j===i?{...x,targetGrade:e.target.value}:x))}>
+                    {getGradeOptions(s.name,qual,s.tier).map(g=><option key={g} value={g}>{g}</option>)}
+                  </select>
                 </div>
                 <button className="btn btn-ghost btn-icon btn-sm" style={{color:'var(--danger)'}} onClick={()=>setSubjects(ss=>ss.filter((_,j)=>j!==i))}><Trash2 size={14}/></button>
               </div>
@@ -104,8 +119,24 @@ export default function Settings() {
             <div className="grid-2" style={{gap:8}}>
               <select className="select" value={newSubj.name} onChange={e=>setNewSubj(s=>({...s,name:e.target.value}))}><option value="">Subject…</option>{subjectList.map(s=><option key={s} value={s}>{s}</option>)}</select>
               <select className="select" value={newSubj.board} onChange={e=>setNewSubj(s=>({...s,board:e.target.value}))}>{EXAM_BOARDS.map(b=><option key={b} value={b}>{b}</option>)}</select>
+              <select className="select" value={newSubj.tier} onChange={e=>setNewSubj(s=>({...s,tier:e.target.value}))}>
+                <option value="Higher">Higher</option>
+                <option value="Foundation">Foundation</option>
+                <option value="N/A">N/A</option>
+              </select>
             </div>
-            <button className="btn btn-secondary btn-sm" onClick={addSubj} disabled={!newSubj.name}><Plus size={14}/> Add subject</button>
+            <div style={{display:'flex',gap:8,alignItems:'center'}}>
+                <label style={{fontSize:'0.78rem',color:'var(--text-muted)'}}>Current:</label>
+                <select className="select" style={{flex:1}} value={newSubj.currentGrade} onChange={e=>setNewSubj(s=>({...s,currentGrade:e.target.value}))}>
+                  <option value="">--</option>
+                  {getGradeOptions(newSubj.name,qual,newSubj.tier).map(g=><option key={g} value={g}>{g}</option>)}
+                </select>
+                <label style={{fontSize:'0.78rem',color:'var(--text-muted)'}}>Target:</label>
+                <select className="select" style={{flex:1}} value={newSubj.targetGrade} onChange={e=>setNewSubj(s=>({...s,targetGrade:e.target.value}))}>
+                  {getGradeOptions(newSubj.name,qual,newSubj.tier).map(g=><option key={g} value={g}>{g}</option>)}
+                </select>
+              </div>
+              <button className="btn btn-secondary btn-sm" onClick={addSubj} disabled={!newSubj.name}><Plus size={14}/> Add subject</button>
           </div>
           <button className="btn btn-primary" onClick={saveSubjects} disabled={saving}>{saving?'Saving…':'Save subjects'}</button>
         </div>

@@ -36,6 +36,22 @@ const GCSE = {
       1: ['P1 – Energy Stores and Transfers','P1 – Kinetic and Gravitational Potential Energy','P1 – Elastic Potential and Specific Heat Capacity','P1 – Power and Efficiency','P1 – Energy Resources','P2 – Circuit Symbols and Components','P2 – Charge, Current and Potential Difference','P2 – Series and Parallel Circuits','P2 – Resistance and Ohm\'s Law','P2 – I-V Characteristics','P2 – Mains Electricity and Domestic Appliances','P2 – National Grid','P3 – States of Matter and Density','P3 – Changes of State and Specific Latent Heat','P3 – Internal Energy and Gas Pressure','P4 – Atomic Structure and History of the Atom','P4 – Radioactivity – Alpha, Beta, Gamma','P4 – Nuclear Equations and Half-Life','P4 – Hazards and Uses of Radiation','P4 – Nuclear Fission and Fusion','Required Practical – Specific Heat Capacity','Required Practical – Resistance','Required Practical – I-V Characteristics','Required Practical – Density'],
       2: ['P5 – Scalar and Vector Quantities','P5 – Gravity and Weight','P5 – Resultant Forces and Newton\'s Laws','P5 – Work Done and Energy Transfer','P5 – Hooke\'s Law','P5 – Distance-Time and Velocity-Time Graphs','P5 – Stopping Distance and Momentum','P6 – Transverse and Longitudinal Waves','P6 – Properties of Waves (Speed, Frequency, Wavelength)','P6 – Reflection and Refraction','P6 – Sound and Ultrasound','P6 – Electromagnetic Spectrum','P6 – Lenses and Ray Diagrams','P7 – Permanent and Induced Magnets','P7 – Motor Effect and Fleming\'s Left-Hand Rule','P7 – Electromagnetic Induction and Generators','P7 – Transformers','P8 – The Solar System','P8 – Life Cycle of a Star','P8 – Red-Shift and the Expanding Universe','Required Practical – Waves','Required Practical – Infrared Radiation'],
     }},
+    'Combined Science: Trilogy': { papers: {
+      1: ['B1 – Cell Structure and Transport','B1 – Cell Division','B2 – Organisation: Digestive System','B2 – Organisation: Disease and Immune Response'],
+      2: ['C1 – Atomic Structure and Periodic Table','C2 – Bonding and Structure','C3 – Quantitative Chemistry','C4 – Chemical Changes and Electrolysis'],
+      3: ['P1 – Energy Stores and Transfers','P2 – Electricity','P3 – Particle Model of Matter','P4 – Atomic Structure and Radioactivity'],
+      4: ['B4 – Bioenergetics (Photosynthesis and Respiration)','B5 – Homeostasis and Response','B6 – Inheritance, Variation and Evolution','B7 – Ecology and Human Impact'],
+      5: ['C5 – Energy Changes','C6 – Rate and Extent of Chemical Change','C7 – Organic Chemistry','C8 – Chemical Analysis and Atmosphere'],
+      6: ['P5 – Forces and Motion','P6 – Waves','P7 – Magnetism and Electromagnetism'],
+    }},
+    'Combined Science: Synergy': { papers: {
+      1: ['Biology – Cells and Organisation','Biology – Infection and Response','Biology – Bioenergetics'],
+      2: ['Biology – Homeostasis','Biology – Inheritance','Biology – Ecology'],
+      3: ['Chemistry – Atomic Structure','Chemistry – Bonding','Chemistry – Quantitative Chemistry'],
+      4: ['Chemistry – Chemical Changes','Chemistry – Organic Chemistry'],
+      5: ['Physics – Energy','Physics – Forces'],
+      6: ['Physics – Waves and Electromagnetism','Physics – Space'],
+    }},
     'Combined Science': { papers: {
       1: ['B1 – Cell Structure and Transport','B1 – Cell Division','B2 – Organisation: Digestive System','B2 – Organisation: Disease'],
       2: ['C1 – Atomic Structure and Periodic Table','C2 – Bonding and Structure','C3 – Quantitative Chemistry','C4 – Chemical Changes'],
@@ -544,10 +560,13 @@ export function getTopicsForSubject(board, subject, level) {
 }
 
 export function getAllTopicsFlat(board, subject, level) {
-  const subj = getTopicsForSubject(board, subject, level)
+  // Try exact subject name first, then with qualification suffix
+  let subj = getTopicsForSubject(board, subject, level)
+  // Fallback: try AQA if board not found
+  if (!subj && board !== 'AQA') subj = getTopicsForSubject('AQA', subject, level)
   if (!subj) return []
   return Object.entries(subj.papers).flatMap(([paper, topicList]) =>
-    topicList.map(t => ({ name: t, paper: parseInt(paper) }))
+    topicList.map(t => ({ name: t, paper: parseInt(paper), subjectId: subject }))
   )
 }
 
