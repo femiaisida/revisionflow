@@ -127,6 +127,10 @@ export default function Topics() {
           {view==='priority'?'← Back to Topics':'🎯 Priority List'}
         </button>
       </div>
+      {/* Priority toggle */}
+      <div style={{marginBottom:8}}>
+        <button className={`btn btn-sm ${view==='priority'?'btn-primary':'btn-secondary'}`} onClick={()=>setView(view==='priority'?'list':'priority')}>🎯 {view==='priority'?'Back to Topics':'Priority List'}</button>
+      </div>
       {/* Subject picker */}
       <div style={{display:'flex',gap:6,flexWrap:'wrap',marginBottom:20}}>
         {subjects.map(s=><button key={s} className={`btn btn-sm ${selSubj===s?'btn-primary':'btn-secondary'}`} onClick={()=>{setSelSubj(s);setSelected([])}}>{s}</button>)}
