@@ -26,6 +26,7 @@ const NAV = [
   { to:'/friends',     label:'Friends',     icon:Users },
   { to:'/leaderboard', label:'Leaderboard', icon:Trophy },
   { to:'/profile',     label:'Profile',     icon:User },
+  { to:'/help',       label:'Help',        icon:HelpCircle },
   { to:'/settings',    label:'Settings',    icon:Settings },
 ]
 

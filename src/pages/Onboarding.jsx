@@ -5,7 +5,7 @@ import { useAuth } from '../context/AuthContext'
 import { doc, updateDoc, setDoc, serverTimestamp } from 'firebase/firestore'
 import { db } from '../firebase'
 import { generateCalendarPlan } from '../utils/ai'
-import { GCSE_SUBJECTS, ALEVEL_SUBJECTS, EXAM_BOARDS } from '../data/subjects'
+import { GCSE_SUBJECTS, ALEVEL_SUBJECTS, BTEC_L2_SUBJECTS, BTEC_L3_SUBJECTS, EXAM_BOARDS, getGradeOptions, getSubjectList } from '../data/subjects'
 import { isTiered } from '../data/examDates2026'
 import { getAllTopicsFlat } from '../data/topics'
 import toast from 'react-hot-toast'
@@ -31,13 +31,14 @@ export default function Onboarding() {
   const [subjects, setSubjects] = useState([])
   const [newSubj, setNewSubj] = useState({ name:'', board:'AQA', tier:'N/A', currentGrade:'', targetGrade:'' })
   const [globalTarget, setGlobalTarget] = useState('9')
+  // gradeOptions is now computed per-subject via getGradeOptions
   const [availability, setAvailability] = useState(
     Object.fromEntries(DAYS.map(d => [d, { enabled: d!=='Sunday', startTime: DEFAULT_TIMES[d], endTime: '21:00' }]))
   )
   const [username, setUsername] = useState('')
 
-  const subjectList  = qual==='A-Level' ? ALEVEL_SUBJECTS : GCSE_SUBJECTS
-  const gradeOptions = qual==='A-Level' ? ['A*','A','B','C','D','E'] : ['9','8','7','6','5','4','3','2','1']
+  const subjectList  = qual==='A-Level' ? ALEVEL_SUBJECTS : qual==='BTEC-L2' ? BTEC_L2_SUBJECTS : qual==='BTEC-L3' ? BTEC_L3_SUBJECTS : GCSE_SUBJECTS
+  const gradeOptions = getGradeOptions(newSubj.name, qual)
 
   function onSubjName(name) {
     setNewSubj(s => ({ ...s, name, tier: isTiered(name) ? 'Higher' : 'N/A' }))

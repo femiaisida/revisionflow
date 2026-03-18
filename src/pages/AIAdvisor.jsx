@@ -1,6 +1,8 @@
 // src/pages/AIAdvisor.jsx
 import React, { useState, useRef, useEffect } from 'react'
 import { useAuth } from '../context/AuthContext'
+import { buildAIContext, getSystemPrompt } from '../utils/buildAIContext'
+import { usePriority } from '../context/PriorityContext'
 import { collection, getDocs, doc, getDoc, setDoc, serverTimestamp } from 'firebase/firestore'
 import { db } from '../firebase'
 import { chatWithAI, getResourceRecommendations, generateStudyPlan, analyseWeaknesses } from '../utils/ai'
@@ -85,6 +87,7 @@ async function callGemini(prompt) {
 
 export default function AIAdvisor() {
   const { profile, user } = useAuth()
+  const { priorities, getTopPriorities } = usePriority()
   const [messages,    setMessages]    = useState([])
   const [input,       setInput]       = useState('')
   const [loading,     setLoading]     = useState(false)

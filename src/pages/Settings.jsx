@@ -4,7 +4,7 @@ import { useAuth } from '../context/AuthContext'
 import { useTheme } from '../context/ThemeContext'
 import { updateUserProfile } from '../utils/firestore'
 import { scheduleDailyReminder, clearDailyReminder } from '../utils/notifications'
-import { GCSE_SUBJECTS, ALEVEL_SUBJECTS, EXAM_BOARDS } from '../data/subjects'
+import { GCSE_SUBJECTS, ALEVEL_SUBJECTS, BTEC_L2_SUBJECTS, BTEC_L3_SUBJECTS, EXAM_BOARDS, getGradeOptions, getSubjectList } from '../data/subjects'
 import { GRADE_BOUNDARIES, AVAILABLE_YEARS, getBoundaries } from '../data/paperDatabase'
 import { gradeColour } from '../utils/calendar'
 import toast from 'react-hot-toast'
@@ -25,7 +25,8 @@ export default function Settings() {
   const [subjects, setSubjects] = useState(profile?.subjects||[])
   const [newSubj, setNewSubj] = useState({ name:'', board:'AQA', tier:'Higher', currentGrade:'', targetGrade:'9' })
 
-  const subjectList = profile?.qualification==='A-Level' ? ALEVEL_SUBJECTS : GCSE_SUBJECTS
+  const subjectList = getSubjectList(profile?.qualification || 'GCSE')
+  function getGradeOpts(subjName) { return getGradeOptions(subjName, profile?.qualification || 'GCSE') }
 
   async function saveProfile() {
     setSaving(true)

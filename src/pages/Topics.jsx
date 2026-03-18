@@ -1,5 +1,6 @@
 // src/pages/Topics.jsx
 import React, { useState, useEffect } from 'react'
+import PriorityList from '../components/PriorityList'
 import { useAuth } from '../context/AuthContext'
 import { collection, getDocs, doc, updateDoc, deleteDoc, setDoc, serverTimestamp } from 'firebase/firestore'
 import { db } from '../firebase'

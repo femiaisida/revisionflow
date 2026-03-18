@@ -1,4 +1,6 @@
 import PrivacyPolicy from './pages/PrivacyPolicy'
+import Help from './pages/Help'
+import { PriorityProvider } from './context/PriorityContext'
 // src/App.jsx
 import React, { Suspense, lazy, useEffect } from 'react'
 import { Routes, Route, Navigate } from 'react-router-dom'
@@ -106,6 +108,7 @@ export default function App() {
             </Route>
 
             <Route path="/privacy" element={<PrivacyPolicy />} />
+        <Route path="/help" element={<Help />} />
         <Route path="*" element={<Navigate to="/" replace />} />
           </Routes>
         </Suspense>

@@ -1,5 +1,6 @@
 // src/pages/Dashboard.jsx
 import React, { useEffect, useState } from 'react'
+import TooltipTour from '../components/TooltipTour'
 import { Link } from 'react-router-dom'
 import { useAuth } from '../context/AuthContext'
 import { getSessions, getTasks, getPaperAttempts } from '../utils/firestore'
@@ -110,6 +111,7 @@ export default function Dashboard() {
 
   return (
     <>
+      {showTour && <TooltipTour onComplete={() => setShowTour(false)} />}
       {!gdprConsent && (
         <div style={{position:'fixed',bottom:0,left:0,right:0,zIndex:9999,background:'var(--surface)',borderTop:'2px solid var(--accent)',padding:'1rem 1.5rem',display:'flex',alignItems:'center',justifyContent:'space-between',flexWrap:'wrap',gap:'0.75rem',boxShadow:'0 -4px 20px rgba(0,0,0,0.3)'}}>
           <p style={{margin:0,color:'var(--text-secondary)',fontSize:'0.9rem',maxWidth:600}}>

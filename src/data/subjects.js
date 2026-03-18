@@ -1,85 +1,128 @@
 // src/data/subjects.js
-
 export const EXAM_BOARDS = ['AQA', 'Edexcel', 'OCR', 'WJEC', 'CCEA', 'Cambridge']
 
 export const GCSE_SUBJECTS = [
-  'Biology', 'Chemistry', 'Physics', 'Combined Science',
+  'Biology', 'Chemistry', 'Physics', 'Combined Science: Trilogy', 'Combined Science: Synergy',
   'Mathematics', 'Further Mathematics',
   'English Language', 'English Literature',
   'History', 'Geography',
   'Computer Science', 'Engineering', 'Design & Technology',
-  'Art & Design', 'Music', 'Drama', 'PE',
-  'French', 'German', 'Spanish', 'Mandarin', 'Latin',
+  'Art & Design', 'Music', 'Drama',
+  'Physical Education',
+  'French', 'German', 'Spanish', 'Mandarin Chinese', 'Arabic', 'Polish', 'Urdu',
   'Religious Studies', 'Sociology', 'Psychology',
   'Business Studies', 'Economics',
-  'Food Technology', 'Media Studies', 'Film Studies',
+  'Media Studies', 'Film Studies',
+  'Food Preparation & Nutrition',
+  'Statistics',
 ]
 
 export const ALEVEL_SUBJECTS = [
   'Biology', 'Chemistry', 'Physics',
   'Mathematics', 'Further Mathematics', 'Statistics',
-  'English Language', 'English Literature', 'English Lang & Lit',
+  'English Language', 'English Literature', 'English Language & Literature',
   'History', 'Geography',
   'Computer Science', 'Engineering',
-  'Art & Design', 'Music', 'Drama & Theatre',
-  'French', 'German', 'Spanish', 'Mandarin', 'Latin', 'Classical Greek',
+  'Art & Design', 'Music', 'Drama & Theatre Studies',
+  'Physical Education',
+  'French', 'German', 'Spanish', 'Mandarin Chinese', 'Arabic', 'Latin', 'Classical Greek',
   'Religious Studies', 'Philosophy', 'Sociology', 'Psychology',
   'Business', 'Economics', 'Accounting',
-  'Law', 'Politics', 'Government & Politics',
+  'Law', 'Politics',
   'Media Studies', 'Film Studies', 'Photography',
   'Design & Technology', 'Product Design',
-  'Physical Education', 'Sport Science',
+  'Environmental Science',
 ]
 
+export const BTEC_L2_SUBJECTS = [
+  'BTEC Tech Award: Health & Social Care',
+  'BTEC Tech Award: Sport',
+  'BTEC Tech Award: Creative Media Production',
+  'BTEC Tech Award: Engineering',
+  'BTEC Tech Award: Performing Arts',
+  'BTEC Tech Award: Business',
+  'BTEC Tech Award: Hospitality',
+  'BTEC Tech Award: IT',
+  'BTEC Tech Award: Animal Care',
+  'BTEC Tech Award: Child Development',
+  'BTEC Tech Award: Music Practice',
+]
+
+export const BTEC_L3_SUBJECTS = [
+  'BTEC National: Business',
+  'BTEC National: IT',
+  'BTEC National: Health & Social Care',
+  'BTEC National: Sport',
+  'BTEC National: Engineering',
+  'BTEC National: Performing Arts',
+  'BTEC National: Art & Design',
+  'BTEC National: Media Production',
+  'BTEC National: Science',
+  'BTEC National: Applied Science',
+  'BTEC National: Law',
+  'BTEC National: Criminology',
+  'BTEC National: Psychology',
+  'BTEC National: Travel & Tourism',
+  'BTEC National: Construction',
+  'BTEC National: Public Services',
+  'BTEC National: Childcare & Education',
+]
+
+export const GRADE_OPTIONS = {
+  GCSE:              ['9','8','7','6','5','4','3','2','1','U'],
+  'Combined Science':['9-9','9-8','8-8','8-7','7-7','7-6','6-6','6-5','5-5','5-4','4-4','4-3','3-3','U'],
+  'A-Level':         ['A*','A','B','C','D','E','U'],
+  'BTEC-L2':         ['D*','D','M','P','U'],
+  'BTEC-L3':         ['D*D*','D*D','DD','DM','MM','MP','PP','U'],
+}
+
+export function getGradeOptions(subjectName, qualification) {
+  if (!subjectName) return GRADE_OPTIONS.GCSE
+  if (subjectName.startsWith('BTEC National')) return GRADE_OPTIONS['BTEC-L3']
+  if (subjectName.startsWith('BTEC Tech Award')) return GRADE_OPTIONS['BTEC-L2']
+  if (subjectName.includes('Combined Science')) return GRADE_OPTIONS['Combined Science']
+  if (qualification === 'A-Level') return GRADE_OPTIONS['A-Level']
+  return GRADE_OPTIONS.GCSE
+}
+
+export function getSubjectList(qualification) {
+  if (qualification === 'A-Level') return ALEVEL_SUBJECTS
+  if (qualification === 'BTEC-L2') return BTEC_L2_SUBJECTS
+  if (qualification === 'BTEC-L3') return BTEC_L3_SUBJECTS
+  return GCSE_SUBJECTS
+}
+
 export const SUBJECT_COLOURS = {
-  'Biology':            '#2E7D32',
-  'Chemistry':          '#E65100',
-  'Physics':            '#4A148C',
-  'Combined Science':   '#1B5E20',
-  'Mathematics':        '#1565C0',
-  'Further Mathematics':'#0D47A1',
-  'English Language':   '#00695C',
-  'English Literature': '#4E342E',
-  'History':            '#5D4037',
-  'Geography':          '#558B2F',
-  'Computer Science':   '#1B5E20',
-  'French':             '#1A237E',
-  'German':             '#6A1B9A',
-  'Spanish':            '#B71C1C',
-  'Business Studies':   '#AD1457',
-  'Economics':          '#E65100',
-  'Psychology':         '#006064',
-  'Sociology':          '#37474F',
-  'Religious Studies':  '#4E342E',
-  'Music':              '#880E4F',
-  'Drama':              '#311B92',
-  'Art & Design':       '#BF360C',
-  'PE':                 '#1B5E20',
-  'default':            '#7c3aed',
+  'Biology':'#27ae60','Chemistry':'#8e44ad','Physics':'#2980b9',
+  'Combined Science: Trilogy':'#16a085','Combined Science: Synergy':'#1abc9c',
+  'Mathematics':'#e74c3c','Further Mathematics':'#c0392b','Statistics':'#e67e22',
+  'English Language':'#f39c12','English Literature':'#d35400',
+  'History':'#795548','Geography':'#4caf50',
+  'Computer Science':'#3498db','Engineering':'#607d8b','Design & Technology':'#9c27b0',
+  'Art & Design':'#e91e63','Music':'#673ab7','Drama':'#ff5722','Drama & Theatre Studies':'#ff5722',
+  'Physical Education':'#ff9800',
+  'French':'#1565c0','German':'#b71c1c','Spanish':'#e65100',
+  'Mandarin Chinese':'#c62828','Arabic':'#1b5e20','Polish':'#283593','Urdu':'#4a148c',
+  'Latin':'#5d4037','Classical Greek':'#4e342e',
+  'Religious Studies':'#795548','Philosophy':'#6d4c41','Sociology':'#546e7a','Psychology':'#6d4c41',
+  'Business Studies':'#00897b','Business':'#00897b','Economics':'#00acc1','Accounting':'#0097a7',
+  'Law':'#37474f','Politics':'#1a237e',
+  'Media Studies':'#ad1457','Film Studies':'#880e4f','Photography':'#6a1b9a',
+  'Food Preparation & Nutrition':'#558b2f',
+  'Product Design':'#7b1fa2','Environmental Science':'#2e7d32',
+  'default':'#546e7a',
 }
 
-export const GRADE_BOUNDARIES_GCSE = {
-  // Example AQA Maths Higher 2023 — format: [grade9, grade8, grade7, grade6, grade5, grade4, grade3, grade2, grade1]
-  // Full dataset would be loaded from Firestore; this is the seed structure
-  'AQA-Mathematics-Higher-2023': { maxMarks: 240, boundaries: [176,152,124,100,80,64,44,28,12] },
-  'AQA-Mathematics-Foundation-2023': { maxMarks: 240, boundaries: [null,null,null,null,151,120,89,58,27] },
-  'AQA-English Language-2023': { maxMarks: 160, boundaries: [114,103,91,79,67,55,42,29,16] },
-  'AQA-English Literature-2023': { maxMarks: 160, boundaries: [123,110,96,82,67,53,39,25,11] },
+export function subjectColour(name) {
+  if (!name) return SUBJECT_COLOURS.default
+  if (name.startsWith('BTEC')) return '#e65100'
+  return SUBJECT_COLOURS[name] || SUBJECT_COLOURS.default
 }
 
-export const PAPER_STRUCTURES = {
-  // Format: { board, subject, tier, year, paper, totalMarks, questions: [{num, marks}] }
-  // Seeded examples — more are added by admin and community via Firestore
-  'AQA-Mathematics-Higher-2024-P1': {
-    board: 'AQA', subject: 'Mathematics', tier: 'Higher', year: 2024, paper: 1,
-    totalMarks: 80,
-    questions: Array.from({length: 27}, (_, i) => ({ num: i+1, marks: i < 10 ? 2 : i < 20 ? 3 : 4 })),
-  },
-  'AQA-Mathematics-Higher-2024-P2': {
-    board: 'AQA', subject: 'Mathematics', tier: 'Higher', year: 2024, paper: 2,
-    totalMarks: 80,
-    questions: Array.from({length: 25}, (_, i) => ({ num: i+1, marks: i < 8 ? 2 : i < 18 ? 3 : 5 })),
-  },
+export function isTiered(subjectName) {
+  const tiered = ['Mathematics','Further Mathematics','Biology','Chemistry','Physics',
+    'Combined Science: Trilogy','Combined Science: Synergy','Statistics']
+  return tiered.includes(subjectName)
 }
 
 export const XP_REWARDS = {
