@@ -7,7 +7,7 @@ import PWAInstallBanner from './PWAInstallBanner'
 import {
   LayoutDashboard, Calendar, FileText, Brain, AlertCircle,
   CheckSquare, Users, Trophy, User, MessageSquare, BookOpen,
-  Clock, Settings, LogOut, Menu, X, Sun, Moon, Zap, Timer, BarChart2, Layers
+  Clock, Settings, LogOut, Menu, X, Sun, Moon, Zap, Timer, BarChart2, Layers, HelpCircle
 } from 'lucide-react'
 
 const NAV = [
