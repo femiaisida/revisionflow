@@ -45,6 +45,7 @@ export default function Layout() {
   const { theme, toggle }   = useTheme()
   const navigate             = useNavigate()
   const [open,       setOpen]       = useState(false)
+  const [collapsed,   setCollapsed]   = useState(false)
   const [showWidget, setShowWidget] = useState(false)
 
   async function handleLogout() {
