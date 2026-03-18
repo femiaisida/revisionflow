@@ -38,7 +38,7 @@ export default function Onboarding() {
   const [username, setUsername] = useState('')
 
   const subjectList  = qual==='A-Level' ? ALEVEL_SUBJECTS : qual==='BTEC-L2' ? BTEC_L2_SUBJECTS : qual==='BTEC-L3' ? BTEC_L3_SUBJECTS : GCSE_SUBJECTS
-  const gradeOptions = getGradeOptions(newSubj.name, qual)
+  const gradeOptions = getGradeOptions(newSubj.name, qual, newSubj.tier)
 
   function onSubjName(name) {
     setNewSubj(s => ({ ...s, name, tier: isTiered(name) ? 'Higher' : 'N/A' }))
@@ -138,15 +138,21 @@ export default function Onboarding() {
             <div className="fade-in">
               <h3 style={{marginBottom:8}}>What are you studying?</h3>
               <p style={{marginBottom:16}}>Sets the right subjects, topics, and grade boundaries.</p>
-              {['GCSE','A-Level','Both'].map(q=>(
+              {[
+                {id:'GCSE',      label:'GCSE',                      desc:'Grades 9–1 · UK secondary school'},
+                {id:'A-Level',   label:'A-Level',                   desc:'Grades A*–E · Sixth form / college'},
+                {id:'Both',      label:'GCSE + A-Level',            desc:'Studying both simultaneously'},
+                {id:'BTEC-L2',   label:'BTEC Tech Award (Level 2)', desc:'Grades D*–U · Taken alongside GCSEs'},
+                {id:'BTEC-L3',   label:'BTEC National (Level 3)',   desc:'Grades D*D*–U · Sixth form / college'},
+              ].map(({id:q,label,desc})=>(
                 <button key={q} onClick={()=>setQual(q)} className="card"
                   style={{width:'100%',textAlign:'left',cursor:'pointer',marginBottom:8,
                     border:`2px solid ${qual===q?'var(--accent)':'var(--border)'}`,
                     background:qual===q?'rgba(124,58,237,0.1)':'var(--bg-card)',
                     padding:'14px 16px',display:'flex',alignItems:'center',justifyContent:'space-between'}}>
                   <div>
-                    <div style={{fontWeight:600}}>{q}</div>
-                    <div style={{fontSize:'0.8rem',color:'var(--text-muted)'}}>{q==='GCSE'?'Grades 1–9 · UK secondary':q==='A-Level'?'Grades A*–E · Sixth form':'Studying both'}</div>
+                    <div style={{fontWeight:600}}>{label}</div>
+                    <div style={{fontSize:'0.8rem',color:'var(--text-muted)'}}>{desc}</div>
                   </div>
                   {qual===q&&<Check size={16} color="var(--accent-light)"/>}
                 </button>

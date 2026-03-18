@@ -69,19 +69,24 @@ export const BTEC_L3_SUBJECTS = [
 ]
 
 export const GRADE_OPTIONS = {
-  GCSE:              ['9','8','7','6','5','4','3','2','1','U'],
-  'Combined Science':['9-9','9-8','8-8','8-7','7-7','7-6','6-6','6-5','5-5','5-4','4-4','4-3','3-3','U'],
-  'A-Level':         ['A*','A','B','C','D','E','U'],
-  'BTEC-L2':         ['D*','D','M','P','U'],
-  'BTEC-L3':         ['D*D*','D*D','DD','DM','MM','MP','PP','U'],
+  GCSE:                ['9','8','7','6','5','4','3','2','1','U'],
+  'GCSE-Foundation':   ['5','4','3','2','1','U'],
+  'Combined Science':  ['9-9','9-8','8-8','8-7','7-7','7-6','6-6','6-5','5-5','5-4','4-4','4-3','3-3','U'],
+  'Combined-Foundation':['5-5','5-4','4-4','4-3','3-3','U'],
+  'A-Level':           ['A*','A','B','C','D','E','U'],
+  'BTEC-L2':           ['D*','D','M','P','U'],
+  'BTEC-L3':           ['D*D*','D*D','DD','DM','MM','MP','PP','U'],
 }
 
-export function getGradeOptions(subjectName, qualification) {
+export function getGradeOptions(subjectName, qualification, tier) {
   if (!subjectName) return GRADE_OPTIONS.GCSE
   if (subjectName.startsWith('BTEC National')) return GRADE_OPTIONS['BTEC-L3']
   if (subjectName.startsWith('BTEC Tech Award')) return GRADE_OPTIONS['BTEC-L2']
-  if (subjectName.includes('Combined Science')) return GRADE_OPTIONS['Combined Science']
+  if (subjectName.includes('Combined Science')) {
+    return tier === 'Foundation' ? GRADE_OPTIONS['Combined-Foundation'] : GRADE_OPTIONS['Combined Science']
+  }
   if (qualification === 'A-Level') return GRADE_OPTIONS['A-Level']
+  if (tier === 'Foundation') return GRADE_OPTIONS['GCSE-Foundation']
   return GRADE_OPTIONS.GCSE
 }
 
