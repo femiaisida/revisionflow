@@ -60,7 +60,7 @@ export default function Layout() {
     <div className="app-layout">
       {open && <div style={{position:'fixed',inset:0,zIndex:99,background:'rgba(0,0,0,0.5)'}} onClick={()=>setOpen(false)}/>}
 
-      <aside className={`sidebar ${open?'open':''}`} style={{width:collapsed?52:undefined,minWidth:collapsed?52:undefined,transition:'width 0.2s,min-width 0.2s',overflow:'hidden'}}>
+      <aside className={`sidebar ${open?'open':''}`} style={{width:collapsed?52:undefined,minWidth:collapsed?52:undefined,transition:'width 0.2s,min-width 0.2s',overflow:collapsed?'hidden':undefined,overflowY:collapsed?'hidden':'auto'}}>
         {/* Logo + collapse toggle */}
         <div style={{display:'flex',alignItems:'center',gap:8,marginBottom:20,padding:'0 4px', justifyContent: collapsed ? 'center' : 'flex-start'}}>
           {!collapsed && (
@@ -113,7 +113,7 @@ export default function Layout() {
         )}
 
         {/* Nav */}
-        <nav style={{flex:1,display:'flex',flexDirection:'column',gap:1}}>
+        <nav style={{flex:1,display:'flex',flexDirection:'column',gap:1,overflowY:'auto'}}>
           {NAV.map(({to,label,icon:Icon})=>(
             <NavLink key={to} to={to} onClick={()=>setOpen(false)}
               style={({isActive})=>({
