@@ -7,6 +7,7 @@ import {
 } from 'firebase/auth'
 import { doc, setDoc, getDoc, serverTimestamp, onSnapshot, query, collection, where, updateDoc, deleteDoc, arrayUnion, arrayRemove } from 'firebase/firestore'
 import { auth, db, googleProvider } from '../firebase'
+import toast from 'react-hot-toast'
 
 const AuthContext = createContext(null)
 
@@ -37,6 +38,7 @@ export function AuthProvider({ children }) {
                   streak: days, 
                   lastSessionDate: new Date().toISOString().substring(0, 10) 
                 })
+                toast.success(`Streak recovered! Restored to ${days} days.`)
               }
             }
           }
