@@ -28,18 +28,23 @@ export function AuthProvider({ children }) {
             const data = snap.data()
             setProfile(data)
             
-            // --- HEAL STREAK (Migration/Recovery) ---
-            if (data.streak === 0 && data.createdAt) {
+            // --- ONE-TIME STREAK RECOVERY (Migration) ---
+            if (!data.streakMigrated && data.createdAt) {
               const created = data.createdAt?.toDate?.() || new Date(data.createdAt)
               const diff = Date.now() - created.getTime()
               const days = Math.floor(diff / (1000 * 60 * 60 * 24))
-              if (days > 0) {
-                updateDoc(doc(db, 'users', u.uid), { 
-                  streak: days, 
-                  lastSessionDate: new Date().toISOString().substring(0, 10) 
-                })
-                toast.success(`Streak recovered! Restored to ${days} days.`)
+              const finalStreak = Math.max(data.streak || 0, days)
+              
+              if (finalStreak > (data.streak || 0)) {
+                toast.success(`Welcome back! We've boosted your streak to ${finalStreak} days to make up for the update!`)
               }
+              
+              updateDoc(doc(db, 'users', u.uid), { 
+                streak: finalStreak, 
+                streakMigrated: true,
+                lastSessionDate: new Date().toISOString().substring(0, 10),
+                updatedAt: serverTimestamp()
+              })
             }
           }
         })
