@@ -33,7 +33,7 @@ export default function Dashboard() {
     if (!user) return
     setDataLoading(true)
     Promise.all([
-      getSessions(user.uid, { limit:150 }),
+      getSessions(user.uid, { limit:500 }),
       getTasks(user.uid),
       getPaperAttempts(user.uid, null),
     ]).then(([sessions, taskList, papers]) => {
@@ -51,7 +51,7 @@ export default function Dashboard() {
 
       const taskEvents = taskList.filter(t => {
         const d = t.dueDate || ''
-        return d.substring(0, 10) === todayStr && !t.completed
+        return d.substring(0, 10) === todayStr  // Include completed ones too
       }).map(t => ({
         ...t,
         isTask: true,
@@ -60,7 +60,17 @@ export default function Dashboard() {
         subject: t.subject || 'General'
       }))
 
-      setTodaySessions([...sessionEvents, ...taskEvents])
+      const combined = [...sessionEvents, ...taskEvents].sort((a,b) => {
+        // Sort by start time (HH:mm or ISO string)
+        const getVal = (x) => {
+          if (x.start && x.start.includes(':')) return x.start
+          if (typeof x.startTime === 'string' && x.startTime.includes('T')) return x.startTime.split('T')[1].substring(0,5)
+          return '00:00'
+        }
+        return getVal(a).localeCompare(getVal(b))
+      })
+
+      setTodaySessions(combined)
       setTasks(taskList.filter(t=>!t.completed).slice(0,5))
       
       const sorted = papers.sort((a,b) => {
