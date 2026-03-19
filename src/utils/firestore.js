@@ -274,7 +274,12 @@ export async function deleteTask(uid, taskId) {
 
 // ── FRIENDS ──────────────────────────────────────────────────────────────────
 export async function sendFriendRequest(fromUid, toUid) {
-  await updateDoc(doc(db, 'users', toUid), { friendRequests: arrayUnion(fromUid) })
+  const batch = writeBatch(db)
+  // To user: receives the request
+  batch.update(doc(db, 'users', toUid), { friendRequests: arrayUnion(fromUid) })
+  // From user: tracks that they sent it
+  batch.update(doc(db, 'users', fromUid), { sentFriendRequests: arrayUnion(toUid) })
+  await batch.commit()
 }
 
 export async function acceptFriendRequest(uid, fromUid) {
@@ -283,17 +288,22 @@ export async function acceptFriendRequest(uid, fromUid) {
     friends: arrayUnion(fromUid),
     friendRequests: arrayRemove(fromUid),
   })
-  batch.update(doc(db, 'users', fromUid), { friends: arrayUnion(uid) })
+  batch.update(doc(db, 'users', fromUid), {
+    friends: arrayUnion(uid),
+    sentFriendRequests: arrayRemove(uid) // remove from sender's list too
+  })
   await batch.commit()
   await awardXP(uid, XP_REWARDS.friendAdded, 'Friend added')
-  // Check friend_5 badge
   const snap = await getDoc(doc(db, 'users', uid))
   const friendCount = (snap.data()?.friends || []).length
   if (friendCount >= 5) await checkAndAwardBadge(uid, 'friend_5')
 }
 
 export async function declineFriendRequest(uid, fromUid) {
-  await updateDoc(doc(db, 'users', uid), { friendRequests: arrayRemove(fromUid) })
+  const batch = writeBatch(db)
+  batch.update(doc(db, 'users', uid), { friendRequests: arrayRemove(fromUid) })
+  batch.update(doc(db, 'users', fromUid), { sentFriendRequests: arrayRemove(uid) })
+  await batch.commit()
 }
 
 export async function removeFriend(uid, friendUid) {

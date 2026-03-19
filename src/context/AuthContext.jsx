@@ -55,6 +55,7 @@ export function AuthProvider({ children }) {
         subjects: [],
         friends: [],
         friendRequests: [],
+        sentFriendRequests: [],
         settings: { theme: 'dark', profilePublic: true, friendsCanSeeGrades: true },
         onboardingComplete: false,
         startingGrades: {},

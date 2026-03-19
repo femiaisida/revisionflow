@@ -54,6 +54,7 @@ export default function CalendarGenerator({ onClose, onGenerated }) {
   // ── Step 3: Session preferences ─────────────────────────────────────────
   const [contentRatio,    setContentRatio]    = useState(2)
   const [examRatio,       setExamRatio]       = useState(1)
+  const [contentDuration, setContentDuration] = useState(45)
   const [sessionGap,      setSessionGap]      = useState(30)
   const [emergencySessions, setEmergency]     = useState(true)
   const [dayCap,          setDayCap]          = useState('none') // 'none' | day name
@@ -85,6 +86,7 @@ export default function CalendarGenerator({ onClose, onGenerated }) {
           const d = snap.data()
           if (d.contentRatio !== undefined) setContentRatio(d.contentRatio)
           if (d.examRatio !== undefined) setExamRatio(d.examRatio)
+          if (d.contentDuration !== undefined) setContentDuration(d.contentDuration)
           if (d.sessionGap !== undefined) setSessionGap(d.sessionGap)
           if (d.emergencySessions !== undefined) setEmergency(d.emergencySessions)
           if (d.dayCap !== undefined) setDayCap(d.dayCap)
@@ -124,6 +126,7 @@ export default function CalendarGenerator({ onClose, onGenerated }) {
       holidays,
       contentRatio,
       examRatio,
+      contentDuration,
       sessionGap,
       tuesdayCap:         dayCap !== 'none',
       cappedDay:          dayCap,
@@ -153,7 +156,7 @@ export default function CalendarGenerator({ onClose, onGenerated }) {
 
       try {
         await setDoc(doc(db, 'users', user.uid, 'settings', 'calendarPrefs'), {
-          contentRatio, examRatio, sessionGap, emergencySessions, dayCap, dayCapCount,
+          contentRatio, examRatio, contentDuration, sessionGap, emergencySessions, dayCap, dayCapCount,
           subjectRatios, subjectRatioValues, prioritySubjects: prioritySubjects || []
         }, { merge: true })
       } catch (err) { console.error('Failed to save prefs', err) }
@@ -364,6 +367,14 @@ export default function CalendarGenerator({ onClose, onGenerated }) {
               </div>
             </div>
 
+            {/* Session duration */}
+            <div>
+              <label className="label">Session length (minutes)</label>
+              <select className="select" style={{width:'auto'}} value={contentDuration} onChange={e=>setContentDuration(parseInt(e.target.value))}>
+                {[30,45,60,90].map(n=><option key={n} value={n}>{n} minutes</option>)}
+              </select>
+            </div>
+
             {/* Gap */}
             <div>
               <label className="label">Break between sessions (minutes)</label>
@@ -468,6 +479,7 @@ export default function CalendarGenerator({ onClose, onGenerated }) {
                 ['Date range', `${startDate} → ${endDate}`],
                 ['Available days', Object.entries(availability).filter(([,v])=>v.enabled).map(([k])=>k.slice(0,3)).join(', ')],
                 ['Ratio', `${contentRatio} content : ${examRatio} exam practice`],
+                ['Session length', `${contentDuration} minutes`],
                 ['Session gap', `${sessionGap} minutes`],
                 ['Day cap', dayCap==='none'?'None':`${dayCap} max ${dayCapCount} session${dayCapCount!==1?'s':''}`],
                 ['Emergency sessions', emergencySessions?`Yes (${examDates.length} exams)`:'No'],

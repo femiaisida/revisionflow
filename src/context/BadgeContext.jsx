@@ -8,6 +8,7 @@ import { db } from '../firebase'
 import { useAuth } from './AuthContext'
 import { BADGES } from '../data/subjects'
 import toast from 'react-hot-toast'
+import { UserPlus } from 'lucide-react'
 
 // Rare badges get the full-screen treatment
 const RARE_BADGE_IDS = [
@@ -21,6 +22,7 @@ export function BadgeProvider({ children }) {
   const { user } = useAuth()
   const [celebration, setCelebration] = useState(null)  // badge object for full-screen
   const knownBadgesRef = useRef(null)  // tracks what we already know about
+  const previousRequestsRef = useRef(null)
 
   useEffect(() => {
     if (!user) return
@@ -28,6 +30,17 @@ export function BadgeProvider({ children }) {
     const unsub = onSnapshot(doc(db, 'users', user.uid), snap => {
       if (!snap.exists()) return
       const current = snap.data().badges || []
+      const currentReqs = snap.data().friendRequests || []
+
+      // --- Friend Requests Notification ---
+      if (previousRequestsRef.current !== null) {
+        if (currentReqs.length > previousRequestsRef.current.length) {
+          toast.success('New friend request received!', {
+            icon: <UserPlus size={18} color="var(--accent)"/>,
+          })
+        }
+      }
+      previousRequestsRef.current = currentReqs
 
       // On first load, mark all current badges as seen in localStorage
       if (knownBadgesRef.current === null) {

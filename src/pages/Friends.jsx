@@ -99,12 +99,13 @@ export default function Friends() {
     )
   }
 
-  const isAlreadyFriend = (uid) => profile?.friends?.includes(uid)
-  const hasPendingRequest = (uid) => profile?.friendRequests?.includes(uid)
+  const isAlreadyFriend   = (uid) => profile?.friends?.includes(uid)
+  const hasIncomingRequest = (uid) => profile?.friendRequests?.includes(uid)
+  const hasSentRequest     = (uid) => profile?.sentFriendRequests?.includes(uid)
 
   return (
     <div className="fade-in">
-      <div style={{display:'flex',alignItems:'center',justifyContent:'space-between',marginBottom:24}}>
+      <div style={{display:'flex',alignItems:'center',justifyContent:'space-between',marginBottom:24,flexWrap:'wrap',gap:12}}>
         <h2>Friends</h2>
         <span className="badge badge-purple"><Users size={12}/> {friends.length} friends</span>
       </div>
@@ -117,14 +118,14 @@ export default function Friends() {
           <input className="input" value={search} onChange={e=>setSearch(e.target.value)}
             placeholder="Search by username or name…"/>
           <button className="btn btn-primary" type="submit" disabled={searching||!search.trim()}>
-            <Search size={16}/>
+            {searching ? <div className="spinner" style={{width:16,height:16}}/> : <Search size={16}/>}
           </button>
         </form>
 
         {searchResults.length > 0 && (
           <div style={{display:'flex',flexDirection:'column',gap:8}}>
             {searchResults.map(u => (
-              <div key={u.id} style={{padding:'10px 12px',background:'var(--bg-surface)',borderRadius:'var(--radius-md)',border:'1px solid var(--border)',display:'flex',alignItems:'center',justifyContent:'space-between',gap:10}}>
+              <div key={u.id} style={{padding:'10px 12px',background:'var(--bg-surface)',borderRadius:'var(--radius-md)',border:'1px solid var(--border)',display:'flex',alignItems:'center',justifyContent:'space-between',gap:10,flexWrap:'wrap'}}>
                 <div>
                   <div style={{fontWeight:600}}>{u.displayName}</div>
                   <div style={{fontSize:'0.75rem',color:'var(--text-muted)'}}>
@@ -132,9 +133,11 @@ export default function Friends() {
                   </div>
                 </div>
                 {isAlreadyFriend(u.id) ? (
-                  <span className="badge badge-green">Already friends</span>
-                ) : hasPendingRequest(u.id) ? (
-                  <span className="badge badge-grey">Request pending</span>
+                  <span className="badge badge-green"><UserCheck size={12}/> Friends</span>
+                ) : hasSentRequest(u.id) ? (
+                  <span className="badge badge-grey">Request sent</span>
+                ) : hasIncomingRequest(u.id) ? (
+                  <button className="btn btn-primary btn-sm" onClick={()=>handleAccept(u.id)}>Accept request</button>
                 ) : (
                   <button className="btn btn-primary btn-sm" onClick={()=>handleSendRequest(u.id)}>
                     <UserPlus size={14}/> Add friend

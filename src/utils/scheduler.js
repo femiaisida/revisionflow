@@ -14,7 +14,7 @@ import { addDays, format, startOfWeek, isSameDay, differenceInDays } from 'date-
 
 // ── CONSTANTS ─────────────────────────────────────────────────────────────────
 const GAP_MINUTES = 30       // minimum gap between sessions
-const CONTENT_DURATION = 45  // content sessions always 45 min
+const CONTENT_DUR = 45  // content sessions always 45 min
 
 const EXAM_DURATIONS = {
   'Mathematics':      { default: 90 },
@@ -111,9 +111,14 @@ export function generateSchedule(options) {
     holidays = [],     // [{ start, end }]
     contentRatio = 2,  // default content sessions per exam session
     examRatio = 1,
+    contentDuration = 45, // NEW: configurable content session length
+    sessionGap = 30,   // NEW: configurable gap
     tuesdayCap = true,
     extendedFromDate = null, // Date from which end time extends to 22:00
   } = options
+
+  const CONTENT_DUR = contentDuration || 45
+
 
   const sessions    = []
   const counters    = {}  // session name counters
@@ -225,13 +230,13 @@ export function generateSchedule(options) {
   }
 
   function placeSession(date, currentMin, endMin, subjName, paper, stype, isEmergency = false) {
-    const dur = isEmergency ? CONTENT_DURATION
-      : stype === 'content' ? CONTENT_DURATION
+    const dur = isEmergency ? CONTENT_DUR
+      : stype === 'content' ? CONTENT_DUR
       : getExamDuration(subjName, paper)
 
     if (currentMin + dur > endMin) {
       // Try content if exam doesn't fit
-      if (stype === 'exam' && currentMin + CONTENT_DURATION <= endMin) {
+      if (stype === 'exam' && currentMin + CONTENT_DUR <= endMin) {
         stype = 'content'
       } else {
         return null
@@ -335,18 +340,18 @@ export function generateSchedule(options) {
 
     if (preExamSubjs.length > 0) {
       let i = 0
-      while (curMin + CONTENT_DURATION <= endMin) {
+      while (curMin + CONTENT_DUR <= endMin) {
         if (isTuesdayCapped && !holidayTuesdayCapped && slotsUsed >= 1) break
-        if (holidayTuesdayCapped && curMin + CONTENT_DURATION > 18 * 60 + 30) break
+        if (holidayTuesdayCapped && curMin + CONTENT_DUR > 18 * 60 + 30) break
         const subj = preExamSubjs[i % preExamSubjs.length]
         const ap = activePapers(subj).filter(p => preExamPapersMap[subj]?.includes(p))
         if (!ap.length) { i++; if (i > preExamSubjs.length * 3) break; continue }
         const stype = nextSessionType(subj)
         const paper = pickPaper(subj, stype, current, ap)
         if (!paper) { i++; continue }
-        const dur = stype === 'content' ? CONTENT_DURATION : getExamDuration(subj, paper)
+        const dur = stype === 'content' ? CONTENT_DUR : getExamDuration(subj, paper)
         if (curMin + dur > endMin) {
-          if (curMin + CONTENT_DURATION <= endMin) {
+          if (curMin + CONTENT_DUR <= endMin) {
             const result = placeSession(current, curMin, endMin, subj, paper, 'content')
             if (result) { sessions.push(result.session); curMin = result.newMin; typePtr[subj]++; slotsUsed++ }
           }
@@ -383,9 +388,9 @@ export function generateSchedule(options) {
       const ordered = [...notSeen, ...seen]
 
       for (const subj of ordered) {
-        if (curMin + CONTENT_DURATION > endMin) break
+        if (curMin + CONTENT_DUR > endMin) break
         if (isTuesdayCapped && !holidayTuesdayCapped && slotsUsed >= 1) break
-        if (holidayTuesdayCapped && curMin + CONTENT_DURATION > 18 * 60 + 30) break
+        if (holidayTuesdayCapped && curMin + CONTENT_DUR > 18 * 60 + 30) break
 
         const ap = activePapers(subj.name)
         if (!ap.length) continue
@@ -401,9 +406,9 @@ export function generateSchedule(options) {
           paper = alts[(stype === 'content' ? contentPtr[subj.name] : examPtr[subj.name]) % alts.length]
         }
 
-        const dur = stype === 'content' ? CONTENT_DURATION : getExamDuration(subj.name, paper)
+        const dur = stype === 'content' ? CONTENT_DUR : getExamDuration(subj.name, paper)
         if (curMin + dur > endMin) {
-          if (stype === 'exam' && curMin + CONTENT_DURATION <= endMin) stype = 'content'
+          if (stype === 'exam' && curMin + CONTENT_DUR <= endMin) stype = 'content'
           else continue
         }
 
