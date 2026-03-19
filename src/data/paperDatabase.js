@@ -124,6 +124,612 @@ export const PAPER_DATABASE = {
 // A-Level: [A*,A,B,C,D,E]
 // ~ prefix in notes = estimated from historical averages
 export const GRADE_BOUNDARIES = {
+  2025: {
+    "AQA-Mathematics-H": {
+        "maxMarks": 240,
+        "boundaries": [
+            197,
+            159,
+            128,
+            103,
+            82,
+            62,
+            46,
+            30,
+            18
+        ]
+    },
+    "AQA-Mathematics-F": {
+        "maxMarks": 240,
+        "boundaries": [
+            null,
+            null,
+            null,
+            170,
+            135,
+            105,
+            79,
+            51,
+            26
+        ]
+    },
+    "AQA-English Language-\u2014": {
+        "maxMarks": 160,
+        "boundaries": [
+            122,
+            110,
+            96,
+            82,
+            68,
+            54,
+            40,
+            27,
+            14
+        ]
+    },
+    "AQA-English Literature-\u2014": {
+        "maxMarks": 160,
+        "boundaries": [
+            113,
+            101,
+            89,
+            77,
+            65,
+            53,
+            41,
+            29,
+            17
+        ]
+    },
+    "AQA-Biology-H": {
+        "maxMarks": 200,
+        "boundaries": [
+            null,
+            null,
+            168,
+            148,
+            125,
+            103,
+            81,
+            58,
+            35
+        ]
+    },
+    "AQA-Chemistry-H": {
+        "maxMarks": 200,
+        "boundaries": [
+            null,
+            null,
+            179,
+            160,
+            136,
+            112,
+            88,
+            64,
+            40
+        ]
+    },
+    "AQA-Physics-H": {
+        "maxMarks": 200,
+        "boundaries": [
+            null,
+            null,
+            168,
+            149,
+            126,
+            103,
+            80,
+            57,
+            34
+        ]
+    },
+    "AQA-Geography-\u2014": {
+        "maxMarks": 216,
+        "boundaries": [
+            null,
+            null,
+            null,
+            null,
+            null,
+            null,
+            null,
+            null,
+            null
+        ]
+    },
+    "AQA-History-\u2014": {
+        "maxMarks": 168,
+        "boundaries": [
+            null,
+            null,
+            null,
+            null,
+            null,
+            null,
+            null,
+            null,
+            null
+        ]
+    },
+    "AQA-Religious Studies A-\u2014": {
+        "maxMarks": 204,
+        "boundaries": [
+            null,
+            null,
+            null,
+            null,
+            null,
+            null,
+            null,
+            null,
+            null
+        ]
+    },
+    "AQA-Computer Science-\u2014": {
+        "maxMarks": 160,
+        "boundaries": [
+            null,
+            null,
+            null,
+            null,
+            null,
+            null,
+            null,
+            null,
+            null
+        ]
+    },
+    "AQA-Psychology-\u2014": {
+        "maxMarks": 200,
+        "boundaries": [
+            null,
+            null,
+            null,
+            null,
+            null,
+            null,
+            null,
+            null,
+            null
+        ]
+    },
+    "AQA-Sociology-\u2014": {
+        "maxMarks": 160,
+        "boundaries": [
+            null,
+            null,
+            null,
+            null,
+            null,
+            null,
+            null,
+            null,
+            null
+        ]
+    },
+    "AQA-Business-\u2014": {
+        "maxMarks": 190,
+        "boundaries": [
+            null,
+            null,
+            null,
+            null,
+            null,
+            null,
+            null,
+            null,
+            null
+        ]
+    },
+    "AQA-Food Preparation & Nutrition-\u2014": {
+        "maxMarks": 160,
+        "boundaries": [
+            null,
+            null,
+            null,
+            null,
+            null,
+            null,
+            null,
+            null,
+            null
+        ]
+    },
+    "AQA-Physical Education-\u2014": {
+        "maxMarks": 200,
+        "boundaries": [
+            null,
+            null,
+            null,
+            null,
+            null,
+            null,
+            null,
+            null,
+            null
+        ]
+    },
+    "AQA-Drama-\u2014": {
+        "maxMarks": 160,
+        "boundaries": [
+            null,
+            null,
+            null,
+            null,
+            null,
+            null,
+            null,
+            null,
+            null
+        ]
+    },
+    "AQA-Media Studies-\u2014": {
+        "maxMarks": 160,
+        "boundaries": [
+            null,
+            null,
+            null,
+            null,
+            null,
+            null,
+            null,
+            null,
+            null
+        ]
+    },
+    "AQA-Accounting-N/A-Alevel": {
+        "maxMarks": 240,
+        "boundaries": [
+            169,
+            143,
+            122,
+            101,
+            81,
+            61
+        ]
+    },
+    "AQA-Biology-N/A-Alevel": {
+        "maxMarks": 260,
+        "boundaries": [
+            178,
+            149,
+            125,
+            101,
+            77,
+            53
+        ]
+    },
+    "AQA-Business-N/A-Alevel": {
+        "maxMarks": 300,
+        "boundaries": [
+            218,
+            195,
+            167,
+            139,
+            111,
+            83
+        ]
+    },
+    "AQA-Chemistry-N/A-Alevel": {
+        "maxMarks": 300,
+        "boundaries": [
+            246,
+            206,
+            170,
+            135,
+            100,
+            65
+        ]
+    },
+    "AQA-Computer Science-N/A-Alevel": {
+        "maxMarks": 375,
+        "boundaries": [
+            309,
+            261,
+            214,
+            167,
+            120,
+            74
+        ]
+    },
+    "AQA-D&T: Product Design-N/A-Alevel": {
+        "maxMarks": 400,
+        "boundaries": [
+            311,
+            281,
+            241,
+            201,
+            162,
+            123
+        ]
+    },
+    "AQA-D&T: Fashion & Textiles-N/A-Alevel": {
+        "maxMarks": 400,
+        "boundaries": [
+            314,
+            280,
+            240,
+            200,
+            160,
+            120
+        ]
+    },
+    "AQA-Dance-N/A-Alevel": {
+        "maxMarks": 200,
+        "boundaries": [
+            143,
+            131,
+            115,
+            99,
+            83,
+            68
+        ]
+    },
+    "AQA-Drama and Theatre-N/A-Alevel": {
+        "maxMarks": 200,
+        "boundaries": [
+            164,
+            147,
+            127,
+            108,
+            89,
+            70
+        ]
+    },
+    "AQA-Economics-N/A-Alevel": {
+        "maxMarks": 240,
+        "boundaries": [
+            191,
+            164,
+            140,
+            116,
+            92,
+            69
+        ]
+    },
+    "AQA-English Language-N/A-Alevel": {
+        "maxMarks": 500,
+        "boundaries": [
+            446,
+            403,
+            343,
+            283,
+            223,
+            163
+        ]
+    },
+    "AQA-English Language & Lit-N/A-Alevel": {
+        "maxMarks": 250,
+        "boundaries": [
+            207,
+            188,
+            161,
+            134,
+            107,
+            80
+        ]
+    },
+    "AQA-English Literature A-N/A-Alevel": {
+        "maxMarks": 375,
+        "boundaries": [
+            311,
+            274,
+            232,
+            191,
+            150,
+            109
+        ]
+    },
+    "AQA-English Literature B-N/A-Alevel": {
+        "maxMarks": 375,
+        "boundaries": [
+            301,
+            265,
+            226,
+            187,
+            148,
+            109
+        ]
+    },
+    "AQA-Environmental Science-N/A-Alevel": {
+        "maxMarks": 240,
+        "boundaries": [
+            171,
+            156,
+            132,
+            108,
+            85,
+            62
+        ]
+    },
+    "AQA-French-N/A-Alevel": {
+        "maxMarks": 400,
+        "boundaries": [
+            356,
+            319,
+            275,
+            232,
+            189,
+            146
+        ]
+    },
+    "AQA-Further Mathematics-N/A-Alevel": {
+        "maxMarks": 300,
+        "boundaries": [
+            210,
+            169,
+            138,
+            107,
+            76,
+            46
+        ]
+    },
+    "AQA-Geography-N/A-Alevel": {
+        "maxMarks": 300,
+        "boundaries": [
+            236,
+            204,
+            174,
+            144,
+            115,
+            86
+        ]
+    },
+    "AQA-German-N/A-Alevel": {
+        "maxMarks": 400,
+        "boundaries": [
+            338,
+            282,
+            236,
+            190,
+            144,
+            99
+        ]
+    },
+    "AQA-History-N/A-Alevel": {
+        "maxMarks": 200,
+        "boundaries": [
+            153,
+            129,
+            108,
+            87,
+            67,
+            47
+        ]
+    },
+    "AQA-Law-N/A-Alevel": {
+        "maxMarks": 300,
+        "boundaries": [
+            null,
+            null,
+            null,
+            null,
+            null,
+            null
+        ]
+    },
+    "AQA-Mathematics-N/A-Alevel": {
+        "maxMarks": 300,
+        "boundaries": [
+            null,
+            null,
+            null,
+            null,
+            null,
+            null
+        ]
+    },
+    "AQA-Media Studies-N/A-Alevel": {
+        "maxMarks": 240,
+        "boundaries": [
+            null,
+            null,
+            null,
+            null,
+            null,
+            null
+        ]
+    },
+    "AQA-Music-N/A-Alevel": {
+        "maxMarks": 300,
+        "boundaries": [
+            null,
+            null,
+            null,
+            null,
+            null,
+            null
+        ]
+    },
+    "AQA-Philosophy-N/A-Alevel": {
+        "maxMarks": 200,
+        "boundaries": [
+            null,
+            null,
+            null,
+            null,
+            null,
+            null
+        ]
+    },
+    "AQA-Physical Education-N/A-Alevel": {
+        "maxMarks": 300,
+        "boundaries": [
+            null,
+            null,
+            null,
+            null,
+            null,
+            null
+        ]
+    },
+    "AQA-Physics-N/A-Alevel": {
+        "maxMarks": 250,
+        "boundaries": [
+            null,
+            null,
+            null,
+            null,
+            null,
+            null
+        ]
+    },
+    "AQA-Politics-N/A-Alevel": {
+        "maxMarks": 231,
+        "boundaries": [
+            null,
+            null,
+            null,
+            null,
+            null,
+            null
+        ]
+    },
+    "AQA-Psychology-N/A-Alevel": {
+        "maxMarks": 288,
+        "boundaries": [
+            null,
+            null,
+            null,
+            null,
+            null,
+            null
+        ]
+    },
+    "AQA-Religious Studies-N/A-Alevel": {
+        "maxMarks": 200,
+        "boundaries": [
+            null,
+            null,
+            null,
+            null,
+            null,
+            null
+        ]
+    },
+    "AQA-Sociology-N/A-Alevel": {
+        "maxMarks": 240,
+        "boundaries": [
+            null,
+            null,
+            null,
+            null,
+            null,
+            null
+        ]
+    },
+    "AQA-Spanish-N/A-Alevel": {
+        "maxMarks": 400,
+        "boundaries": [
+            null,
+            null,
+            null,
+            null,
+            null,
+            null
+        ]
+    }
+},
   2024: {
     // ── AQA GCSE MATHEMATICS ─────────────────────────────────────────────────
     // Verified: total Higher G9=219,G8=191,G7=163,G6=129,G5=95,G4=61 /240 (÷3=80)

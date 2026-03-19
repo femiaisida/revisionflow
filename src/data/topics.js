@@ -6,264 +6,362 @@
 // GCSE TOPICS
 // ─────────────────────────────────────────────────────────────────────────────
 const GCSE = {
-  AQA: {
-    'Mathematics': { papers: {
-      1: ['Number – Structure and Calculation','Number – Fractions, Decimals and Percentages','Number – Measures and Accuracy','Algebra – Notation, Vocabulary and Manipulation','Algebra – Graphs','Algebra – Solving Equations and Inequalities','Algebra – Sequences','Ratio, Proportion and Rates of Change','Geometry – Properties of Shapes','Geometry – Mensuration and Calculation','Geometry – Vectors','Probability','Statistics'],
-      2: ['Number – Calculations, Checking and Estimation','Algebra – Quadratics','Algebra – Simultaneous Equations','Algebra – Inequalities','Algebra – Further Graphs','Geometry – Pythagoras Theorem','Geometry – Trigonometry (SOH CAH TOA)','Geometry – Congruence and Similarity','Statistics – Scatter Graphs','Probability – Combined Events and Tree Diagrams'],
-      3: ['Algebra – Functions','Algebra – Algebraic Proof','Geometry – Circle Theorems','Geometry – Transformations of Graphs','Statistics – Cumulative Frequency and Box Plots','Statistics – Histograms','Number – Surds','Number – Upper and Lower Bounds','Trigonometry – Sine and Cosine Rules','Trigonometry – Area of a Triangle'],
-    }},
-    'Further Mathematics': { papers: {
-      1: ['Algebra – Factor Theorem','Algebra – Algebraic Fractions','Algebra – Proof','Algebra – Functions','Coordinate Geometry','Matrices','Calculus – Differentiation','Calculus – Integration','Series and Sequences','Inequalities'],
-      2: ['Further Algebra and Functions','Further Calculus','Further Trigonometry – Identities','Further Coordinate Geometry','Numerical Methods','Vectors in 3D','Further Statistics','Further Mechanics'],
-    }},
-    'English Language': { papers: {
-      1: ['AO1 – Identify and Interpret Information','AO2 – Language Analysis (Writer\'s Methods)','AO3 – Structural Analysis','AO4 – Critical Evaluation','AO5 – Creative and Descriptive Writing','AO6 – Spelling, Punctuation and Grammar','Descriptive Writing Techniques','Narrative Writing Techniques'],
-      2: ['AO1 – Synthesis and Summary','AO2 – Language Analysis (Non-Fiction)','AO3 – Comparison of Viewpoints','AO4 – Evaluation of Non-Fiction','AO5 – Viewpoint and Argument Writing','Rhetoric and Persuasive Techniques','Register, Tone and Purpose'],
-    }},
-    'English Literature': { papers: {
-      1: ['Macbeth – Ambition and Power','Macbeth – Fate and the Supernatural','Macbeth – Guilt and Conscience','Macbeth – Gender and Masculinity','Macbeth – Character: Macbeth','Macbeth – Character: Lady Macbeth','Macbeth – Jacobean Context','Macbeth – Language and Structure','A Christmas Carol – Social Responsibility','A Christmas Carol – Redemption','A Christmas Carol – Victorian Context','A Christmas Carol – Scrooge\'s Transformation','An Inspector Calls – Social Class','An Inspector Calls – Responsibility and Guilt','An Inspector Calls – 1912 vs 1945 Context','An Inspector Calls – Key Characters'],
-      2: ['Power and Conflict: Ozymandias','Power and Conflict: London','Power and Conflict: The Prelude','Power and Conflict: My Last Duchess','Power and Conflict: The Charge of the Light Brigade','Power and Conflict: Exposure','Power and Conflict: Storm on the Island','Power and Conflict: Bayonet Charge','Power and Conflict: Remains','Power and Conflict: Poppies','Power and Conflict: War Photographer','Power and Conflict: Tissue','Power and Conflict: The Emigrée','Power and Conflict: Kamikaze','Power and Conflict: Checking Out Me History','Poetry Comparison Technique','Unseen Poetry Analysis','Unseen Poetry Comparison'],
-    }},
-    'Biology': { papers: {
-      1: ['B1 – Cell Structure','B1 – Cell Division (Mitosis)','B1 – Transport in Cells (Diffusion, Osmosis, Active Transport)','B2 – Human Digestive System','B2 – The Heart and Blood Vessels','B2 – Health, Disease and Cancer','B2 – Non-Communicable Diseases','B3 – Communicable Diseases','B3 – Viral and Bacterial Disease','B3 – Preventing and Treating Disease','B3 – Monoclonal Antibodies','B4 – Photosynthesis','B4 – Aerobic and Anaerobic Respiration','Required Practical – Microscopy','Required Practical – Osmosis','Required Practical – Food Tests','Required Practical – Enzymes and pH','Required Practical – Photosynthesis Rate'],
-      2: ['B5 – Nervous System','B5 – The Brain','B5 – The Eye','B5 – Hormonal Coordination','B5 – Kidneys and Homeostasis','B5 – Controlling Blood Glucose','B5 – Reproductive Hormones','B6 – DNA and the Genome','B6 – Inheritance and Genetics','B6 – Natural Selection and Evolution','B6 – Classification of Living Organisms','B7 – Adaptations and Interdependence','B7 – Organisation of Ecosystems','B7 – Biodiversity and Human Impact','B7 – Food Production and Land Use','Required Practical – Plant Tropisms','Required Practical – Population Size'],
-    }},
-    'Chemistry': { papers: {
-      1: ['C1 – Atomic Structure and the Periodic Table','C1 – Electronic Structure','C1 – Group 1 (Alkali Metals)','C1 – Group 7 (Halogens)','C1 – Group 0 (Noble Gases)','C2 – Ionic Bonding','C2 – Covalent Bonding','C2 – Metallic Bonding','C2 – Giant Ionic and Covalent Structures','C2 – Nanoparticles','C3 – Relative Formula Mass and Moles','C3 – Limiting Reactants and Yields','C3 – Concentration of Solutions','C4 – Metal Reactivity Series','C4 – Extraction of Metals','C4 – Reactions of Acids','C4 – pH and Neutralisation','C4 – Electrolysis','C5 – Exothermic and Endothermic Reactions','C5 – Bond Energies','C5 – Electrochemical Cells','Required Practical – Making Salts','Required Practical – Titration','Required Practical – Electrolysis','Required Practical – Temperature Changes'],
-      2: ['C6 – Rate of Reaction and Collision Theory','C6 – Factors Affecting Rate','C6 – Catalysts','C6 – Reversible Reactions and Equilibrium','C6 – Le Chatelier\'s Principle','C6 – The Haber Process','C7 – Crude Oil and Hydrocarbons','C7 – Alkanes and Alkenes','C7 – Alcohols and Carboxylic Acids','C7 – Addition and Condensation Polymers','C8 – Purity and Formulations','C8 – Chromatography','C8 – Identification of Gases','C8 – Flame Tests and Ion Tests','C9 – Earth\'s Atmosphere History','C9 – Greenhouse Effect and Climate Change','C9 – Atmospheric Pollutants','C10 – Finite and Renewable Resources','C10 – Water Treatment','C10 – Life Cycle Assessment','Required Practical – Rates of Reaction','Required Practical – Chromatography','Required Practical – Identifying Ions'],
-    }},
-    'Physics': { papers: {
-      1: ['P1 – Energy Stores and Transfers','P1 – Kinetic and Gravitational Potential Energy','P1 – Elastic Potential and Specific Heat Capacity','P1 – Power and Efficiency','P1 – Energy Resources','P2 – Circuit Symbols and Components','P2 – Charge, Current and Potential Difference','P2 – Series and Parallel Circuits','P2 – Resistance and Ohm\'s Law','P2 – I-V Characteristics','P2 – Mains Electricity and Domestic Appliances','P2 – National Grid','P3 – States of Matter and Density','P3 – Changes of State and Specific Latent Heat','P3 – Internal Energy and Gas Pressure','P4 – Atomic Structure and History of the Atom','P4 – Radioactivity – Alpha, Beta, Gamma','P4 – Nuclear Equations and Half-Life','P4 – Hazards and Uses of Radiation','P4 – Nuclear Fission and Fusion','Required Practical – Specific Heat Capacity','Required Practical – Resistance','Required Practical – I-V Characteristics','Required Practical – Density'],
-      2: ['P5 – Scalar and Vector Quantities','P5 – Gravity and Weight','P5 – Resultant Forces and Newton\'s Laws','P5 – Work Done and Energy Transfer','P5 – Hooke\'s Law','P5 – Distance-Time and Velocity-Time Graphs','P5 – Stopping Distance and Momentum','P6 – Transverse and Longitudinal Waves','P6 – Properties of Waves (Speed, Frequency, Wavelength)','P6 – Reflection and Refraction','P6 – Sound and Ultrasound','P6 – Electromagnetic Spectrum','P6 – Lenses and Ray Diagrams','P7 – Permanent and Induced Magnets','P7 – Motor Effect and Fleming\'s Left-Hand Rule','P7 – Electromagnetic Induction and Generators','P7 – Transformers','P8 – The Solar System','P8 – Life Cycle of a Star','P8 – Red-Shift and the Expanding Universe','Required Practical – Waves','Required Practical – Infrared Radiation'],
-    }},
-    'Combined Science: Trilogy': { papers: {
-      1: ['B1 – Cell Structure and Transport','B1 – Cell Division','B2 – Organisation: Digestive System','B2 – Organisation: Disease and Immune Response'],
-      2: ['C1 – Atomic Structure and Periodic Table','C2 – Bonding and Structure','C3 – Quantitative Chemistry','C4 – Chemical Changes and Electrolysis'],
-      3: ['P1 – Energy Stores and Transfers','P2 – Electricity','P3 – Particle Model of Matter','P4 – Atomic Structure and Radioactivity'],
-      4: ['B4 – Bioenergetics (Photosynthesis and Respiration)','B5 – Homeostasis and Response','B6 – Inheritance, Variation and Evolution','B7 – Ecology and Human Impact'],
-      5: ['C5 – Energy Changes','C6 – Rate and Extent of Chemical Change','C7 – Organic Chemistry','C8 – Chemical Analysis and Atmosphere'],
-      6: ['P5 – Forces and Motion','P6 – Waves','P7 – Magnetism and Electromagnetism'],
-    }},
-    'Combined Science: Synergy': { papers: {
-      1: ['Biology – Cells and Organisation','Biology – Infection and Response','Biology – Bioenergetics'],
-      2: ['Biology – Homeostasis','Biology – Inheritance','Biology – Ecology'],
-      3: ['Chemistry – Atomic Structure','Chemistry – Bonding','Chemistry – Quantitative Chemistry'],
-      4: ['Chemistry – Chemical Changes','Chemistry – Organic Chemistry'],
-      5: ['Physics – Energy','Physics – Forces'],
-      6: ['Physics – Waves and Electromagnetism','Physics – Space'],
-    }},
-    'Combined Science': { papers: {
-      1: ['B1 – Cell Structure and Transport','B1 – Cell Division','B2 – Organisation: Digestive System','B2 – Organisation: Disease'],
-      2: ['C1 – Atomic Structure and Periodic Table','C2 – Bonding and Structure','C3 – Quantitative Chemistry','C4 – Chemical Changes'],
-      3: ['P1 – Energy','P2 – Electricity','P3 – Particle Model','P4 – Atomic Structure'],
-      4: ['B4 – Bioenergetics','B5 – Homeostasis','B6 – Inheritance','B7 – Ecology'],
-      5: ['C5 – Energy Changes','C6 – Rate of Reaction','C7 – Organic Chemistry','C8 – Analysis'],
-      6: ['P5 – Forces','P6 – Waves','P7 – Magnetism'],
-    }},
-    'Geography': { papers: {
-      1: ['1A – Tectonic Hazards','1A – Tropical Storms','1A – Climate Change','1B – Ecosystems','1B – Tropical Rainforests','1B – Hot Deserts','1B – Cold Environments','1C – Coastal Landscapes','1C – River Landscapes','1C – Glacial Landscapes'],
-      2: ['2A – Urban Growth and Urbanisation','2A – UK City Case Study','2A – Developing World City Case Study','2B – Measuring Development','2B – Causes of Uneven Development','2B – Reducing the Development Gap','2B – Nigeria Case Study','2B – UK Economy Post-Industrial','2C – Food Resource Management','2C – Water Resource Management','2C – Energy Resource Management'],
-      3: ['3A – Issue Evaluation','3B – Physical Fieldwork','3B – Human Fieldwork','3C – Map and Atlas Skills','3C – Graphs and Statistical Skills','3C – Ordnance Survey Skills'],
-    }},
-    'History': { papers: {
-      1: ['Medicine in Britain – Medieval (1250–1500)','Medicine in Britain – Renaissance (1500–1700)','Medicine in Britain – Industrial and Germ Theory','Medicine in Britain – Modern Medicine','Medicine in Britain – Key Individuals','Western Front Historic Environment'],
-      2: ['Conflict and Tension – Alliance Systems','Conflict and Tension – WWI Causes','Conflict and Tension – Treaty of Versailles','Elizabethan England – Government and Religion','Elizabethan England – Mary Queen of Scots','Elizabethan England – Exploration and Armada','Germany 1890–1945 – Weimar Republic','Germany 1890–1945 – Rise of Nazis','Germany 1890–1945 – Life in Nazi Germany'],
-    }},
-    'German': { papers: {
-      1: ['Listening – Identity and Culture','Listening – Local Area and Travel','Listening – School and Future Plans','Listening – Global Issues','Phonics Recognition'],
-      2: ['Speaking – Role Play','Speaking – Photo Card','Speaking – General Conversation: Identity','Speaking – General Conversation: Local Area','Speaking – General Conversation: School and Careers','Speaking – General Conversation: Global Issues'],
-      3: ['Reading – Identity and Culture','Reading – Local Area and Travel','Reading – School and Future Plans','Reading – Global Issues','Grammar – Present Tense','Grammar – Perfect Tense','Grammar – Imperfect Tense','Grammar – Future and Conditional','Grammar – Cases (Nominative, Accusative, Dative, Genitive)','Grammar – Modal Verbs','Grammar – Word Order (SVOMPT)','Grammar – Subordinate Clauses','Vocabulary – All AQA Themes'],
-      4: ['Writing – Translation into German','Writing – Short Structured Task','Writing – Open-Ended Extended Writing','Writing – Accuracy and Range of Structures'],
-    }},
-    'French': { papers: {
-      1: ['Listening – Theme 1: Identity and Culture','Listening – Theme 2: Local Area and Travel','Listening – Theme 3: School and Future Plans','Listening – Theme 4: Global Issues'],
-      2: ['Speaking – Role Play','Speaking – Photo Card Description','Speaking – General Conversation'],
-      3: ['Reading – All Themes','Grammar – Present Tense (Regular and Irregular)','Grammar – Perfect, Imperfect and Future Tenses','Grammar – Pronouns, Articles, Adjectives','Grammar – Negatives and Questions','Vocabulary – Full AQA French List'],
-      4: ['Writing – Translation into French','Writing – Structured Response','Writing – Open-Ended Task'],
-    }},
-    'Spanish': { papers: {
-      1: ['Listening – Theme 1: Identity and Culture','Listening – Theme 2: Local Area and Travel','Listening – Theme 3: School and Future Plans','Listening – Theme 4: Global Issues'],
-      2: ['Speaking – Role Play','Speaking – Photo Card','Speaking – General Conversation'],
-      3: ['Reading – All Themes','Grammar – Tenses (Present, Preterite, Imperfect, Future, Conditional)','Grammar – Verbs (Reflexive, Radical-Changing)','Vocabulary – AQA Spanish List'],
-      4: ['Writing – Translation into Spanish','Writing – Structured Task','Writing – Open-Ended Task'],
-    }},
-    'Religious Studies': { papers: {
-      1: ['Christianity – Nature of God','Christianity – Trinity and Incarnation','Christianity – Creation and the Fall','Christianity – Salvation and Atonement','Christianity – Afterlife','Christianity – Worship and Prayer','Christianity – Sacraments','Christianity – Church in the Community','Islam – The Six Articles of Faith','Islam – Tawhid and Nature of Allah','Islam – Angels, Prophethood, Holy Books','Islam – Akhirah and Predestination','Islam – Sunni and Shi\'a Differences','Islam – The Five Pillars','Islam – Jihad','Islam – Id-ul-Fitr and Id-ul-Adha'],
-      2: ['Theme A – Relationships and Families','Theme B – Religion and Life (Abortion, Euthanasia)','Theme D – Religion, Peace and Conflict','Theme E – Religion, Crime and Punishment','Theme F – Human Rights and Social Justice'],
-    }},
-    'Sociology': { papers: {
-      1: ['Sociological Theory and Methods – Functionalism','Sociological Theory and Methods – Marxism','Sociological Theory and Methods – Feminism','Research Methods – Surveys and Interviews','Research Methods – Observation','Research Methods – Ethics in Research','Education – Role and Purpose','Education – Achievement and Social Class','Education – Gender and Achievement','Education – Ethnicity and Achievement','Education – Hidden Curriculum','Families and Households – Roles of Family','Families and Households – Changing Family Patterns'],
-      2: ['Crime and Deviance – Defining Crime','Crime and Deviance – Patterns and Statistics','Crime and Deviance – Functionalist Explanations','Crime and Deviance – Marxist Explanations','Crime and Deviance – Labelling Theory','Social Stratification – Class, Status, Power','Social Stratification – Social Mobility','Social Stratification – Poverty'],
-    }},
-    'Psychology': { papers: {
-      1: ['Memory – Multi-Store Model','Memory – Working Memory Model','Memory – Eyewitness Testimony','Perception – Theories of Perception','Development – Piaget\'s Theory','Development – Vygotsky\'s Theory','Research Methods – Experiments','Research Methods – Observations','Research Methods – Self-Report Methods'],
-      2: ['Social Influence – Obedience (Milgram)','Social Influence – Conformity (Asch)','Language, Thought and Communication','Brain and Neuropsychology','Psychological Problems – Depression','Psychological Problems – Phobias','Research Methods – Sampling and Ethics'],
-    }},
-    'Media Studies': { papers: {
-      1: ['Media Language – Semiotics','Media Language – Narrative Theory','Media Language – Genre','Media Representations – Stereotyping','Media Representations – Gender and Identity','Media Industries – Ownership and Control','Media Audiences – Active and Passive','Set Products – Music Video','Set Products – Newspapers'],
-      2: ['Media in the Online Age – Convergence','Media in the Online Age – Social Media','Long Form TV Drama – Analysis','Film – Marketing and Distribution','Magazines – Representation','Advertising – Persuasion Techniques'],
-    }},
+  "Edexcel": {
+    "Subject": {
+      "papers": {
+        "1": [
+          "Key Topic Areas"
+        ]
+      }
+    }
   },
-
-  OCR: {
-    'Computer Science': { papers: {
-      1: ['1.1 CPU Structure (ALU, CU, Registers, Cache)','1.1 Fetch-Decode-Execute Cycle','1.1 Factors Affecting CPU Performance','1.1 Embedded Systems','1.2 RAM, ROM and Virtual Memory','1.2 Secondary Storage Types','1.2 Units of Data (Bits to TB)','1.2 Binary, Denary, Hexadecimal','1.2 Binary Arithmetic and Overflow','1.2 Character Encoding (ASCII and Unicode)','1.2 Representing Images (Pixels, Bit Depth)','1.2 Representing Sound (Sample Rate, Bit Depth)','1.2 Data Compression (Lossy and Lossless)','1.3 Types of Network (LAN, WAN, PAN)','1.3 Network Topologies (Star, Mesh, Bus)','1.3 Wired and Wireless Networks','1.3 Protocols (TCP/IP, HTTP, HTTPS, FTP, DNS)','1.3 Network Hardware (Router, Switch, NIC)','1.4 Forms of Attack (Phishing, Malware, SQL Injection)','1.4 Preventing Attacks (Firewalls, Encryption, Authentication)','1.5 Operating System Functions','1.5 Utility Software','1.6 Ethical Issues','1.6 Legal Issues (Computer Misuse Act, GDPR, Copyright)','1.6 Environmental Impact of Technology'],
-      2: ['2.1 Computational Thinking (Decomposition, Abstraction)','2.1 Algorithms in Pseudocode and Flowcharts','2.1 Linear and Binary Search','2.1 Bubble Sort, Merge Sort, Insertion Sort','2.2 Variables, Constants, Data Types','2.2 Sequence, Selection, Iteration','2.2 String Manipulation','2.2 Arrays and Lists','2.2 File Handling','2.2 Procedures and Functions','2.2 Local and Global Variables','2.3 Defensive Design and Input Validation','2.3 Testing (Normal, Boundary, Erroneous Data)','2.3 Syntax vs Logic Errors','2.4 AND, OR, NOT Logic Gates','2.4 Truth Tables','2.4 Logic Circuits','2.5 High and Low Level Languages','2.5 Compilers, Interpreters, Assemblers','2.5 IDE Features','Programming in Python – Core Concepts','Programming in Python – Data Structures','Programming in Python – File I/O'],
-    }},
-    'Mathematics': { papers: {
-      1: ['Number – Calculations and Fractions','Algebra – Expressions and Equations','Geometry – Angles and Shapes','Statistics and Probability'],
-      2: ['Number and Algebra – Calculator','Geometry and Measures – Calculator','Statistics – Calculator'],
-      3: ['Further Algebra (Higher)','Further Geometry (Higher)','Further Statistics (Higher)'],
-    }},
-    'English Language': { papers: {
-      1: ['Reading – Identifying Information','Reading – Language Techniques and Effects','Reading – Structural Features','Writing – Imaginative and Creative'],
-      2: ['Reading – Non-Fiction Analysis','Reading – Comparison of Texts','Writing – Transactional (Letters, Speeches, Articles)'],
-    }},
-    'English Literature': { papers: {
-      1: ['Modern Prose or Drama','Shakespeare – Character and Theme','Essay Technique – Embedding Evidence'],
-      2: ['19th-Century Novel','Poetry Anthology','Unseen Poetry'],
-    }},
-    'Geography': { papers: {
-      1: ['Physical Landscapes – Coasts','Physical Landscapes – Rivers','Glaciation','Weather and Climate'],
-      2: ['Changing Cities','Global Development','Resource Management'],
-      3: ['Geographical Debates – Topic A','Geographical Debates – Topic B','Fieldwork Investigation'],
-    }},
-    'History': { papers: {
-      1: ['History Around Us – Local Study','British Period Study'],
-      2: ['Non-British Depth Study'],
-    }},
-    'Biology': { papers: {
-      1: ['Cell Biology','Biological Molecules','Enzymes and Metabolism','Exchange and Transport','Biodiversity and Classification'],
-      2: ['Genetics and Inheritance','Natural Selection and Evolution','Ecosystems and Human Impact','Homeostasis'],
-    }},
-    'Chemistry': { papers: {
-      1: ['Atoms, Molecules and Stoichiometry','Ionic and Covalent Bonding','Energetics','Periodic Table Trends'],
-      2: ['Rates of Reaction and Equilibrium','Organic Chemistry','Chemical Analysis','Industrial Processes'],
-    }},
-    'Physics': { papers: {
-      1: ['Forces and Motion','Energy','Waves and Sound','Electricity'],
-      2: ['Magnetism and Electromagnetism','Radioactivity and Nuclear Physics','Space Physics'],
-    }},
-  },
-
-  Edexcel: {
-    'Mathematics': { papers: {
-      1: ['Number – Calculations and Rounding','Algebra – Expressions and Graphs','Ratio and Proportion','Geometry – Angles and Shapes','Statistics and Probability'],
-      2: ['Algebra – Equations and Quadratics','Geometry – Pythagoras and Trigonometry','Statistics – Scatter Graphs and Histograms','Probability – Combined Events'],
-      3: ['Algebra – Further Graphs and Proof','Geometry – Circle Theorems and Vectors','Statistics – Advanced Analysis'],
-    }},
-    'English Language': { papers: {
-      1: ['Reading Fiction – Inference and Language Analysis','Writing – Imaginative and Creative'],
-      2: ['Reading Non-Fiction – Analysis and Comparison','Writing – Transactional'],
-    }},
-    'English Literature': { papers: {
-      1: ['Shakespeare and Post-1914 Text','Essay Technique'],
-      2: ['19th-Century Novel','Poetry Anthology','Unseen Poetry'],
-    }},
-    'Business Studies': { papers: {
-      1: ['Theme 1 – Enterprise and Entrepreneurs','Theme 1 – Market Research','Theme 1 – Marketing Mix','Theme 1 – Finance (Revenue, Costs, Profit, Cash Flow)','Theme 1 – Operations','Theme 1 – External Influences','Theme 1 – Stakeholders'],
-      2: ['Theme 2 – Business Growth','Theme 2 – Globalisation','Theme 2 – Product Life Cycle and Boston Matrix','Theme 2 – Pricing and Promotion','Theme 2 – Financial Statements and Ratio Analysis','Theme 2 – Efficiency and Technology','Theme 2 – HR and Motivation'],
-    }},
-    'History': { papers: {
-      1: ['Thematic Study – Crime and Punishment','Thematic Study – Medicine Through Time','Historic Environment Study'],
-      2: ['British Depth Study'],
-      3: ['Modern Depth Study'],
-    }},
-    'Geography': { papers: {
-      1: ['Coasts – Processes and Landforms','Rivers – Processes and Landforms','Glaciation','Weather Hazards and Climate'],
-      2: ['Urban Issues','Development and Globalisation','The Development Gap'],
-      3: ['UK Geographical Issues','Fieldwork Investigation'],
-    }},
-    'Religious Studies': { papers: {
-      1: ['Beliefs and Teachings – Christianity','Beliefs and Teachings – Islam or Second Religion'],
-      2: ['Practices – Christianity','Practices – Islam or Second Religion','Thematic Studies – A, B, D, E, F'],
-    }},
-    'Economics': { papers: {
-      1: ['Supply and Demand','Elasticity','Market Failure','Government Intervention'],
-      2: ['Macroeconomic Objectives','Fiscal and Monetary Policy','International Trade','Development Economics'],
-    }},
-    'Biology': { papers: {
-      1: ['Cell Biology and Transport','Biological Molecules','Photosynthesis and Respiration','Disease and Immunity'],
-      2: ['Coordination and Homeostasis','Genetics and Evolution','Ecosystems','Biotechnology'],
-    }},
-    'Chemistry': { papers: {
-      1: ['Atomic Structure and Bonding','Moles and Equations','Acids and Redox','Inorganic Chemistry'],
-      2: ['Organic Chemistry','Rates and Equilibrium','Analysis and Environmental Chemistry'],
-    }},
-    'Physics': { papers: {
-      1: ['Motion and Forces','Energy','Waves and Optics','Electricity'],
-      2: ['Magnetism','Radioactivity','Space and Astrophysics'],
-    }},
-  },
-
-  WJEC: {
-    'Mathematics': { papers: {
-      1: ['Number and Algebra','Geometry and Measures','Statistics and Probability'],
-      2: ['Number and Algebra (Calculator)','Shape and Space','Data Handling'],
-    }},
-    'English Language': { papers: {
-      1: ['Reading Literary Prose – Analysis and Response','Writing – Descriptive and Narrative'],
-      2: ['Reading Non-Fiction – Analysis and Comparison','Writing – Transactional and Persuasive'],
-    }},
-    'English Literature': { papers: {
-      1: ['Poetry Collection','Prose Study'],
-      2: ['Drama – Shakespeare','Unseen Texts'],
-    }},
-    'Biology': { papers: {
-      1: ['Cells and Osmosis','Respiration and Digestive System','Circulatory System','Pathogens and Disease','Homeostasis'],
-      2: ['Biodiversity and Classification','Genetics and DNA','Variation and Evolution','Biotechnology','Ecosystems'],
-    }},
-    'Chemistry': { papers: {
-      1: ['Bonding and Structure','Periodic Table','Equations and Moles','Acids and Electrolysis'],
-      2: ['Rates and Equilibrium','Organic Chemistry','Chemical Analysis','Environmental Chemistry'],
-    }},
-    'Physics': { papers: {
-      1: ['Motion and Forces','Energy','Electricity and Magnetism'],
-      2: ['Waves and Sound','Radioactivity','Space Physics'],
-    }},
-    'Geography': { papers: {
-      1: ['Changing Landscapes – Rivers and Coasts','Changing Landscapes – Weather and Climate'],
-      2: ['Changing Places – Urbanisation','Changing Places – Economic Change'],
-      3: ['Applied Fieldwork Enquiry'],
-    }},
-    'History': { papers: {
-      1: ['Changes in Health and Medicine','Conflict and Change'],
-      2: ['Power and Protest','Wales and the Wider World'],
-    }},
-    'French': { papers: {
-      1: ['Listening – All Themes'],
-      2: ['Reading – All Themes'],
-      3: ['Writing – Translation and Extended Tasks'],
-    }},
-    'German': { papers: {
-      1: ['Listening – All Themes'],
-      2: ['Reading – All Themes'],
-      3: ['Writing – Translation and Extended Tasks'],
-    }},
-  },
-
-  CCEA: {
-    'Mathematics': { papers: {
-      1: ['Number and Algebra – Module T1','Geometry – Module T1','Statistics – Module T1'],
-      2: ['Further Number and Algebra – Module T2','Further Geometry','Further Statistics'],
-    }},
-    'English Language': { papers: {
-      1: ['Writing – Personal, Imaginative and Persuasive'],
-      2: ['Reading – Comprehension and Analysis'],
-    }},
-    'Biology': { papers: {
-      1: ['Cells and Biological Molecules','Osmosis and Enzymes','Nutrition and the Digestive System','Circulatory System','Breathing and Respiration'],
-      2: ['Genetics and DNA','Natural Selection and Evolution','Homeostasis','Ecosystems','Human Impact on Environment'],
-    }},
-    'Chemistry': { papers: {
-      1: ['Atomic Structure and Bonding','Formulae and Equations','Acids, Bases and Salts'],
-      2: ['Rates and Equilibrium','Organic Chemistry','Industrial Chemistry'],
-    }},
-    'Physics': { papers: {
-      1: ['Motion and Forces','Energy, Work and Power','Electricity'],
-      2: ['Waves and Optics','Magnetism','Radioactivity'],
-    }},
-  },
+  "AQA": {
+    "Mathematics": {
+      "papers": {
+        "1": [
+          "All topics as Paper 1",
+          "More complex calculations, multi-step problems",
+          "Financial maths (compound interest, reverse percentage)"
+        ]
+      }
+    },
+    "English Language": {
+      "papers": {
+        "1": [
+          "Reading: 20th/21st century fiction",
+          "Inference",
+          "Language analysis",
+          "Structure analysis",
+          "Evaluation",
+          "Writing: descriptive or narrative"
+        ],
+        "2": [
+          "Reading: 19th century non-fiction + modern non-fiction",
+          "Comparison",
+          "Writing: viewpoint or perspective text"
+        ]
+      }
+    },
+    "English Literature": {
+      "papers": {
+        "1": [
+          "Shakespeare play (set text \u2013 choice from: Macbeth, Romeo & Juliet, The Merchant of Venice, etc.)",
+          "19th-century novel"
+        ],
+        "2": [
+          "Modern prose or drama",
+          "Power & Conflict or Love & Relationships anthology poetry",
+          "Unseen poetry"
+        ]
+      }
+    },
+    "Biology": {
+      "papers": {
+        "1": [
+          "Cell biology",
+          "Organisation",
+          "Infection & response",
+          "Bioenergetics"
+        ],
+        "2": [
+          "Homeostasis & response",
+          "Inheritance, variation & evolution",
+          "Ecology"
+        ]
+      }
+    },
+    "Chemistry": {
+      "papers": {
+        "1": [
+          "Atomic structure & periodic table",
+          "Bonding",
+          "Quantitative chemistry",
+          "Chemical changes",
+          "Energy changes"
+        ],
+        "2": [
+          "Rate & extent of reactions",
+          "Organic chemistry",
+          "Chemical analysis",
+          "Chemistry of the atmosphere",
+          "Using resources"
+        ]
+      }
+    },
+    "Physics": {
+      "papers": {
+        "1": [
+          "Energy",
+          "Electricity",
+          "Particle model of matter",
+          "Atomic structure"
+        ],
+        "2": [
+          "Forces",
+          "Waves",
+          "Magnetism & electromagnetism",
+          "Space physics (higher tier)"
+        ]
+      }
+    },
+    "Geography": {
+      "papers": {
+        "1": [
+          "Natural hazards",
+          "Living world (ecosystems, tropical rainforests, hot deserts)",
+          "Physical landscapes in the UK (rivers, coasts)"
+        ],
+        "2": [
+          "Urban issues & challenges",
+          "Changing economic world",
+          "Resource management",
+          "Food/water/energy"
+        ],
+        "3": [
+          "Issue evaluation",
+          "Fieldwork (two investigations)",
+          "Geographical skills"
+        ]
+      }
+    },
+    "History": {
+      "papers": {
+        "1": [
+          "Section A: Period study (America, Germany, Russia, or America 1920\u201373)",
+          "Section B: Wider world conflict topic"
+        ],
+        "2": [
+          "Section A: Thematic study (Health, Power, Migration)",
+          "Section B: British depth study (Norman England, Elizabethan, etc.)"
+        ]
+      }
+    },
+    "Economics": {
+      "papers": {
+        "1": [
+          "Economic foundations",
+          "Resource allocation",
+          "Price mechanism",
+          "Competition",
+          "Market failure",
+          "Role of government"
+        ],
+        "2": [
+          "National economic performance",
+          "Government objectives",
+          "Fiscal/monetary policy",
+          "International trade",
+          "Globalisation",
+          "Inequality"
+        ]
+      }
+    },
+    "Business": {
+      "papers": {
+        "1": [
+          "Business activity",
+          "Business ownership",
+          "Stakeholders",
+          "Business location",
+          "Business planning",
+          "Operations",
+          "HRM"
+        ],
+        "2": [
+          "Marketing",
+          "Market research",
+          "Marketing mix (4Ps)",
+          "Finance",
+          "Sources of finance",
+          "Financial planning",
+          "External influences"
+        ]
+      }
+    },
+    "Computer Science": {
+      "papers": {
+        "1": [
+          "Algorithms",
+          "Programming fundamentals",
+          "Data structures",
+          "Boolean logic",
+          "Theory of computation",
+          "Problems & solutions"
+        ],
+        "2": [
+          "Hardware",
+          "Software",
+          "Binary & data representation",
+          "Networks",
+          "Cybersecurity",
+          "Databases",
+          "Ethical, legal & cultural issues"
+        ]
+      }
+    },
+    "Psychology": {
+      "papers": {
+        "1": [
+          "Memory",
+          "Perception",
+          "Development (Piaget)",
+          "Research methods"
+        ],
+        "2": [
+          "Social influence",
+          "Language, thought & communication",
+          "Brain & neuropsychology",
+          "Psychological problems"
+        ]
+      }
+    },
+    "Sociology": {
+      "papers": {
+        "1": [
+          "What is sociology?",
+          "The family (types, roles, diversity, changing patterns)",
+          "Education (role, sociological perspectives)"
+        ],
+        "2": [
+          "Crime & deviance",
+          "Social stratification (class, gender, ethnicity, power)"
+        ]
+      }
+    },
+    "Religious Studies A": {
+      "papers": {
+        "1": [
+          "Two religions studied in depth: Christian/Catholic/Islamic/Hindu/Jewish/Sikh/Buddhist beliefs, practices, sources of wisdom"
+        ],
+        "2": [
+          "Themes: Religion & relationships",
+          "Religion & life",
+          "Religion, peace & conflict",
+          "Religion, crime & punishment",
+          "Religion, human rights & social justice"
+        ]
+      }
+    },
+    "Citizenship Studies": {
+      "papers": {
+        "1": [
+          "Living together in the UK",
+          "Democracy, government & participation",
+          "Rights & responsibilities"
+        ],
+        "2": [
+          "Active citizenship",
+          "Bilateral & international relations",
+          "Media & digital citizenship"
+        ]
+      }
+    },
+    "Drama": {
+      "papers": {
+        "1": [
+          "Set text analysis",
+          "Theatre vocabulary",
+          "Live theatre evaluation"
+        ]
+      }
+    },
+    "Music": {
+      "papers": {
+        "1": [
+          "Listening to and appraising music",
+          "Four areas of study (compulsory): Western Classical Tradition, Popular Music, Traditional Music, Western Classical Tradition since 1910"
+        ]
+      }
+    },
+    "Physical Education": {
+      "papers": {
+        "1": [
+          "Applied anatomy & physiology",
+          "Movement analysis",
+          "Physical training"
+        ],
+        "2": [
+          "Sports psychology",
+          "Socio-cultural influences",
+          "Health, fitness & wellbeing",
+          "Use of data"
+        ]
+      }
+    },
+    "Food Preparation & Nutrition": {
+      "papers": {
+        "1": [
+          "Food commodities",
+          "Principles of nutrition",
+          "Diet & good health",
+          "Functional & chemical properties of food",
+          "Cooking",
+          "Food provenance",
+          "Food science"
+        ]
+      }
+    },
+    "Media Studies": {
+      "papers": {
+        "1": [
+          "Media language",
+          "Representation",
+          "Media industries",
+          "Audiences",
+          "Set products: newspapers, advertising, music video, online"
+        ],
+        "2": [
+          "Television",
+          "Film",
+          "Radio",
+          "Video games",
+          "Online/social media",
+          "Set products",
+          "NEA"
+        ]
+      }
+    },
+    "Design & Technology": {
+      "papers": {
+        "1": [
+          "Core technical principles",
+          "Specialist technical principles",
+          "Designing & making principles"
+        ]
+      }
+    },
+    "French": {
+      "papers": {
+        "1": [
+          "Translation",
+          "Free writing",
+          "Role-play",
+          "Photo card",
+          "Conversation"
+        ]
+      }
+    },
+    "German": {
+      "papers": {
+        "1": [
+          "Themes: Identity & culture",
+          "Local/national/international/global",
+          "Current/future study & employment",
+          "Grammar"
+        ]
+      }
+    },
+    "Spanish": {
+      "papers": {
+        "1": [
+          "Themes: Identity & culture",
+          "Local/national/international/global",
+          "Study, employment & future plans",
+          "Grammar"
+        ]
+      }
+    }
+  }
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -493,35 +591,232 @@ const L2_VOCATIONAL = {
 // BTEC (topic/unit structures only — no past papers or grade boundaries)
 // ─────────────────────────────────────────────────────────────────────────────
 const BTEC = {
-  Pearson: {
-    'BTEC Tech Award Health and Social Care': { papers: {
-      1: ['Component 1 – Human Lifespan Development','Component 2 – Health and Social Care Services','Component 3 – Health and Wellbeing (Exam)','HSC – Care Values and Principles','HSC – Communication in Care Settings'],
-    }},
-    'BTEC Tech Award Sport': { papers: {
-      1: ['Component 1 – Preparing Participants to Take Part in Sport','Component 2 – Developing Fitness to Improve Performance','Component 3 – Sport and the Media (Exam)','Sport – Sports Leadership','Sport – Injury and First Aid'],
-    }},
-    'BTEC Tech Award Creative Media Production': { papers: {
-      1: ['Component 1 – Exploring Media Products','Component 2 – Creating a Media Product','Component 3 – Responding to a Brief (Exam)','Media – Codes and Conventions','Media – Audience Research'],
-    }},
-    'BTEC Tech Award Business': { papers: {
-      1: ['Component 1 – Exploring Enterprises','Component 2 – Market Research','Component 3 – Promotion and Finance (Exam)','Business – Enterprise Skills','Business – Financial Documents'],
-    }},
-    'BTEC Tech Award Computing': { papers: {
-      1: ['Component 1 – Exploring User Interface Design','Component 2 – Collecting and Presenting Data','Component 3 – Effective Digital Working Practices (Exam)','Computing – Programming Concepts','Computing – Data Handling and Spreadsheets'],
-    }},
-    'BTEC Tech Award Performing Arts': { papers: {
-      1: ['Component 1 – Exploring the Performing Arts','Component 2 – Developing Skills and Techniques','Component 3 – Responding to a Brief (Exam)','PA – Performance Skills','PA – Rehearsal Techniques'],
-    }},
-    'BTEC Tech Award Engineering': { papers: {
-      1: ['Component 1 – Exploring Engineering Sectors','Component 2 – Engineering Design','Component 3 – Responding to an Engineering Brief (Exam)','Engineering – Materials and Processes','Engineering – CAD and Prototyping'],
-    }},
-    'BTEC National Business': { papers: {
-      1: ['Unit 1 – Exploring Business','Unit 2 – Developing a Marketing Campaign','Unit 3 – Personal and Business Finance','Unit 6 – Principles of Management','Unit 8 – Recruitment and Selection'],
-    }},
-    'BTEC National IT': { papers: {
-      1: ['Unit 1 – Information Technology Systems','Unit 2 – Creating Systems to Manage Information','Unit 3 – Using Social Media in Business','Unit 5 – Data Modelling','Unit 7 – IT Systems Security'],
-    }},
-  },
+  "Pearson": {
+    "Subject Title": {
+      "papers": {
+        "1": [
+          "Available Sizes"
+        ]
+      }
+    },
+    "Animal Care": {
+      "papers": {
+        "1": [
+          "Award / Certificate / Extended Certificate"
+        ]
+      }
+    },
+    "Applied Science": {
+      "papers": {
+        "1": [
+          "Certificate / Ext Cert / Foundation Diploma / Diploma / Ext Diploma"
+        ]
+      }
+    },
+    "Art and Design": {
+      "papers": {
+        "1": [
+          "Certificate / Ext Cert / Diploma / Ext Diploma"
+        ]
+      }
+    },
+    "Business": {
+      "papers": {
+        "1": [
+          "Certificate / Ext Cert / Foundation Diploma / Diploma / Ext Diploma"
+        ]
+      }
+    },
+    "Children and Young People's Workforce": {
+      "papers": {
+        "1": [
+          "Award / Certificate / Extended Certificate"
+        ]
+      }
+    },
+    "Construction and the Built Environment": {
+      "papers": {
+        "1": [
+          "Award / Certificate / Extended Certificate"
+        ]
+      }
+    },
+    "Engineering": {
+      "papers": {
+        "1": [
+          "Certificate / Ext Cert / Foundation Diploma / Diploma / Ext Diploma"
+        ]
+      }
+    },
+    "Health and Social Care": {
+      "papers": {
+        "1": [
+          "Certificate / Ext Cert / Foundation Diploma / Diploma / Ext Diploma"
+        ]
+      }
+    },
+    "Hospitality": {
+      "papers": {
+        "1": [
+          "Certificate / Ext Cert / Diploma / Ext Diploma"
+        ]
+      }
+    },
+    "Information Technology": {
+      "papers": {
+        "1": [
+          "Certificate / Ext Cert / Foundation Diploma / Diploma / Ext Diploma"
+        ]
+      }
+    },
+    "Land-based Technology": {
+      "papers": {
+        "1": [
+          "Award / Certificate"
+        ]
+      }
+    },
+    "Creative Media Production": {
+      "papers": {
+        "1": [
+          "Certificate / Ext Cert / Diploma / Ext Diploma"
+        ]
+      }
+    },
+    "Performing Arts": {
+      "papers": {
+        "1": [
+          "Certificate / Ext Cert / Foundation Diploma / Diploma / Ext Diploma"
+        ]
+      }
+    },
+    "Public Services": {
+      "papers": {
+        "1": [
+          "Certificate / Ext Cert / Foundation Diploma / Diploma / Ext Diploma"
+        ]
+      }
+    },
+    "Sport": {
+      "papers": {
+        "1": [
+          "Certificate / Ext Cert / Foundation Diploma / Diploma / Ext Diploma"
+        ]
+      }
+    },
+    "Travel and Tourism": {
+      "papers": {
+        "1": [
+          "Certificate / Ext Cert / Foundation Diploma / Diploma / Ext Diploma"
+        ]
+      }
+    },
+    "Vehicle Technology": {
+      "papers": {
+        "1": [
+          "Award / Certificate"
+        ]
+      }
+    },
+    "Animal Management": {
+      "papers": {
+        "1": [
+          "Certificate / Ext Cert / Foundation Diploma / Diploma / Ext Diploma"
+        ]
+      }
+    },
+    "Applied Human Biology": {
+      "papers": {
+        "1": [
+          "Certificate / Ext Cert / Diploma / Ext Diploma"
+        ]
+      }
+    },
+    "Applied Law": {
+      "papers": {
+        "1": [
+          "Certificate / Ext Cert"
+        ]
+      }
+    },
+    "Applied Psychology": {
+      "papers": {
+        "1": [
+          "Certificate / Ext Cert / Diploma / Ext Diploma"
+        ]
+      }
+    },
+    "Children's Play, Learning & Development": {
+      "papers": {
+        "1": [
+          "Certificate / Ext Cert / Diploma / Ext Diploma"
+        ]
+      }
+    },
+    "Computing": {
+      "papers": {
+        "1": [
+          "Certificate / Ext Cert / Diploma / Ext Diploma"
+        ]
+      }
+    },
+    "Construction & Built Environment": {
+      "papers": {
+        "1": [
+          "Certificate / Ext Cert / Diploma / Ext Diploma"
+        ]
+      }
+    },
+    "Enterprise & Entrepreneurship": {
+      "papers": {
+        "1": [
+          "Certificate / Ext Cert"
+        ]
+      }
+    },
+    "Esports": {
+      "papers": {
+        "1": [
+          "Certificate / Ext Cert"
+        ]
+      }
+    },
+    "Forensic & Criminal Investigation": {
+      "papers": {
+        "1": [
+          "Certificate / Ext Cert / Diploma"
+        ]
+      }
+    },
+    "Land and Environment": {
+      "papers": {
+        "1": [
+          "Certificate / Ext Cert / Diploma / Ext Diploma"
+        ]
+      }
+    },
+    "Music": {
+      "papers": {
+        "1": [
+          "Certificate / Ext Cert / Foundation Diploma / Diploma / Ext Diploma"
+        ]
+      }
+    },
+    "Music Technology": {
+      "papers": {
+        "1": [
+          "Certificate / Ext Cert / Diploma"
+        ]
+      }
+    },
+    "Sport and Exercise Science": {
+      "papers": {
+        "1": [
+          "Certificate / Ext Cert / Diploma / Ext Diploma"
+        ]
+      }
+    }
+  }
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
