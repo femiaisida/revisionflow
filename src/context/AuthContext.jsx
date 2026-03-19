@@ -5,7 +5,7 @@ import {
   createUserWithEmailAndPassword, signInWithPopup,
   signOut, updateProfile, sendPasswordResetEmail
 } from 'firebase/auth'
-import { doc, setDoc, getDoc, serverTimestamp } from 'firebase/firestore'
+import { doc, setDoc, getDoc, serverTimestamp, onSnapshot } from 'firebase/firestore'
 import { auth, db, googleProvider } from '../firebase'
 
 const AuthContext = createContext(null)
@@ -16,17 +16,26 @@ export function AuthProvider({ children }) {
   const [loading, setLoading] = useState(true)
 
   useEffect(() => {
-    const unsub = onAuthStateChanged(auth, async (u) => {
+    let unsubSnapshot = null
+
+    const unsubAuth = onAuthStateChanged(auth, async (u) => {
       setUser(u)
       if (u) {
-        const snap = await getDoc(doc(db, 'users', u.uid))
-        if (snap.exists()) setProfile(snap.data())
+        // Real-time listener for the user profile
+        unsubSnapshot = onSnapshot(doc(db, 'users', u.uid), (snap) => {
+          if (snap.exists()) setProfile(snap.data())
+        })
       } else {
+        if (unsubSnapshot) unsubSnapshot()
         setProfile(null)
       }
       setLoading(false)
     })
-    return unsub
+
+    return () => {
+      unsubAuth()
+      if (unsubSnapshot) unsubSnapshot()
+    }
   }, [])
 
   async function createUserDoc(u, extra = {}) {

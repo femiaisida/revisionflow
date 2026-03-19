@@ -33,17 +33,29 @@ export default function Dashboard() {
     if (!user) return
     setDataLoading(true)
     Promise.all([
-      getSessions(user.uid, { limit:50 }),
+      getSessions(user.uid, { limit:100 }),
       getTasks(user.uid),
       getPaperAttempts(user.uid, null),
     ]).then(([sessions, taskList, papers]) => {
-      const todayStr = new Date().toISOString().split('T')[0]
-      setTodaySessions(sessions.filter(s => {
-        if (s.date && typeof s.date === 'string' && s.date.substring(0,10) === todayStr) return true
-        if (s.start && typeof s.start === 'string' && s.start.substring(0,10) === todayStr) return true
-        if (s.startTime) { try { return new Date(s.startTime).toISOString().split('T')[0] === todayStr } catch(e) {} }
+      const todayStr = format(new Date(), 'yyyy-MM-dd')
+      
+      const sessionEvents = sessions.filter(s => {
+        if (s.date === todayStr) return true
+        if (s.startTime && s.startTime.substring(0,10) === todayStr) return true
         return false
+      })
+
+      const taskEvents = taskList.filter(t => 
+        t.dueDate === todayStr && !t.completed
+      ).map(t => ({
+        ...t,
+        isTask: true,
+        title: `Task: ${t.title}`,
+        startTime: t.dueDate,
+        subject: t.subject || 'General'
       }))
+
+      setTodaySessions([...sessionEvents, ...taskEvents])
       setTasks(taskList.filter(t=>!t.completed).slice(0,5))
       // Sort by date descending, load more for sparkline to work
       const sorted = papers.sort((a,b) => {

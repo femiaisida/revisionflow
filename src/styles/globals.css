@@ -275,13 +275,19 @@ a:hover { text-decoration: underline; }
   padding: 8px 0 max(8px, env(safe-area-inset-bottom));
 }
 @media (max-width: 768px) { .mobile-nav { display: flex; } }
-.mobile-nav-items { display: flex; width: 100%; justify-content: space-around; }
+.mobile-nav-items { 
+  display: flex; width: 100%; justify-content: space-around; 
+  overflow-x: auto; scrollbar-width: none; -ms-overflow-style: none;
+  padding: 0 4px;
+}
+.mobile-nav-items::-webkit-scrollbar { display: none; }
 .mobile-nav-item {
   display: flex; flex-direction: column; align-items: center; gap: 3px;
   padding: 6px 12px; border-radius: var(--radius-sm);
   color: var(--text-muted); font-size: 0.7rem; font-weight: 500;
   cursor: pointer; transition: all var(--transition); border: none;
   background: transparent; text-decoration: none;
+  flex-shrink: 0; min-width: 64px;
 }
 .mobile-nav-item.active { color: var(--accent-light); }
 

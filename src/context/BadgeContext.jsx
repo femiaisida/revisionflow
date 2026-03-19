@@ -29,30 +29,40 @@ export function BadgeProvider({ children }) {
       if (!snap.exists()) return
       const current = snap.data().badges || []
 
-      // First load — initialise without firing celebrations
+      // On first load, mark all current badges as seen in localStorage
       if (knownBadgesRef.current === null) {
-        knownBadgesRef.current = new Set(current)
+        const stored = localStorage.getItem(`seen_badges_${user.uid}`)
+        const seenSet = stored ? new Set(JSON.parse(stored)) : new Set(current)
+        
+        // Add current to seen set to be sure (syncing DB with LocalStorage)
+        current.forEach(id => seenSet.add(id))
+        localStorage.setItem(`seen_badges_${user.uid}`, JSON.stringify([...seenSet]))
+        
+        knownBadgesRef.current = seenSet
         return
       }
 
-      // Find newly awarded badges
+      // Find badges in 'current' that aren't in our 'seen' set
       const newBadges = current.filter(id => !knownBadgesRef.current.has(id))
-      knownBadgesRef.current = new Set(current)
+      
+      if (newBadges.length > 0) {
+        const updatedSet = new Set(knownBadgesRef.current)
+        newBadges.forEach(id => {
+          updatedSet.add(id)
+          const badge = BADGES.find(b => b.id === id)
+          if (!badge) return
 
-      newBadges.forEach(id => {
-        const badge = BADGES.find(b => b.id === id)
-        if (!badge) return
-
-        if (RARE_BADGE_IDS.includes(id)) {
-          // Full-screen celebration
-          setCelebration(badge)
-        } else {
-          // Toast notification
-          toast.custom((t) => (
-            <BadgeToast badge={badge} visible={t.visible} onDismiss={() => toast.dismiss(t.id)}/>
-          ), { duration: 5000 })
-        }
-      })
+          if (RARE_BADGE_IDS.includes(id)) {
+            setCelebration(badge)
+          } else {
+            toast.custom((t) => (
+              <BadgeToast badge={badge} visible={t.visible} onDismiss={() => toast.dismiss(t.id)}/>
+            ), { duration: 5000 })
+          }
+        })
+        knownBadgesRef.current = updatedSet
+        localStorage.setItem(`seen_badges_${user.uid}`, JSON.stringify([...updatedSet]))
+      }
     })
 
     return () => unsub()

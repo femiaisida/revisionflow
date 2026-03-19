@@ -86,11 +86,17 @@ export async function addSession(uid, session) {
     completed: false,
     createdAt: serverTimestamp(),
   })
-  // Award import badge if this is an imported session
   if (session.source === 'import') {
     await checkAndAwardBadge(uid, 'calendar_import')
   }
   return ref.id
+}
+
+export async function updateSession(uid, sessionId, data) {
+  await updateDoc(doc(db, 'users', uid, 'sessions', sessionId), {
+    ...data,
+    updatedAt: serverTimestamp()
+  })
 }
 
 export async function completeSession(uid, sessionId, notes = '') {
@@ -126,8 +132,12 @@ export async function completeSession(uid, sessionId, notes = '') {
 
 export async function getSessions(uid, options = {}) {
   let q = collection(db, 'users', uid, 'sessions')
-  if (options.subject) q = query(q, where('subject', '==', options.subject))
-  if (options.limit)   q = query(q, limit(options.limit))
+  if (options.subject) {
+    q = query(q, where('subject', '==', options.subject), orderBy('startTime', 'desc'))
+  } else {
+    q = query(q, orderBy('startTime', 'desc'))
+  }
+  if (options.limit) q = query(q, limit(options.limit))
   const snap = await getDocs(q)
   return snap.docs.map(d => ({ id: d.id, ...d.data() }))
 }

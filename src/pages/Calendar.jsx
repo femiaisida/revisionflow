@@ -2,7 +2,7 @@
 import React, { useState, useEffect, useRef } from 'react'
 import Skeleton from '../components/Skeleton'
 import { useAuth } from '../context/AuthContext'
-import { completeSession, completeTask } from '../utils/firestore'
+import { completeSession, completeTask, updateSession } from '../utils/firestore'
 import { collection, getDocs, deleteDoc, doc, addDoc, serverTimestamp, writeBatch } from 'firebase/firestore'
 import { db } from '../firebase'
 import { getMonthDays, getWeekDays, sessionsForDay, downloadICS, parseICS, parseCSV } from '../utils/calendar'
@@ -24,6 +24,7 @@ export default function Calendar() {
   const [sessions,     setSessions]     = useState([])
   const [selected,     setSelected]     = useState(null)
   const [showAdd,      setShowAdd]      = useState(false)
+  const [showEdit,     setShowEdit]     = useState(null)
   const [showComplete, setShowComplete] = useState(null)
   const [showGen,      setShowGen]      = useState(false)
   const [showClear,    setShowClear]    = useState(false)
@@ -342,6 +343,7 @@ export default function Calendar() {
                 <div style={{display:'flex',flexDirection:'column',gap:8}}>
                   {selectedSessions.map(s=>(
                     <SessionCard key={s._docId||s.id} session={s}
+                      onEdit={()=>setShowEdit(s)}
                       onComplete={()=>s.isTask ? handleComplete(s, '') : setShowComplete(s)}
                       onDelete={()=>handleDeleteSession(s)}/>
                   ))}
@@ -365,6 +367,16 @@ export default function Calendar() {
             await loadSessions()
             setShowAdd(false)
             toast.success('Session added')
+          }}/>
+      )}
+      {showEdit&&(
+        <EditSessionModal user={user} profile={profile} session={showEdit}
+          onClose={()=>setShowEdit(null)}
+          onSave={async data=>{
+            await updateSession(user.uid, showEdit.id, data)
+            await loadSessions()
+            setShowEdit(null)
+            toast.success('Session updated')
           }}/>
       )}
       {showComplete&&(
@@ -395,7 +407,7 @@ export default function Calendar() {
 }
 
 // ── Session Card ──────────────────────────────────────────────────────────────
-function SessionCard({ session:s, onComplete, onDelete }) {
+function SessionCard({ session:s, onComplete, onDelete, onEdit }) {
   return (
     <div style={{padding:12,borderRadius:'var(--radius-md)',background:'var(--bg-surface)',
       border:`1px solid ${s.completed?'var(--success)':s.isEmergency?'var(--danger)':'var(--border)'}`}}>
@@ -413,15 +425,81 @@ function SessionCard({ session:s, onComplete, onDelete }) {
         </div>
         <div style={{display:'flex',gap:5,flexShrink:0,alignItems:'flex-start'}}>
           {!s.completed&&(
-            <button className="btn btn-secondary btn-sm" onClick={onComplete}>
-              <CheckCircle2 size={13}/> Done
-            </button>
+            <>
+              <button className="btn btn-secondary btn-sm" onClick={onEdit} style={{padding:'4px 8px'}}>Edit</button>
+              <button className="btn btn-secondary btn-sm" onClick={onComplete}>
+                <CheckCircle2 size={13}/> Done
+              </button>
+            </>
           )}
           {s.completed&&<span style={{color:'var(--success)',fontSize:'0.75rem',fontWeight:600}}>✓</span>}
           <button className="btn btn-ghost btn-icon btn-sm" style={{color:'var(--danger)'}} onClick={onDelete}>
             <Trash2 size={13}/>
           </button>
         </div>
+      </div>
+    </div>
+  )
+}
+
+// ── Edit Session Modal ────────────────────────────────────────────────────────
+function EditSessionModal({ user, profile, session, onClose, onSave }) {
+  const subjects = profile?.subjects?.map(s=>s.name)||[]
+  const [form,setForm] = useState({
+    subject: session.subject||'',
+    type: session.type  || 'Content Revision',
+    date: session.date  || format(new Date(), 'yyyy-MM-dd'),
+    start: session.start|| '17:00',
+    duration: session.duration||45,
+    paper: session.paper||'',
+    notes: session.notes||'',
+  })
+
+  async function handleSubmit(e) {
+    e.preventDefault()
+    const startDt = new Date(`${form.date}T${form.start}`)
+    await onSave({
+      ...form,
+      duration: parseInt(form.duration),
+      title: `${form.subject}${form.paper?' P'+form.paper:''} – ${form.type}`,
+      startTime: startDt.toISOString(),
+      endTime: new Date(startDt.getTime()+parseInt(form.duration)*60000).toISOString(),
+    })
+  }
+
+  return (
+    <div className="modal-overlay" onClick={onClose}>
+      <div className="modal" onClick={e=>e.stopPropagation()}>
+        <div className="modal-header">
+          <span className="modal-title">Edit Session</span>
+          <button className="btn btn-ghost btn-icon" onClick={onClose}><X size={18}/></button>
+        </div>
+        <form onSubmit={handleSubmit} style={{display:'flex',flexDirection:'column',gap:12}}>
+          <div className="grid-2" style={{gap:10}}>
+            <div><label className="label">Subject</label>
+              <select className="select" value={form.subject} onChange={e=>setForm(f=>({...f,subject:e.target.value}))} required>
+                <option value="">Select…</option>{subjects.map(s=><option key={s} value={s}>{s}</option>)}
+              </select></div>
+            <div><label className="label">Type</label>
+              <select className="select" value={form.type} onChange={e=>setForm(f=>({...f,type:e.target.value}))}>
+                {SESSION_TYPES.map(t=><option key={t} value={t}>{t}</option>)}
+              </select></div>
+            <div><label className="label">Paper</label>
+              <input className="input" placeholder="1, 2…" value={form.paper} onChange={e=>setForm(f=>({...f,paper:e.target.value}))}/></div>
+            <div><label className="label">Date</label>
+              <input className="input" type="date" value={form.date} onChange={e=>setForm(f=>({...f,date:e.target.value}))} required/></div>
+            <div><label className="label">Start time</label>
+              <input className="input" type="time" value={form.start} onChange={e=>setForm(f=>({...f,start:e.target.value}))} required/></div>
+            <div><label className="label">Duration (min)</label>
+              <input className="input" type="number" min={15} max={300} value={form.duration} onChange={e=>setForm(f=>({...f,duration:e.target.value}))} required/></div>
+          </div>
+          <div><label className="label">Notes</label>
+            <textarea className="textarea" style={{minHeight:55}} value={form.notes} onChange={e=>setForm(f=>({...f,notes:e.target.value}))}/></div>
+          <div style={{display:'flex',gap:8,justifyContent:'flex-end'}}>
+            <button type="button" className="btn btn-secondary" onClick={onClose}>Cancel</button>
+            <button type="submit" className="btn btn-primary">Save changes</button>
+          </div>
+        </form>
       </div>
     </div>
   )
