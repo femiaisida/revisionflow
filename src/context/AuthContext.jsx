@@ -5,7 +5,7 @@ import {
   createUserWithEmailAndPassword, signInWithPopup,
   signOut, updateProfile, sendPasswordResetEmail
 } from 'firebase/auth'
-import { doc, setDoc, getDoc, serverTimestamp, onSnapshot } from 'firebase/firestore'
+import { doc, setDoc, getDoc, serverTimestamp, onSnapshot, query, collection, where, updateDoc, deleteDoc, arrayUnion, arrayRemove } from 'firebase/firestore'
 import { auth, db, googleProvider } from '../firebase'
 
 const AuthContext = createContext(null)
@@ -21,10 +21,47 @@ export function AuthProvider({ children }) {
     const unsubAuth = onAuthStateChanged(auth, async (u) => {
       setUser(u)
       if (u) {
-        // Real-time listener for the user profile
+        // 1. Real-time listener for the user profile
         unsubSnapshot = onSnapshot(doc(db, 'users', u.uid), (snap) => {
-          if (snap.exists()) setProfile(snap.data())
+          if (snap.exists()) {
+            const data = snap.data()
+            setProfile(data)
+          }
         })
+
+        // 2. Real-time listener for friend notifications (Permission-Safe Sync)
+        const q = query(collection(db, 'user_notifications'), where('to', '==', u.uid))
+        const unsubNotifs = onSnapshot(q, (snap) => {
+          snap.docs.forEach(async (d) => {
+            const notif = d.data()
+            if (notif.type === 'friend_accept') {
+              // Bob accepted our request! Finalize the link on our side.
+              await updateDoc(doc(db, 'users', u.uid), {
+                friends: arrayUnion(notif.from),
+                sentFriendRequests: arrayRemove(notif.from),
+                updatedAt: serverTimestamp()
+              })
+              await deleteDoc(d.ref)
+            } else if (notif.type === 'friend_request') {
+              // Received a request. We'll merge these into the profile virtual state
+              // so the UI sees them in friendRequests array.
+              setProfile(prev => {
+                if (!prev) return prev
+                const existing = prev.friendRequests || []
+                if (existing.includes(notif.from)) return prev
+                return { ...prev, friendRequests: [...existing, notif.from] }
+              })
+            }
+          })
+        })
+        
+        // Add unsubNotifs to clean up
+        const oldUnsub = unsubSnapshot
+        unsubSnapshot = () => {
+          if (oldUnsub) oldUnsub()
+          unsubNotifs()
+        }
+
       } else {
         if (unsubSnapshot) unsubSnapshot()
         setProfile(null)

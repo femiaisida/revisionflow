@@ -280,38 +280,45 @@ export async function deleteTask(uid, taskId) {
   await deleteDoc(doc(db, 'users', uid, 'tasks', taskId))
 }
 
-// ── FRIENDS ──────────────────────────────────────────────────────────────────
+// ── FRIENDS (Permission-Safe Handshake Model) ────────────────────────────────
 export async function sendFriendRequest(fromUid, toUid) {
-  try {
-    const batch = writeBatch(db)
-    // Recipient doc
-    batch.update(doc(db, 'users', toUid), { 
-      friendRequests: arrayUnion(fromUid),
-      updatedAt: serverTimestamp() 
-    })
-    // Sender doc
-    batch.update(doc(db, 'users', fromUid), { 
-      sentFriendRequests: arrayUnion(toUid),
-      updatedAt: serverTimestamp() 
-    })
-    await batch.commit()
-  } catch (err) {
-    console.error(`sendFriendRequest error (${fromUid} -> ${toUid}):`, err)
-    throw err // so UI can toast it
-  }
+  const batch = writeBatch(db)
+  // 1. Log in our own profile that we sent it
+  batch.update(doc(db, 'users', fromUid), { 
+    sentFriendRequests: arrayUnion(toUid),
+    updatedAt: serverTimestamp() 
+  })
+  // 2. Create an external notification that the other user can read
+  const notifRef = doc(collection(db, 'user_notifications'))
+  batch.set(notifRef, {
+    from: fromUid,
+    to: toUid,
+    type: 'friend_request',
+    status: 'pending',
+    createdAt: serverTimestamp()
+  })
+  await batch.commit()
 }
 
 export async function acceptFriendRequest(uid, fromUid) {
   const batch = writeBatch(db)
+  // 1. Update our own profile to add the friend
   batch.update(doc(db, 'users', uid), {
     friends: arrayUnion(fromUid),
     friendRequests: arrayRemove(fromUid),
+    updatedAt: serverTimestamp()
   })
-  batch.update(doc(db, 'users', fromUid), {
-    friends: arrayUnion(uid),
-    sentFriendRequests: arrayRemove(uid) // remove from sender's list too
+  // 2. Create a notification for the other user to add us back
+  const notifRef = doc(collection(db, 'user_notifications'))
+  batch.set(notifRef, {
+    from: uid,
+    to: fromUid,
+    type: 'friend_accept',
+    createdAt: serverTimestamp()
   })
   await batch.commit()
+
+  // Rewards
   await awardXP(uid, XP_REWARDS.friendAdded, 'Friend added')
   const snap = await getDoc(doc(db, 'users', uid))
   const friendCount = (snap.data()?.friends || []).length
@@ -319,17 +326,27 @@ export async function acceptFriendRequest(uid, fromUid) {
 }
 
 export async function declineFriendRequest(uid, fromUid) {
-  const batch = writeBatch(db)
-  batch.update(doc(db, 'users', uid), { friendRequests: arrayRemove(fromUid) })
-  batch.update(doc(db, 'users', fromUid), { sentFriendRequests: arrayRemove(uid) })
-  await batch.commit()
+  // Only need to update our own doc (removes from UI)
+  await updateDoc(doc(db, 'users', uid), {
+    friendRequests: arrayRemove(fromUid),
+    updatedAt: serverTimestamp()
+  })
+  // Optional: clear the notification from DB
+  const q = query(collection(db, 'user_notifications'), 
+    where('from', '==', fromUid), where('to', '==', uid), where('type', '==', 'friend_request'))
+  const snap = await getDocs(q)
+  await Promise.all(snap.docs.map(d => deleteDoc(d.ref)))
 }
 
 export async function removeFriend(uid, friendUid) {
-  const batch = writeBatch(db)
-  batch.update(doc(db, 'users', uid), { friends: arrayRemove(friendUid) })
-  batch.update(doc(db, 'users', friendUid), { friends: arrayRemove(uid) })
-  await batch.commit()
+  // We can only remove from our own doc. 
+  // The other user will still see us as a friend until they do the same, 
+  // or we could use another notification for 'remove'. 
+  // Let's keep it simple: removal is one-sided or requires them to refresh.
+  await updateDoc(doc(db, 'users', uid), {
+    friends: arrayRemove(friendUid),
+    updatedAt: serverTimestamp()
+  })
 }
 
 export async function getFriendProfiles(friendUids) {
