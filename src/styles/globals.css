@@ -370,3 +370,35 @@ tr:hover td { background: var(--bg-hover); }
 .skeleton-pulse {
   animation: skeletonPulse 1.5s ease-in-out infinite;
 }
+
+/* Mobile overrides */
+@media (max-width: 600px) {
+  h1 { font-size: 1.6rem; }
+  h2 { font-size: 1.3rem; }
+  h3 { font-size: 1.15rem; }
+  .card { padding: 14px !important; }
+  .stat-card { padding: 12px 14px !important; }
+  .grid-2, .grid-4, .grid-3 { gap: 12px !important; }
+  .main-content { padding: 12px !important; padding-bottom: 90px !important; }
+}
+
+/* Page-specific mobile tweaks */
+@media (max-width: 600px) {
+  /* Stack grid layouts */
+  .grid-2, .grid-3, .grid-4 { grid-template-columns: 1fr !important; }
+  
+  /* Shrink padding globally on small screens */
+  .card { padding: 12px 14px !important; }
+  
+  /* Leaderboard / Friends row scaling */
+  .card[style*="display: flex"] { 
+    flex-wrap: wrap !important;
+    gap: 8px !important;
+  }
+  
+  /* Ensure stat values don't overflow */
+  .stat-card div:nth-child(2) { font-size: 1.25rem !important; }
+  
+  /* Buttons should handle long text better */
+  .btn { padding: 8px 14px !important; font-size: 0.8rem !important; }
+}

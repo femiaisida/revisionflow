@@ -33,21 +33,26 @@ export default function Dashboard() {
     if (!user) return
     setDataLoading(true)
     Promise.all([
-      getSessions(user.uid, { limit:100 }),
+      getSessions(user.uid, { limit:150 }),
       getTasks(user.uid),
       getPaperAttempts(user.uid, null),
     ]).then(([sessions, taskList, papers]) => {
       const todayStr = format(new Date(), 'yyyy-MM-dd')
       
-      const sessionEvents = sessions.filter(s => {
-        if (s.date === todayStr) return true
-        if (s.startTime && s.startTime.substring(0,10) === todayStr) return true
-        return false
-      })
+      const getSessionDate = (s) => {
+        if (!s) return null
+        if (s.date) return s.date
+        if (typeof s.startTime === 'string') return s.startTime.substring(0, 10)
+        if (s.startTime?.toDate) return format(s.startTime.toDate(), 'yyyy-MM-dd')
+        return null
+      }
 
-      const taskEvents = taskList.filter(t => 
-        t.dueDate === todayStr && !t.completed
-      ).map(t => ({
+      const sessionEvents = sessions.filter(s => getSessionDate(s) === todayStr)
+
+      const taskEvents = taskList.filter(t => {
+        const d = t.dueDate || ''
+        return d.substring(0, 10) === todayStr && !t.completed
+      }).map(t => ({
         ...t,
         isTask: true,
         title: `Task: ${t.title}`,
@@ -57,13 +62,16 @@ export default function Dashboard() {
 
       setTodaySessions([...sessionEvents, ...taskEvents])
       setTasks(taskList.filter(t=>!t.completed).slice(0,5))
-      // Sort by date descending, load more for sparkline to work
+      
       const sorted = papers.sort((a,b) => {
         const da = a.attemptDate ? new Date(a.attemptDate) : new Date(a.createdAt?.seconds*1000||0)
         const db2 = b.attemptDate ? new Date(b.attemptDate) : new Date(b.createdAt?.seconds*1000||0)
         return db2 - da
       })
       setRecentPapers(sorted.slice(0,20))
+      setDataLoading(false)
+    }).catch(err => {
+      console.error('Failed to load dashboard data:', err)
       setDataLoading(false)
     })
     loadDailyBriefing()

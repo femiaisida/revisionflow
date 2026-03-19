@@ -133,13 +133,18 @@ export async function completeSession(uid, sessionId, notes = '') {
 export async function getSessions(uid, options = {}) {
   let q = collection(db, 'users', uid, 'sessions')
   if (options.subject) {
-    q = query(q, where('subject', '==', options.subject), orderBy('startTime', 'desc'))
-  } else {
-    q = query(q, orderBy('startTime', 'desc'))
+    q = query(q, where('subject', '==', options.subject))
   }
   if (options.limit) q = query(q, limit(options.limit))
   const snap = await getDocs(q)
-  return snap.docs.map(d => ({ id: d.id, ...d.data() }))
+  const docs = snap.docs.map(d => ({ id: d.id, ...d.data() }))
+  
+  // Sort client-side to handle missing fields gracefully
+  return docs.sort((a,b) => {
+    const ta = a.startTime ? new Date(a.startTime).getTime() : (a.createdAt?.seconds ? a.createdAt.seconds * 1000 : 0)
+    const tb = b.startTime ? new Date(b.startTime).getTime() : (b.createdAt?.seconds ? b.createdAt.seconds * 1000 : 0)
+    return tb - ta
+  })
 }
 
 // ── PAST PAPERS ───────────────────────────────────────────────────────────────
