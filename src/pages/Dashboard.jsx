@@ -3,6 +3,7 @@ import React, { useEffect, useState } from 'react'
 import Skeleton from '../components/Skeleton'
 import AIOutput from '../components/AIOutput'
 import TooltipTour from '../components/TooltipTour'
+import UpdatePrompt from '../components/UpdatePrompt'
 import { Link } from 'react-router-dom'
 import { useAuth } from '../context/AuthContext'
 import { getSessions, getTasks, getPaperAttempts } from '../utils/firestore'
@@ -160,6 +161,7 @@ export default function Dashboard() {
         </div>
       )}
       <div className="fade-in">
+      <UpdatePrompt />
       {/* Setup banner — shown until all steps complete */}
       {!setupDone && !setupSkipped && (
         <div style={{marginBottom:20,padding:16,background:'linear-gradient(135deg,rgba(124,58,237,0.1),rgba(59,130,246,0.1))',border:'1px solid var(--accent)',borderRadius:'var(--radius-lg)'}}>
