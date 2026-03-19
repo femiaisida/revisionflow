@@ -2,7 +2,7 @@
 import { useState } from 'react'
 import { useAuth } from '../context/AuthContext'
 import { chatWithAI } from '../utils/ai'
-import Layout from '../components/Layout'
+import { HelpCircle, Send, BookOpen, Calendar, FileText, Brain, MessageSquare, Timer, BarChart2, Users, Trophy, Settings, Zap, ChevronDown, ChevronUp } from 'lucide-react'
 
 const APP_ARCHITECTURE = `RevisionFlow is a UK GCSE, A-Level and BTEC revision tracking web app. Here is the complete architecture:
 
@@ -46,19 +46,42 @@ const QUICK_QUESTIONS = [
   'What are badges and how do I earn them?',
 ]
 
+const FAQ = [
+  { q: 'How do I get started?', a: 'After signing up and completing onboarding, head to Settings to add your subjects, boards, and target grades. Then go to Calendar to generate your first AI revision schedule.' },
+  { q: 'How does the AI revision schedule work?', a: 'Go to Calendar → Generate Schedule. The AI wizard asks about your subjects, availability, and priorities, then creates a personalised timetable that you can edit and export to Google/Apple Calendar.' },
+  { q: 'How do I track past papers?', a: 'Go to Past Papers → Log Paper. Select your subject, enter the year, paper number, your score, and grade. The app auto-fills grade boundaries and tracks your trajectory over time.' },
+  { q: 'What do the topic confidence ratings mean?', a: '1 = Struggling, 2 = Needs work, 3 = Getting there, 4 = Good, 5 = Strong. Rate each topic honestly — the app uses these to prioritise your revision and give smarter AI advice.' },
+  { q: 'How does XP and levelling work?', a: 'You earn XP for logging sessions (+20), past papers (+15), adding topics (+10), and maintaining streaks. There are 50 levels with increasing XP requirements and 14 badges to unlock.' },
+  { q: 'Can I use this for A-Levels or BTEC?', a: 'Yes! Go to Settings and change your qualification type. The app supports GCSE (9-1), A-Level (A*-E), and BTEC (D*/D/M/P/U) with appropriate grade scales.' },
+  { q: 'Is my data private?', a: 'Yes. Your data is stored securely in Firebase with strict security rules. Only you can access your data. You can delete your account and all data from Settings at any time.' },
+  { q: 'How do I export my calendar?', a: 'In Calendar, click the export button to download an .ics file. You can import this into Google Calendar, Apple Calendar, or Outlook.' },
+]
+
+const FEATURES = [
+  { icon: BookOpen, title: 'Dashboard', desc: 'Daily sessions, streak tracker, AI tips, and setup checklist', colour: 'var(--accent)' },
+  { icon: Calendar, title: 'Calendar', desc: 'AI-powered schedule generator with ICS import/export', colour: '#3b82f6' },
+  { icon: FileText, title: 'Past Papers', desc: 'Track scores, grade boundaries, and grade trajectory', colour: '#f59e0b' },
+  { icon: Brain, title: 'Topics', desc: 'Confidence ratings, heatmap, and priority list', colour: '#8b5cf6' },
+  { icon: MessageSquare, title: 'AI Advisor', desc: 'Chat, grade predictor, flashcards, answer marker', colour: '#06b6d4' },
+  { icon: Timer, title: 'Timer', desc: 'Pomodoro, stopwatch, ambient sounds and music', colour: '#ec4899' },
+  { icon: BarChart2, title: 'Analytics', desc: 'Study charts, heatmaps, and progress tracking', colour: '#22c55e' },
+  { icon: Users, title: 'Friends', desc: 'Add friends & compete on leaderboards', colour: '#f97316' },
+  { icon: Trophy, title: 'Gamification', desc: 'XP system, 50 levels, 14 badges, daily streaks', colour: '#eab308' },
+  { icon: Settings, title: 'Settings', desc: 'Subjects, boards, tiers, notifications, themes', colour: '#64748b' },
+]
+
 export default function Help() {
   const { profile } = useAuth()
   const [question, setQuestion] = useState('')
   const [answer, setAnswer] = useState('')
   const [loading, setLoading] = useState(false)
-  const [asked, setAsked] = useState([])
+  const [openFaq, setOpenFaq] = useState(null)
 
   async function ask(q) {
     const query = q || question.trim()
     if (!query) return
     setLoading(true)
     setAnswer('')
-    setAsked(prev => [query, ...prev.slice(0, 4)])
     setQuestion('')
 
     const prompt = `You are the help assistant for RevisionFlow, a UK revision tracking app. Answer the following question about how to use RevisionFlow.
@@ -82,97 +105,118 @@ Give a clear, friendly answer specific to RevisionFlow. Be concise (2-4 sentence
   }
 
   return (
-    <Layout>
-      <div className="fade-in" style={{ maxWidth: 720, margin: '0 auto', padding: '1.5rem' }}>
-        <h2 style={{ color: 'var(--text-primary)', marginBottom: '0.25rem' }}>Help Centre</h2>
-        <p style={{ color: 'var(--text-secondary)', marginBottom: '1.5rem', fontSize: '0.9rem' }}>
-          Ask anything about RevisionFlow — the AI knows the whole app.
-        </p>
+    <div className="fade-in" style={{ maxWidth: 760, margin: '0 auto' }}>
+      {/* Header */}
+      <div style={{ marginBottom: 28 }}>
+        <h2 style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 4 }}>
+          <HelpCircle size={22} color="var(--accent-light)" /> Help Centre
+        </h2>
+        <p style={{ fontSize: '0.9rem' }}>Everything you need to know about RevisionFlow</p>
+      </div>
 
-        {/* Search bar */}
-        <div style={{ display: 'flex', gap: '0.5rem', marginBottom: '1.5rem' }}>
+      {/* AI Search */}
+      <div className="card accent-card" style={{ padding: 20, marginBottom: 24 }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 12 }}>
+          <Zap size={16} color="var(--accent-light)" />
+          <span style={{ fontWeight: 700, fontSize: '0.9rem' }}>Ask AI anything about RevisionFlow</span>
+        </div>
+        <div style={{ display: 'flex', gap: 8 }}>
           <input
+            className="input"
             value={question}
             onChange={e => setQuestion(e.target.value)}
             onKeyDown={e => e.key === 'Enter' && ask()}
             placeholder="e.g. How do I generate a revision schedule?"
-            style={{
-              flex: 1, padding: '0.65rem 1rem', borderRadius: 10,
-              border: '1px solid var(--border)', background: 'var(--surface)',
-              color: 'var(--text-primary)', fontSize: '0.95rem',
-            }}
           />
-          <button onClick={() => ask()} disabled={loading || !question.trim()} style={{
-            background: 'var(--accent)', color: 'white', border: 'none',
-            borderRadius: 10, padding: '0.65rem 1.25rem', cursor: 'pointer',
-            fontWeight: 700, fontSize: '0.9rem', opacity: loading ? 0.6 : 1,
-          }}>
-            {loading ? '…' : 'Ask'}
+          <button className="btn btn-primary" onClick={() => ask()} disabled={loading || !question.trim()} style={{ flexShrink: 0 }}>
+            {loading ? '…' : <><Send size={14} /> Ask</>}
           </button>
         </div>
-
-        {/* Answer */}
-        {(loading || answer || asked.length > 0) && (
+        {(loading || answer) && (
           <div style={{
-            padding: '1rem 1.25rem', background: 'var(--surface)',
-            borderRadius: 12, border: '1px solid var(--border)',
-            marginBottom: '1.5rem',
+            marginTop: 14, padding: '12px 16px', background: 'rgba(124,58,237,0.08)',
+            borderRadius: 'var(--radius-md)', fontSize: '0.88rem', lineHeight: 1.7,
           }}>
-            <div style={{ fontSize: '0.75rem', color: 'var(--accent)', fontWeight: 700, marginBottom: '0.5rem' }}>
+            <div style={{ fontWeight: 700, marginBottom: 4, color: 'var(--accent-light)', fontSize: '0.78rem' }}>
               ✨ RevisionFlow Assistant
             </div>
             {loading
-              ? <div style={{ color: 'var(--text-muted)' }}>Finding answer…</div>
-              : <p style={{ color: 'var(--text-secondary)', lineHeight: 1.7, margin: 0 }}>{answer}</p>
+              ? <span style={{ color: 'var(--text-muted)' }}>Finding answer…</span>
+              : <p style={{ margin: 0, color: 'var(--text-secondary)' }}>{answer}</p>
             }
           </div>
         )}
-
-        {/* Quick questions */}
-        <h3 style={{ color: 'var(--text-primary)', fontSize: '0.95rem', marginBottom: '0.75rem', fontWeight: 700 }}>
-          Common questions
-        </h3>
-        <div style={{ display: 'flex', flexWrap: 'wrap', gap: '0.5rem', marginBottom: '2rem' }}>
+        {/* Quick question chips */}
+        <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6, marginTop: 14 }}>
           {QUICK_QUESTIONS.map(q => (
-            <button key={q} onClick={() => ask(q)} style={{
-              background: 'var(--surface)', border: '1px solid var(--border)',
-              borderRadius: 20, padding: '0.35rem 0.85rem', cursor: 'pointer',
-              color: 'var(--text-secondary)', fontSize: '0.82rem',
-              transition: 'border-color 0.15s, color 0.15s',
-            }}>
+            <button key={q} onClick={() => ask(q)} className="btn btn-secondary btn-sm"
+              style={{ borderRadius: 20, fontSize: '0.76rem', padding: '4px 12px' }}>
               {q}
             </button>
           ))}
         </div>
+      </div>
 
-        {/* Feature overview */}
-        <h3 style={{ color: 'var(--text-primary)', fontSize: '0.95rem', marginBottom: '0.75rem', fontWeight: 700 }}>
-          Feature overview
-        </h3>
-        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(200px, 1fr))', gap: '0.75rem' }}>
-          {[
-            { icon: '📅', title: 'Dashboard', desc: 'Daily sessions, streak, AI tip' },
-            { icon: '📆', title: 'Calendar', desc: 'AI schedule generator + ICS import' },
-            { icon: '📄', title: 'Past Papers', desc: 'Track scores and grade boundaries' },
-            { icon: '🧠', title: 'Topics', desc: 'Confidence ratings + priority list' },
-            { icon: '✨', title: 'AI Advisor', desc: 'Chat, grade prediction, flashcards' },
-            { icon: '⏱', title: 'Timer', desc: 'Pomodoro, stopwatch, ambient sounds' },
-            { icon: '📊', title: 'Analytics', desc: 'Charts, heatmaps, progress tracking' },
-            { icon: '👥', title: 'Friends', desc: 'Leaderboard and social features' },
-            { icon: '🎯', title: 'Gamification', desc: 'XP, levels, streaks, badges' },
-            { icon: '⚙️', title: 'Settings', desc: 'Subjects, notifications, privacy' },
-          ].map(f => (
-            <div key={f.title} style={{
-              padding: '0.9rem', background: 'var(--surface)',
-              borderRadius: 10, border: '1px solid var(--border)',
-            }}>
-              <div style={{ fontSize: '1.25rem', marginBottom: '0.35rem' }}>{f.icon}</div>
-              <div style={{ fontWeight: 700, color: 'var(--text-primary)', fontSize: '0.875rem', marginBottom: '0.2rem' }}>{f.title}</div>
-              <div style={{ color: 'var(--text-muted)', fontSize: '0.78rem' }}>{f.desc}</div>
+      {/* FAQ Accordion */}
+      <div style={{ marginBottom: 28 }}>
+        <h3 style={{ marginBottom: 12, fontSize: '1rem' }}>Frequently Asked Questions</h3>
+        <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
+          {FAQ.map((item, i) => (
+            <div key={i} className="card" style={{ padding: 0, overflow: 'hidden' }}>
+              <button
+                onClick={() => setOpenFaq(openFaq === i ? null : i)}
+                style={{
+                  width: '100%', display: 'flex', alignItems: 'center', justifyContent: 'space-between',
+                  padding: '14px 18px', background: 'transparent', border: 'none', cursor: 'pointer',
+                  color: 'var(--text-primary)', fontWeight: 600, fontSize: '0.88rem', textAlign: 'left',
+                }}
+              >
+                {item.q}
+                {openFaq === i ? <ChevronUp size={16} /> : <ChevronDown size={16} />}
+              </button>
+              {openFaq === i && (
+                <div style={{
+                  padding: '0 18px 16px', color: 'var(--text-secondary)',
+                  fontSize: '0.85rem', lineHeight: 1.7, borderTop: '1px solid var(--border)',
+                  paddingTop: 14,
+                }}>
+                  {item.a}
+                </div>
+              )}
             </div>
           ))}
         </div>
       </div>
-    </Layout>
+
+      {/* Features Grid */}
+      <div style={{ marginBottom: 28 }}>
+        <h3 style={{ marginBottom: 12, fontSize: '1rem' }}>Feature Overview</h3>
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(200px, 1fr))', gap: 10 }}>
+          {FEATURES.map(f => {
+            const Icon = f.icon
+            return (
+              <div key={f.title} className="card" style={{ padding: '16px 14px', display: 'flex', flexDirection: 'column', gap: 6 }}>
+                <div style={{
+                  width: 36, height: 36, borderRadius: 10,
+                  background: `${f.colour}18`, display: 'flex', alignItems: 'center', justifyContent: 'center',
+                }}>
+                  <Icon size={18} color={f.colour} />
+                </div>
+                <div style={{ fontWeight: 700, fontSize: '0.88rem' }}>{f.title}</div>
+                <div style={{ fontSize: '0.78rem', color: 'var(--text-muted)', lineHeight: 1.4 }}>{f.desc}</div>
+              </div>
+            )
+          })}
+        </div>
+      </div>
+
+      {/* Contact */}
+      <div className="card" style={{ textAlign: 'center', padding: '24px 16px' }}>
+        <h4 style={{ marginBottom: 6 }}>Still need help?</h4>
+        <p style={{ fontSize: '0.85rem', marginBottom: 12 }}>
+          Contact us at <strong style={{ color: 'var(--accent-light)' }}>femiaisida1@gmail.com</strong>
+        </p>
+      </div>
+    </div>
   )
 }

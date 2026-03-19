@@ -96,11 +96,11 @@ export default function App() {
               <Route path="/leaderboard" element={<Leaderboard />} />
               <Route path="/profile"     element={<Profile />} />
               <Route path="/settings"    element={<Settings />} />
+              <Route path="/help"        element={<Help />} />
             </Route>
 
             <Route path="/privacy" element={<PrivacyPolicy />} />
-        <Route path="/help" element={<Help />} />
-        <Route path="*" element={<Navigate to="/" replace />} />
+            <Route path="*" element={<Navigate to="/" replace />} />
           </Routes>
         </Suspense>
         </ErrorBoundary>
