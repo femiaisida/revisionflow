@@ -280,45 +280,25 @@ export async function deleteTask(uid, taskId) {
   await deleteDoc(doc(db, 'users', uid, 'tasks', taskId))
 }
 
-// ── FRIENDS (Permission-Safe Handshake Model) ────────────────────────────────
+// ── FRIENDS (Permission-Safe Pull Model) ─────────────────────────────────────
 export async function sendFriendRequest(fromUid, toUid) {
-  const batch = writeBatch(db)
-  // 1. Log in our own profile that we sent it
-  batch.update(doc(db, 'users', fromUid), { 
+  // We ONLY update our own document. This is 100% reliable with rules.
+  // The recipient will find this request by querying users who have them in 'sentFriendRequests'.
+  await updateDoc(doc(db, 'users', fromUid), { 
     sentFriendRequests: arrayUnion(toUid),
     updatedAt: serverTimestamp() 
   })
-  // 2. Create an external notification that the other user can read
-  const notifRef = doc(collection(db, 'user_notifications'))
-  batch.set(notifRef, {
-    from: fromUid,
-    to: toUid,
-    type: 'friend_request',
-    status: 'pending',
-    createdAt: serverTimestamp()
-  })
-  await batch.commit()
 }
 
 export async function acceptFriendRequest(uid, fromUid) {
-  const batch = writeBatch(db)
-  // 1. Update our own profile to add the friend
-  batch.update(doc(db, 'users', uid), {
+  // 1. Add them to our friends, remove from incoming (virtual)
+  // We can't actually remove ourselves from their 'sentFriendRequests',
+  // but they will see we added them to 'friends' and update themselves.
+  await updateDoc(doc(db, 'users', uid), {
     friends: arrayUnion(fromUid),
-    friendRequests: arrayRemove(fromUid),
+    friendRequests: arrayRemove(fromUid), // legacy support
     updatedAt: serverTimestamp()
   })
-  // 2. Create a notification for the other user to add us back
-  const notifRef = doc(collection(db, 'user_notifications'))
-  batch.set(notifRef, {
-    from: uid,
-    to: fromUid,
-    type: 'friend_accept',
-    createdAt: serverTimestamp()
-  })
-  await batch.commit()
-
-  // Rewards
   await awardXP(uid, XP_REWARDS.friendAdded, 'Friend added')
   const snap = await getDoc(doc(db, 'users', uid))
   const friendCount = (snap.data()?.friends || []).length
@@ -326,27 +306,26 @@ export async function acceptFriendRequest(uid, fromUid) {
 }
 
 export async function declineFriendRequest(uid, fromUid) {
-  // Only need to update our own doc (removes from UI)
+  // Simply hide it locally by keeping a 'blacklist' or just removing from UI.
+  // We'll use a 'declinedFriendRequests' array on our OWN doc.
   await updateDoc(doc(db, 'users', uid), {
-    friendRequests: arrayRemove(fromUid),
+    declinedFriendRequests: arrayUnion(fromUid),
     updatedAt: serverTimestamp()
   })
-  // Optional: clear the notification from DB
-  const q = query(collection(db, 'user_notifications'), 
-    where('from', '==', fromUid), where('to', '==', uid), where('type', '==', 'friend_request'))
-  const snap = await getDocs(q)
-  await Promise.all(snap.docs.map(d => deleteDoc(d.ref)))
 }
 
 export async function removeFriend(uid, friendUid) {
-  // We can only remove from our own doc. 
-  // The other user will still see us as a friend until they do the same, 
-  // or we could use another notification for 'remove'. 
-  // Let's keep it simple: removal is one-sided or requires them to refresh.
   await updateDoc(doc(db, 'users', uid), {
     friends: arrayRemove(friendUid),
     updatedAt: serverTimestamp()
   })
+}
+
+export async function getReceivedRequests(uid) {
+  // Query all users who listed US in their sent requests
+  const q = query(collection(db, 'users'), where('sentFriendRequests', 'array-contains', uid))
+  const snap = await getDocs(q)
+  return snap.docs.map(d => ({ id: d.id, ...d.data() }))
 }
 
 export async function getFriendProfiles(friendUids) {

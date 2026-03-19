@@ -21,46 +21,58 @@ export function AuthProvider({ children }) {
     const unsubAuth = onAuthStateChanged(auth, async (u) => {
       setUser(u)
       if (u) {
-        // 1. Real-time listener for the user profile
+        // 1. Profile listener
         unsubSnapshot = onSnapshot(doc(db, 'users', u.uid), (snap) => {
           if (snap.exists()) {
             const data = snap.data()
             setProfile(data)
+            
+            // --- HEAL STREAK (Migration/Recovery) ---
+            if (data.streak === 0 && data.createdAt) {
+              const created = data.createdAt?.toDate?.() || new Date(data.createdAt)
+              const diff = Date.now() - created.getTime()
+              const days = Math.floor(diff / (1000 * 60 * 60 * 24))
+              if (days > 0) {
+                updateDoc(doc(db, 'users', u.uid), { 
+                  streak: days, 
+                  lastSessionDate: new Date().toISOString().substring(0, 10) 
+                })
+              }
+            }
           }
         })
 
-        // 2. Real-time listener for friend notifications (Permission-Safe Sync)
-        const q = query(collection(db, 'user_notifications'), where('to', '==', u.uid))
-        const unsubNotifs = onSnapshot(q, (snap) => {
+        // 2. Handshake Pull (Permission-Safe Sync)
+        // Alice watches Bob. If Bob added Alice to HIS 'friends', 
+        // Alice adds Bob to HER 'friends'.
+        const q = query(collection(db, 'users'), where('friends', 'array-contains', u.uid))
+        const unsubHandshake = onSnapshot(q, (snap) => {
+          if (snap.empty) return
+          
           snap.docs.forEach(async (d) => {
-            const notif = d.data()
-            if (notif.type === 'friend_accept') {
-              // Bob accepted our request! Finalize the link on our side.
+            const bob = d.data()
+            const bobUid = d.id
+            
+            // Re-fetch our latest state to avoid race conditions
+            const ourSnap = await getDoc(doc(db, 'users', u.uid))
+            const ourData = ourSnap.data()
+            const ourFriends = ourData?.friends || []
+            const ourSent = ourData?.sentFriendRequests || []
+            
+            if (!ourFriends.includes(bobUid) && ourSent.includes(bobUid)) {
+              // Mutual handshake!
               await updateDoc(doc(db, 'users', u.uid), {
-                friends: arrayUnion(notif.from),
-                sentFriendRequests: arrayRemove(notif.from),
+                friends: arrayUnion(bobUid),
+                sentFriendRequests: arrayRemove(bobUid),
                 updatedAt: serverTimestamp()
-              })
-              await deleteDoc(d.ref)
-            } else if (notif.type === 'friend_request') {
-              // Received a request. We'll merge these into the profile virtual state
-              // so the UI sees them in friendRequests array.
-              setProfile(prev => {
-                if (!prev) return prev
-                const existing = prev.friendRequests || []
-                if (existing.includes(notif.from)) return prev
-                return { ...prev, friendRequests: [...existing, notif.from] }
               })
             }
           })
         })
-        
-        // Add unsubNotifs to clean up
-        const oldUnsub = unsubSnapshot
-        unsubSnapshot = () => {
-          if (oldUnsub) oldUnsub()
-          unsubNotifs()
-        }
+
+        // Wrap unsubs
+        const oldU = unsubSnapshot
+        unsubSnapshot = () => { if (oldU) oldU(); unsubHandshake() }
 
       } else {
         if (unsubSnapshot) unsubSnapshot()

@@ -3,7 +3,8 @@ import React, { useState, useEffect } from 'react'
 import { useAuth } from '../context/AuthContext'
 import {
   sendFriendRequest, acceptFriendRequest, declineFriendRequest,
-  removeFriend, getFriendProfiles, getUserByUsername, searchUsersByName
+  removeFriend, getFriendProfiles, getUserByUsername, searchUsersByName,
+  getReceivedRequests
 } from '../utils/firestore'
 import { LEVELS } from '../data/subjects'
 import toast from 'react-hot-toast'
@@ -20,9 +21,19 @@ export default function Friends() {
 
   useEffect(() => {
     if (!profile) return
-    if (profile.friends?.length)       getFriendProfiles(profile.friends).then(setFriends)
-    if (profile.friendRequests?.length) getFriendProfiles(profile.friendRequests).then(setRequests)
-  }, [profile])
+    if (profile.friends?.length) {
+      getFriendProfiles(profile.friends).then(setFriends)
+    } else {
+      setFriends([])
+    }
+    
+    // Fetch virtual requests (people who sent a request TO us)
+    getReceivedRequests(user.uid).then(allReqs => {
+      const declined = profile.declinedFriendRequests || []
+      const active = allReqs.filter(r => !declined.includes(r.id) && !profile.friends?.includes(r.id))
+      setRequests(active)
+    })
+  }, [profile, user.uid])
 
   async function handleSearch(e) {
     e.preventDefault()
@@ -107,7 +118,7 @@ export default function Friends() {
   }
 
   const isAlreadyFriend   = (uid) => profile?.friends?.includes(uid)
-  const hasIncomingRequest = (uid) => profile?.friendRequests?.includes(uid)
+  const hasIncomingRequest = (uid) => requests.some(r => r.id === uid)
   const hasSentRequest     = (uid) => profile?.sentFriendRequests?.includes(uid)
 
   return (
