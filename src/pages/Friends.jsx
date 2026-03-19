@@ -55,8 +55,12 @@ export default function Friends() {
   }
 
   async function handleSendRequest(toUid) {
-    await sendFriendRequest(user.uid, toUid)
-    toast.success('Friend request sent!')
+    try {
+      await sendFriendRequest(user.uid, toUid)
+      toast.success('Friend request sent!')
+    } catch (err) {
+      toast.error('Could not send request: ' + err.message)
+    }
     setSearchResults([])
     setSearch('')
   }

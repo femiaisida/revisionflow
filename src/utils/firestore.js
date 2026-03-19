@@ -66,12 +66,20 @@ export async function updateStreak(uid) {
   const snap = await getDoc(ref)
   if (!snap.exists()) return
   const data = snap.data()
-  const today = new Date().toDateString()
+  const today = new Date().toISOString().substring(0, 10) // YYYY-MM-DD
   const last = data.lastSessionDate
+  
   if (last === today) return data.streak
-  const yesterday = new Date(Date.now() - 86400000).toDateString()
+  
+  const yesterday = new Date(Date.now() - 86400000).toISOString().substring(0, 10)
   const newStreak = last === yesterday ? (data.streak || 0) + 1 : 1
-  await updateDoc(ref, { streak: newStreak, lastSessionDate: today })
+  
+  await updateDoc(ref, { 
+    streak: newStreak, 
+    lastSessionDate: today,
+    updatedAt: serverTimestamp() 
+  })
+  
   await awardXP(uid, XP_REWARDS.streakDay, 'Daily streak')
   if (newStreak === 3)  await checkAndAwardBadge(uid, 'streak_3')
   if (newStreak === 7)  await checkAndAwardBadge(uid, 'streak_7')
@@ -274,12 +282,23 @@ export async function deleteTask(uid, taskId) {
 
 // ── FRIENDS ──────────────────────────────────────────────────────────────────
 export async function sendFriendRequest(fromUid, toUid) {
-  const batch = writeBatch(db)
-  // To user: receives the request
-  batch.update(doc(db, 'users', toUid), { friendRequests: arrayUnion(fromUid) })
-  // From user: tracks that they sent it
-  batch.update(doc(db, 'users', fromUid), { sentFriendRequests: arrayUnion(toUid) })
-  await batch.commit()
+  try {
+    const batch = writeBatch(db)
+    // Recipient doc
+    batch.update(doc(db, 'users', toUid), { 
+      friendRequests: arrayUnion(fromUid),
+      updatedAt: serverTimestamp() 
+    })
+    // Sender doc
+    batch.update(doc(db, 'users', fromUid), { 
+      sentFriendRequests: arrayUnion(toUid),
+      updatedAt: serverTimestamp() 
+    })
+    await batch.commit()
+  } catch (err) {
+    console.error(`sendFriendRequest error (${fromUid} -> ${toUid}):`, err)
+    throw err // so UI can toast it
+  }
 }
 
 export async function acceptFriendRequest(uid, fromUid) {
