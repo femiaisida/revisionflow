@@ -18,7 +18,7 @@ export default function Topics() {
   const { user, profile } = useAuth()
   const [topics, setTopics] = useState([])
   const [allTopics, setAllTopics] = useState([])
-  const [selSubj, setSelSubj] = useState('')
+  const [selSubj, setSelSubj] = useState('All')
   const [showAdd, setShowAdd] = useState(false)
   const [aiAdvice, setAiAdvice] = useState({})
   const [loadingAI, setLoadingAI] = useState(null)
@@ -30,7 +30,7 @@ export default function Topics() {
   const subjects = profile?.subjects?.map(s=>s.name) || []
 
   useEffect(() => {
-    if (!user || !selSubj) return
+    if (!user) return
     loadTopics()
   }, [user, selSubj])
 
@@ -38,7 +38,11 @@ export default function Topics() {
     const snap = await getDocs(collection(db,'users',user.uid,'topics'))
     const all = snap.docs.map(d=>({id:d.id,...d.data()}))
     setAllTopics(all)
-    setTopics(all.filter(t=>t.subjectId===selSubj))
+    if (selSubj === 'All') {
+      setTopics(all)
+    } else {
+      setTopics(all.filter(t=>t.subjectId===selSubj))
+    }
   }
 
   async function handleSeedTopics() {
@@ -117,6 +121,7 @@ export default function Topics() {
 
       {/* Subject picker */}
       <div style={{display:'flex',gap:6,flexWrap:'wrap',marginBottom:20}}>
+        <button className={`btn btn-sm ${selSubj==='All'?'btn-primary':'btn-secondary'}`} onClick={()=>{setSelSubj('All');setSelected([])}}>All Subjects</button>
         {subjects.map(s=><button key={s} className={`btn btn-sm ${selSubj===s?'btn-primary':'btn-secondary'}`} onClick={()=>{setSelSubj(s);setSelected([])}}>{s}</button>)}
       </div>
 
@@ -152,7 +157,7 @@ export default function Topics() {
             </div>
           ) : view==='priority' ? (
             // ── Priority view ──
-            <PriorityList topics={allTopics} profile={profile} />
+            <PriorityList topics={topics} profile={profile} />
           ) : view==='heat' ? (
             // ── Heatmap view ──
             <div>
