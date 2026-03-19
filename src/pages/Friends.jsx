@@ -73,6 +73,11 @@ export default function Friends() {
     setRequests(r => r.filter(u => u.id !== fromUid))
   }
 
+  async function handleCancelRequest(toUid) {
+    await declineFriendRequest(toUid, user.uid) // decline(target, sender) removes correctly
+    toast.success('Request cancelled')
+  }
+
   async function handleRemove(friendUid) {
     if (!confirm('Remove this friend?')) return
     await removeFriend(user.uid, friendUid)
@@ -135,7 +140,10 @@ export default function Friends() {
                 {isAlreadyFriend(u.id) ? (
                   <span className="badge badge-green"><UserCheck size={12}/> Friends</span>
                 ) : hasSentRequest(u.id) ? (
-                  <span className="badge badge-grey">Request sent</span>
+                  <div style={{display:'flex',alignItems:'center',gap:6}}>
+                    <span className="badge badge-grey">Request sent</span>
+                    <button className="btn btn-ghost btn-danger btn-sm" onClick={()=>handleCancelRequest(u.id)} style={{fontSize:'0.65rem',padding:'2px 6px'}}>Cancel</button>
+                  </div>
                 ) : hasIncomingRequest(u.id) ? (
                   <button className="btn btn-primary btn-sm" onClick={()=>handleAccept(u.id)}>Accept request</button>
                 ) : (
