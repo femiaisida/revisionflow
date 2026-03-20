@@ -107,6 +107,20 @@ export async function updateSession(uid, sessionId, data) {
   })
 }
 
+export async function deleteSession(uid, sessionId) {
+  const sessionRef = doc(db, 'users', uid, 'sessions', sessionId)
+  const snap = await getDoc(sessionRef)
+  await deleteDoc(sessionRef)
+  if (snap.exists() && snap.data().completed) {
+    const userRef = doc(db, 'users', uid)
+    const userSnap = await getDoc(userRef)
+    if (userSnap.exists()) {
+      const newXP = Math.max(0, (userSnap.data().xp || 0) - XP_REWARDS.sessionCompleted)
+      await updateDoc(userRef, { xp: newXP })
+    }
+  }
+}
+
 export async function completeSession(uid, sessionId, notes = '') {
   await updateDoc(doc(db, 'users', uid, 'sessions', sessionId), {
     completed: true,

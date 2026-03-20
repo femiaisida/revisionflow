@@ -129,6 +129,40 @@ export default function Landing() {
         <Link to="/signup" className="btn btn-primary btn-lg">Create your free account <ArrowRight size={17}/></Link>
       </section>
 
+      {/* GDPR / Data trust section */}
+      <section style={{padding:'48px 40px',background:'var(--bg-surface)',borderTop:'1px solid var(--border)'}}>
+        <div style={{maxWidth:860,margin:'0 auto'}}>
+          <h2 style={{textAlign:'center',marginBottom:8,fontSize:'1.4rem'}}>Your data, your control</h2>
+          <p style={{textAlign:'center',color:'var(--text-secondary)',marginBottom:32,maxWidth:560,margin:'0 auto 32px'}}>
+            RevisionFlow is built by a student, not a corporation. We handle your data with care and full transparency.
+          </p>
+          <div style={{display:'grid',gridTemplateColumns:'repeat(auto-fit,minmax(200px,1fr))',gap:16,marginBottom:28}}>
+            {[
+              { icon:'🔒', title:'No data selling', desc:'Your revision data is never sold, shared with advertisers, or used for any purpose outside RevisionFlow.' },
+              { icon:'🇬🇧', title:'UK GDPR compliant', desc:'We comply fully with the UK General Data Protection Regulation and the Data Protection Act 2018.' },
+              { icon:'🗑️', title:'Delete anytime', desc:'Delete your account and all associated data permanently from Settings at any time — no questions asked.' },
+              { icon:'👶', title:'Age 13+', desc:'Designed for secondary school students. Users under 13 require parental consent. We do not knowingly collect data from under-13s.' },
+              { icon:'🤖', title:'AI transparency', desc:'AI requests use Mistral AI and Google Gemini APIs. Neither trains their models on API data by default.' },
+              { icon:'📧', title:'Right to access', desc:'Email femiaisida1@gmail.com to request a copy of your data, corrections, or deletion under UK GDPR Article 15–17.' },
+            ].map(item => (
+              <div key={item.title} style={{padding:'16px',background:'var(--bg-card)',borderRadius:'var(--radius-md)',border:'1px solid var(--border)'}}>
+                <div style={{fontSize:'1.5rem',marginBottom:8}}>{item.icon}</div>
+                <div style={{fontWeight:700,fontSize:'0.9rem',marginBottom:4}}>{item.title}</div>
+                <div style={{fontSize:'0.8rem',color:'var(--text-secondary)',lineHeight:1.6}}>{item.desc}</div>
+              </div>
+            ))}
+          </div>
+          <p style={{textAlign:'center',fontSize:'0.82rem',color:'var(--text-muted)'}}>
+            Read our full{' '}
+            <Link to="/privacy" style={{color:'var(--accent-light)',fontWeight:600}}>Privacy Policy</Link>
+            {' '}· Complaints to the{' '}
+            <a href="https://ico.org.uk" target="_blank" rel="noreferrer" style={{color:'var(--accent-light)'}}>ICO</a>
+            {' '}· Contact:{' '}
+            <a href="mailto:femiaisida1@gmail.com" style={{color:'var(--accent-light)'}}>femiaisida1@gmail.com</a>
+          </p>
+        </div>
+      </section>
+
       {/* Footer */}
       <footer style={{padding:'28px 40px',display:'flex',justifyContent:'space-between',alignItems:'center',flexWrap:'wrap',gap:10,borderTop:'1px solid var(--border)'}}>
         <div style={{display:'flex',alignItems:'center',gap:8}}>

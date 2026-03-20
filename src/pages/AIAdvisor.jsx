@@ -9,7 +9,7 @@ import { chatWithAI, getResourceRecommendations, generateStudyPlan, analyseWeakn
 import { checkAndAwardBadge } from '../utils/firestore'
 import AIOutput from '../components/AIOutput'
 import { SUBJECT_COLOURS } from '../data/subjects'
-import { MessageSquare, Send, Zap, BookOpen, TrendingUp, X, Brain, Star, Target, FileText, Check } from 'lucide-react'
+import { MessageSquare, Send, Zap, BookOpen, TrendingUp, X, Brain, Star, Target, FileText, Check, Lightbulb } from 'lucide-react'
 
 const QUICK_PROMPTS = [
   'What should I revise today?',
@@ -73,6 +73,9 @@ export default function AIAdvisor() {
   const [markA,       setMarkA]       = useState('')
   const [markResult,  setMarkResult]  = useState('')
   const [markMarks,   setMarkMarks]   = useState('')
+  const [techSubj,    setTechSubj]    = useState('')
+  const [techLoading, setTechLoading] = useState(false)
+  const [techResult,  setTechResult]  = useState('')
   const [markIsPaper, setMarkIsPaper] = useState(false)
   const [markYear,    setMarkYear]    = useState('2024')
   const [markPaperNum,setMarkPaperNum]= useState('1')
@@ -290,6 +293,7 @@ Provide a detailed marking breakdown with ALL of the following:
           {k:'flash',   label:'Flashcards',    icon:Star},
           {k:'resources',label:'Resources',    icon:BookOpen},
           {k:'plan',    label:'Study Plan',    icon:TrendingUp},
+          {k:'techniques', label:'Techniques',  icon:Lightbulb},
         ].map(({k,label,icon:Icon})=>(
           <button key={k} className={`tab${tab===k?' active':''}`} onClick={()=>setTab(k)}>
             <Icon size={13}/> {label}
@@ -605,6 +609,116 @@ Provide a detailed marking breakdown with ALL of the following:
       )}
 
       {/* ── Add to Calendar modal ── */}
+      {/* ── Revision Techniques ── */}
+      {tab==='techniques'&&(
+        <div>
+          <div className="card" style={{marginBottom:16}}>
+            <h4 style={{marginBottom:4,display:'flex',alignItems:'center',gap:8}}>
+              <Lightbulb size={18} color="var(--accent-light)"/> Evidence-Based Revision Techniques
+            </h4>
+            <p style={{marginBottom:14,fontSize:'0.875rem',color:'var(--text-secondary)'}}>
+              Get subject-specific advice on the most effective revision methods — grounded in cognitive science research.
+            </p>
+            <div style={{display:'flex',gap:10,alignItems:'flex-end',flexWrap:'wrap'}}>
+              <div style={{flex:1,minWidth:180}}>
+                <label className="label">Choose a subject</label>
+                <select className="select" value={techSubj} onChange={e=>setTechSubj(e.target.value)}>
+                  <option value="">Select subject…</option>
+                  {subjects.map(s=><option key={s} value={s}>{s}</option>)}
+                </select>
+              </div>
+              <button className="btn btn-primary" onClick={handleTechniques}
+                disabled={techLoading||!techSubj} style={{minWidth:140}}>
+                {techLoading?'Generating…':'Get techniques'}
+              </button>
+            </div>
+          </div>
+
+          {/* Static evidence-based techniques overview — always visible */}
+          <div className="card" style={{marginBottom:16}}>
+            <h4 style={{marginBottom:12}}>The 6 most effective revision techniques (research-backed)</h4>
+            <div style={{display:'grid',gridTemplateColumns:'repeat(auto-fill,minmax(240px,1fr))',gap:10}}>
+              {[
+                {
+                  name:'Retrieval Practice',
+                  rating:'★★★★★',
+                  ratingCol:'var(--success)',
+                  desc:'Testing yourself on content rather than re-reading it. The act of retrieving strengthens memory far more than passive review.',
+                  how:'Use flashcards, practice questions, past papers, or cover your notes and write down everything you remember.',
+                  avoid:'Passive re-reading and highlighting — these feel productive but produce almost no durable learning.',
+                },
+                {
+                  name:'Spaced Repetition',
+                  rating:'★★★★★',
+                  ratingCol:'var(--success)',
+                  desc:'Reviewing material at increasing intervals (e.g. 1 day → 3 days → 7 days → 21 days). Exploits the spacing effect to dramatically reduce forgetting.',
+                  how:'Anki, Quizlet, or RevisionFlow flashcard system. Review topics you found hard more frequently.',
+                  avoid:'Cramming the night before — this produces short-term recall but very little long-term retention.',
+                },
+                {
+                  name:'Interleaving',
+                  rating:'★★★★☆',
+                  ratingCol:'var(--success)',
+                  desc:'Mixing different topics or subjects within a single study session instead of blocking all of one topic before moving on.',
+                  how:'In a 90-minute session, spend 30 min on Topic A, 30 min on Topic B, 30 min on Topic C — not 90 min on Topic A.',
+                  avoid:'Blocked practice (finishing all of one topic before starting another) — feels easier but builds weaker memories.',
+                },
+                {
+                  name:'Elaborative Interrogation',
+                  rating:'★★★★☆',
+                  ratingCol:'var(--warning)',
+                  desc:'Asking "why?" and "how?" about facts rather than accepting them at face value. Forces deeper processing.',
+                  how:'For each fact, ask: "Why is this true? How does this connect to what I already know? What would happen if this were false?"',
+                  avoid:'Learning facts in isolation without connecting them to wider knowledge.',
+                },
+                {
+                  name:'Concrete Examples',
+                  rating:'★★★★☆',
+                  ratingCol:'var(--warning)',
+                  desc:'Grounding abstract concepts in specific, memorable examples. Particularly powerful for concepts in sciences, economics, and law.',
+                  how:'For every abstract principle, write down 2–3 real-world examples. Draw diagrams that show the concept in action.',
+                  avoid:'Abstract definitions without application — hard to recall under exam pressure.',
+                },
+                {
+                  name:'Dual Coding',
+                  rating:'★★★☆☆',
+                  ratingCol:'var(--warning)',
+                  desc:'Combining verbal and visual information — words plus diagrams, charts, or mind maps. Gives your brain two routes to the same knowledge.',
+                  how:'Draw diagrams from memory, create visual summaries, annotate your notes with sketches.',
+                  avoid:'Relying on either text OR visuals alone — the combination is what matters.',
+                },
+              ].map(t=>(
+                <div key={t.name} style={{padding:'12px 14px',background:'var(--bg-surface)',borderRadius:'var(--radius-md)',border:'1px solid var(--border)'}}>
+                  <div style={{display:'flex',justifyContent:'space-between',alignItems:'center',marginBottom:6}}>
+                    <span style={{fontWeight:700,fontSize:'0.9rem'}}>{t.name}</span>
+                    <span style={{fontSize:'0.75rem',color:t.ratingCol,fontWeight:700}}>{t.rating}</span>
+                  </div>
+                  <p style={{fontSize:'0.78rem',color:'var(--text-secondary)',lineHeight:1.6,marginBottom:6}}>{t.desc}</p>
+                  <div style={{fontSize:'0.75rem',lineHeight:1.5}}>
+                    <span style={{color:'var(--success)',fontWeight:600}}>✓ How: </span>
+                    <span style={{color:'var(--text-secondary)'}}>{t.how}</span>
+                  </div>
+                  <div style={{fontSize:'0.75rem',lineHeight:1.5,marginTop:3}}>
+                    <span style={{color:'var(--danger)',fontWeight:600}}>✗ Avoid: </span>
+                    <span style={{color:'var(--text-secondary)'}}>{t.avoid}</span>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+
+          {techLoading && <div className="loading-center"><div className="spinner"/></div>}
+          {techResult && (
+            <div className="card">
+              <h4 style={{marginBottom:12}}>Subject-specific techniques for {techSubj}</h4>
+              <div style={{fontSize:'0.875rem',lineHeight:1.8}}>
+                {renderMD(techResult)}
+              </div>
+            </div>
+          )}
+        </div>
+      )}
+
       {showAddCal && (
         <AddPlanToCalendarModal
           studyPlan={studyPlan}

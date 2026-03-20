@@ -86,11 +86,13 @@ export default function Calendar() {
       if (!docId) { toast.error('Cannot delete: missing ID'); return }
       if (session.isTask) {
         await deleteDoc(doc(db, 'users', user.uid, 'tasks', docId))
+        setSessions(s => s.filter(x => (x._docId || x.id) !== docId))
+        toast.success('Task deleted')
       } else {
-        await deleteDoc(doc(db, 'users', user.uid, 'sessions', docId))
+        await deleteSession(user.uid, docId)
+        setSessions(s => s.filter(x => (x._docId || x.id) !== docId))
+        toast.success(session.completed ? 'Session deleted (-50 XP)' : 'Session deleted')
       }
-      setSessions(s => s.filter(x => (x._docId || x.id) !== docId))
-      toast.success(session.isTask ? 'Task deleted' : 'Session deleted')
     } catch (err) {
       toast.error('Delete failed: ' + err.message)
       console.error(err)

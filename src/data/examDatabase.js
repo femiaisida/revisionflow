@@ -10730,6 +10730,602 @@ export const EXAM_DATES_2026 = [
     { name:'Paper 1', date:'2026-05-12', session:'PM', duration:180, code:'7062/1' },
     { name:'Paper 2', date:'2026-06-01', session:'PM', duration:180, code:'7062/2' },
   ]},
+
+  // ─────────────────────────────────────────────────────────────────────────
+  // OCR GCSE - Source: OCR Final Timetable June 2026 (published August 2025)
+  // ─────────────────────────────────────────────────────────────────────────
+
+  { board:'OCR', subject:'Biology A', qualification:'GCSE', gradingSystem:'GCSE_STANDARD', papers:[
+    { name:'Paper 1 (F) / Paper 3 (H): Breadth in Biology', date:'2026-05-12', session:'PM', duration:105, code:'J247/01+03' },
+    { name:'Paper 2 (F) / Paper 4 (H): Depth in Biology', date:'2026-06-08', session:'AM', duration:105, code:'J247/02+04' },
+  ]},
+  { board:'OCR', subject:'Biology B', qualification:'GCSE', gradingSystem:'GCSE_STANDARD', papers:[
+    { name:'Breadth in Biology (F/H)', date:'2026-05-12', session:'PM', duration:105, code:'J257/01+03' },
+    { name:'Depth in Biology (F/H)', date:'2026-06-08', session:'AM', duration:105, code:'J257/02+04' },
+  ]},
+  { board:'OCR', subject:'Business', qualification:'GCSE', gradingSystem:'GCSE_STANDARD', papers:[
+    { name:'Business 1: Business Activity, Marketing and People', date:'2026-05-11', session:'PM', duration:90, code:'J204/01' },
+    { name:'Business 2: Operations, Finance and Influences on Business', date:'2026-05-21', session:'PM', duration:90, code:'J204/02' },
+  ]},
+  { board:'OCR', subject:'Chemistry A', qualification:'GCSE', gradingSystem:'GCSE_STANDARD', papers:[
+    { name:'Paper 1 (F) / Paper 3 (H)', date:'2026-05-18', session:'AM', duration:105, code:'J248/01+03' },
+    { name:'Paper 2 (F) / Paper 4 (H)', date:'2026-06-12', session:'AM', duration:105, code:'J248/02+04' },
+  ]},
+  { board:'OCR', subject:'Chemistry B', qualification:'GCSE', gradingSystem:'GCSE_STANDARD', papers:[
+    { name:'Breadth in Chemistry (F/H)', date:'2026-05-18', session:'AM', duration:105, code:'J258/01+03' },
+    { name:'Depth in Chemistry (F/H)', date:'2026-06-12', session:'AM', duration:105, code:'J258/02+04' },
+  ]},
+  { board:'OCR', subject:'Citizenship Studies', qualification:'GCSE', gradingSystem:'GCSE_STANDARD', papers:[
+    { name:'Citizenship in Perspective', date:'2026-05-07', session:'PM', duration:50, code:'J270/01' },
+    { name:'Citizenship in Action', date:'2026-05-14', session:'PM', duration:105, code:'J270/02' },
+    { name:'Our Rights, Our Society, Our World', date:'2026-06-01', session:'AM', duration:60, code:'J270/03' },
+  ]},
+  { board:'OCR', subject:'Combined Science A', qualification:'GCSE', gradingSystem:'GCSE_COMBINED', papers:[
+    { name:'Paper 1 Biology (F) / Paper 7 Biology (H)', date:'2026-05-12', session:'PM', duration:70, code:'J250/01+07' },
+    { name:'Paper 3 Chemistry (F) / Paper 9 Chemistry (H)', date:'2026-05-18', session:'AM', duration:70, code:'J250/03+09' },
+    { name:'Paper 5 Physics (F) / Paper 11 Physics (H)', date:'2026-06-02', session:'AM', duration:70, code:'J250/05+11' },
+    { name:'Paper 2 Biology (F) / Paper 8 Biology (H)', date:'2026-06-08', session:'AM', duration:70, code:'J250/02+08' },
+    { name:'Paper 4 Chemistry (F) / Paper 10 Chemistry (H)', date:'2026-06-12', session:'AM', duration:70, code:'J250/04+10' },
+    { name:'Paper 6 Physics (F) / Paper 12 Physics (H)', date:'2026-06-15', session:'AM', duration:70, code:'J250/06+12' },
+  ]},
+  { board:'OCR', subject:'Combined Science B', qualification:'GCSE', gradingSystem:'GCSE_COMBINED', papers:[
+    { name:'Biology (F/H)', date:'2026-05-12', session:'PM', duration:105, code:'J260/01+05' },
+    { name:'Chemistry (F/H)', date:'2026-05-18', session:'AM', duration:105, code:'J260/02+06' },
+    { name:'Physics (F/H)', date:'2026-06-02', session:'AM', duration:105, code:'J260/03+07' },
+    { name:'Combined Science (F/H)', date:'2026-06-08', session:'AM', duration:105, code:'J260/04+08' },
+  ]},
+  { board:'OCR', subject:'Computer Science', qualification:'GCSE', gradingSystem:'GCSE_STANDARD', papers:[
+    { name:'Computer Systems', date:'2026-05-13', session:'PM', duration:90, code:'J277/01' },
+    { name:'Computational Thinking, Algorithms and Programming', date:'2026-05-19', session:'PM', duration:90, code:'J277/02' },
+  ]},
+  { board:'OCR', subject:'Design and Technology', qualification:'GCSE', gradingSystem:'GCSE_STANDARD', papers:[
+    { name:'Principles of Design and Technology', date:'2026-06-10', session:'PM', duration:120, code:'J310/01' },
+  ]},
+  { board:'OCR', subject:'Drama', qualification:'GCSE', gradingSystem:'GCSE_STANDARD', papers:[
+    { name:'Drama: Performance and Response', date:'2026-05-08', session:'PM', duration:90, code:'J316/04' },
+  ]},
+  { board:'OCR', subject:'Economics', qualification:'GCSE', gradingSystem:'GCSE_STANDARD', papers:[
+    { name:'Introduction to Economics', date:'2026-05-08', session:'PM', duration:90, code:'J205/01' },
+    { name:'National and International Economics', date:'2026-05-22', session:'AM', duration:90, code:'J205/02' },
+  ]},
+  { board:'OCR', subject:'English Language', qualification:'GCSE', gradingSystem:'GCSE_STANDARD', papers:[
+    { name:'Communicating Information and Ideas', date:'2026-05-21', session:'AM', duration:120, code:'J351/01' },
+    { name:'Exploring Effects and Impact', date:'2026-06-05', session:'AM', duration:120, code:'J351/02' },
+  ]},
+  { board:'OCR', subject:'English Literature', qualification:'GCSE', gradingSystem:'GCSE_STANDARD', papers:[
+    { name:'Exploring Modern and Literary Heritage Texts', date:'2026-05-11', session:'AM', duration:120, code:'J352/01' },
+    { name:'Exploring Poetry and Shakespeare', date:'2026-05-19', session:'AM', duration:120, code:'J352/02' },
+  ]},
+  { board:'OCR', subject:'Food Preparation and Nutrition', qualification:'GCSE', gradingSystem:'GCSE_STANDARD', papers:[
+    { name:'Food Preparation and Nutrition', date:'2026-06-11', session:'PM', duration:90, code:'J309/01' },
+  ]},
+  { board:'OCR', subject:'Geography A', qualification:'GCSE', gradingSystem:'GCSE_STANDARD', papers:[
+    { name:'Living in the UK Today', date:'2026-05-13', session:'AM', duration:60, code:'J383/01' },
+    { name:'The World Around Us', date:'2026-06-03', session:'PM', duration:60, code:'J383/02' },
+    { name:'Geographical Skills', date:'2026-06-11', session:'AM', duration:90, code:'J383/03' },
+  ]},
+  { board:'OCR', subject:'Geography B', qualification:'GCSE', gradingSystem:'GCSE_STANDARD', papers:[
+    { name:'Our Natural World', date:'2026-05-13', session:'AM', duration:90, code:'J384/01' },
+    { name:'People and Society', date:'2026-06-03', session:'PM', duration:90, code:'J384/02' },
+    { name:'Geographical Exploration', date:'2026-06-11', session:'AM', duration:90, code:'J384/03' },
+  ]},
+  { board:'OCR', subject:'History A', qualification:'GCSE', gradingSystem:'GCSE_STANDARD', papers:[
+    { name:'Period Study with Non-British Depth Study', date:'2026-05-15', session:'AM', duration:105, code:'J410/01-07' },
+    { name:'Thematic Study', date:'2026-06-04', session:'AM', duration:60, code:'J410/08-10' },
+    { name:'British Depth Study with Historic Environment', date:'2026-06-09', session:'PM', duration:75, code:'J410/11-13' },
+  ]},
+  { board:'OCR', subject:'History B (Schools History Project)', qualification:'GCSE', gradingSystem:'GCSE_STANDARD', papers:[
+    { name:'British History: Thematic Study and Depth Study', date:'2026-06-04', session:'AM', duration:105, code:'J411/11-19' },
+    { name:'History Around Us', date:'2026-05-15', session:'AM', duration:60, code:'J411/21' },
+    { name:'World History: Period Study and Depth Study', date:'2026-06-09', session:'PM', duration:105, code:'J411/31-39' },
+  ]},
+  { board:'OCR', subject:'Mathematics', qualification:'GCSE', gradingSystem:'GCSE_STANDARD', papers:[
+    { name:'Paper 1 (F-calculator) / Paper 4 (H-calculator)', date:'2026-05-14', session:'AM', duration:90, code:'J560/01+04' },
+    { name:'Paper 2 (F-non-calc) / Paper 5 (H-non-calc)', date:'2026-06-03', session:'AM', duration:90, code:'J560/02+05' },
+    { name:'Paper 3 (F-calculator) / Paper 6 (H-calculator)', date:'2026-06-10', session:'AM', duration:90, code:'J560/03+06' },
+  ]},
+  { board:'OCR', subject:'Media Studies', qualification:'GCSE', gradingSystem:'GCSE_STANDARD', papers:[
+    { name:'Television and Promoting Media', date:'2026-05-18', session:'PM', duration:105, code:'J200/01' },
+    { name:'Music and News', date:'2026-06-02', session:'PM', duration:75, code:'J200/02' },
+  ]},
+  { board:'OCR', subject:'Music', qualification:'GCSE', gradingSystem:'GCSE_STANDARD', papers:[
+    { name:'Listening and Appraising', date:'2026-06-05', session:'PM', duration:90, code:'J536/05' },
+  ]},
+  { board:'OCR', subject:'Physical Education', qualification:'GCSE', gradingSystem:'GCSE_STANDARD', papers:[
+    { name:'Physical Factors Affecting Performance', date:'2026-05-22', session:'AM', duration:60, code:'J587/01' },
+    { name:'Socio-cultural Issues and Sports Psychology', date:'2026-06-01', session:'AM', duration:60, code:'J587/02' },
+  ]},
+  { board:'OCR', subject:'Physics A', qualification:'GCSE', gradingSystem:'GCSE_STANDARD', papers:[
+    { name:'Paper 1 (F) / Paper 3 (H)', date:'2026-06-02', session:'AM', duration:105, code:'J249/01+03' },
+    { name:'Paper 2 (F) / Paper 4 (H)', date:'2026-06-15', session:'AM', duration:105, code:'J249/02+04' },
+  ]},
+  { board:'OCR', subject:'Physics B', qualification:'GCSE', gradingSystem:'GCSE_STANDARD', papers:[
+    { name:'Breadth in Physics (F/H)', date:'2026-06-02', session:'AM', duration:105, code:'J259/01+03' },
+    { name:'Depth in Physics (F/H)', date:'2026-06-15', session:'AM', duration:105, code:'J259/02+04' },
+  ]},
+  { board:'OCR', subject:'Psychology', qualification:'GCSE', gradingSystem:'GCSE_STANDARD', papers:[
+    { name:'Studies and Applications in Psychology 1', date:'2026-05-07', session:'AM', duration:90, code:'J203/01' },
+    { name:'Studies and Applications in Psychology 2', date:'2026-05-14', session:'PM', duration:90, code:'J203/02' },
+  ]},
+  { board:'OCR', subject:'Religious Studies', qualification:'GCSE', gradingSystem:'GCSE_STANDARD', papers:[
+    { name:'Beliefs and Teachings & Practices (choice of religion)', date:'2026-05-12', session:'AM', duration:60, code:'J625/01-05' },
+    { name:'Religion, Philosophy and Ethics in the Modern World', date:'2026-05-20', session:'PM', duration:120, code:'J625/06-10' },
+  ]},
+
+  // ─────────────────────────────────────────────────────────────────────────
+  // OCR Cambridge Nationals - Source: OCR Final Timetable June 2026
+  // ─────────────────────────────────────────────────────────────────────────
+
+  { board:'OCR', subject:'Cambridge National: Sport Studies', qualification:'Cambridge National Level 1/2', gradingSystem:'GCSE_STANDARD', papers:[
+    { name:'Contemporary Issues in Sport', date:'2026-05-08', session:'AM', duration:75, code:'R184/01' },
+  ]},
+  { board:'OCR', subject:'Cambridge National: Creative iMedia', qualification:'Cambridge National Level 1/2', gradingSystem:'GCSE_STANDARD', papers:[
+    { name:'Creative iMedia in the Media Industry', date:'2026-06-08', session:'PM', duration:90, code:'R093/01' },
+  ]},
+  { board:'OCR', subject:'Cambridge National: Engineering Design', qualification:'Cambridge National Level 1/2', gradingSystem:'GCSE_STANDARD', papers:[
+    { name:'Principles of Engineering Design', date:'2026-05-12', session:'AM', duration:75, code:'R038/01' },
+  ]},
+  { board:'OCR', subject:'Cambridge National: Engineering Manufacture', qualification:'Cambridge National Level 1/2', gradingSystem:'GCSE_STANDARD', papers:[
+    { name:'Principles of Engineering Manufacture', date:'2026-06-01', session:'AM', duration:75, code:'R014/01' },
+  ]},
+  { board:'OCR', subject:'Cambridge National: Engineering Programmable Systems', qualification:'Cambridge National Level 1/2', gradingSystem:'GCSE_STANDARD', papers:[
+    { name:'Principles of Electronic and Programmable Systems', date:'2026-06-11', session:'PM', duration:75, code:'R047/01' },
+  ]},
+  { board:'OCR', subject:'Cambridge National: Health and Social Care', qualification:'Cambridge National Level 1/2', gradingSystem:'GCSE_STANDARD', papers:[
+    { name:'Principles of Care in Health and Social Care Settings', date:'2026-06-03', session:'PM', duration:75, code:'R032/01' },
+  ]},
+  { board:'OCR', subject:'Cambridge National: IT', qualification:'Cambridge National Level 1/2', gradingSystem:'GCSE_STANDARD', papers:[
+    { name:'IT in the Digital World', date:'2026-05-15', session:'PM', duration:90, code:'R050/01' },
+  ]},
+  { board:'OCR', subject:'Cambridge National: Child Development', qualification:'Cambridge National Level 1/2', gradingSystem:'GCSE_STANDARD', papers:[
+    { name:'Health and Well-being for Child Development', date:'2026-05-19', session:'PM', duration:75, code:'R057/01' },
+  ]},
+  { board:'OCR', subject:'Cambridge National: Enterprise and Marketing', qualification:'Cambridge National Level 1/2', gradingSystem:'GCSE_STANDARD', papers:[
+    { name:'Enterprise and Marketing Concepts', date:'2026-05-20', session:'PM', duration:75, code:'R067/01' },
+  ]},
+  { board:'OCR', subject:'Cambridge National: Sport Science', qualification:'Cambridge National Level 1/2', gradingSystem:'GCSE_STANDARD', papers:[
+    { name:'Reducing the Risk of Sports Injuries', date:'2026-05-18', session:'PM', duration:75, code:'R180/01' },
+  ]},
+
+  // ─────────────────────────────────────────────────────────────────────────
+  // OCR A-Level - Source: OCR Final Timetable AS/A Level June 2026 (April 2025)
+  // ─────────────────────────────────────────────────────────────────────────
+
+  { board:'OCR', subject:'Biology A', qualification:'A-Level', gradingSystem:'ALEVEL', papers:[
+    { name:'Biological Processes', date:'2026-06-04', session:'PM', duration:135, code:'H420/01' },
+    { name:'Biological Diversity', date:'2026-06-12', session:'AM', duration:135, code:'H420/02' },
+    { name:'Unified Biology', date:'2026-06-16', session:'AM', duration:90, code:'H420/03' },
+  ]},
+  { board:'OCR', subject:'Biology B (Advancing Biology)', qualification:'A-Level', gradingSystem:'ALEVEL', papers:[
+    { name:'Fundamentals of Biology', date:'2026-06-04', session:'PM', duration:135, code:'H422/01' },
+    { name:'Scientific Literacy in Biology', date:'2026-06-12', session:'AM', duration:135, code:'H422/02' },
+    { name:'Practical Skills in Biology', date:'2026-06-16', session:'AM', duration:90, code:'H422/03' },
+  ]},
+  { board:'OCR', subject:'Business', qualification:'A-Level', gradingSystem:'ALEVEL', papers:[
+    { name:'Operating in a Local Business Environment', date:'2026-05-13', session:'PM', duration:120, code:'H431/01' },
+    { name:'The UK Business Environment', date:'2026-05-19', session:'AM', duration:120, code:'H431/02' },
+    { name:'The Global Business Environment', date:'2026-06-09', session:'PM', duration:120, code:'H431/03' },
+  ]},
+  { board:'OCR', subject:'Chemistry A', qualification:'A-Level', gradingSystem:'ALEVEL', papers:[
+    { name:'Periodic Table, Elements and Physical Chemistry', date:'2026-06-02', session:'AM', duration:135, code:'H432/01' },
+    { name:'Synthesis and Analytical Techniques', date:'2026-06-09', session:'AM', duration:135, code:'H432/02' },
+    { name:'Unified Chemistry', date:'2026-06-15', session:'AM', duration:90, code:'H432/03' },
+  ]},
+  { board:'OCR', subject:'Chemistry B (Salters)', qualification:'A-Level', gradingSystem:'ALEVEL', papers:[
+    { name:'Fundamentals of Chemistry', date:'2026-06-02', session:'AM', duration:135, code:'H433/01' },
+    { name:'Scientific Literacy in Chemistry', date:'2026-06-09', session:'AM', duration:135, code:'H433/02' },
+    { name:'Practical Skills in Chemistry', date:'2026-06-15', session:'AM', duration:90, code:'H433/03' },
+  ]},
+  { board:'OCR', subject:'Computer Science', qualification:'A-Level', gradingSystem:'ALEVEL', papers:[
+    { name:'Computer Systems', date:'2026-06-10', session:'PM', duration:150, code:'H446/01' },
+    { name:'Algorithms and Programming', date:'2026-06-17', session:'AM', duration:150, code:'H446/02' },
+  ]},
+  { board:'OCR', subject:'Design and Technology: Design Engineering', qualification:'A-Level', gradingSystem:'ALEVEL', papers:[
+    { name:'Principles of Design Engineering', date:'2026-05-22', session:'AM', duration:90, code:'H404/01' },
+    { name:'Problem Solving in Design Engineering', date:'2026-06-10', session:'AM', duration:105, code:'H404/02' },
+  ]},
+  { board:'OCR', subject:'Design and Technology: Product Design', qualification:'A-Level', gradingSystem:'ALEVEL', papers:[
+    { name:'Principles of Product Design', date:'2026-05-22', session:'AM', duration:90, code:'H406/01' },
+    { name:'Problem Solving in Product Design', date:'2026-06-10', session:'AM', duration:105, code:'H406/02' },
+  ]},
+  { board:'OCR', subject:'Drama and Theatre', qualification:'A-Level', gradingSystem:'ALEVEL', papers:[
+    { name:'Analysing Performance', date:'2026-05-21', session:'AM', duration:135, code:'H459/31' },
+    { name:'Deconstructing Texts for Performance', date:'2026-06-04', session:'AM', duration:105, code:'H459/41-48' },
+  ]},
+  { board:'OCR', subject:'Economics', qualification:'A-Level', gradingSystem:'ALEVEL', papers:[
+    { name:'Microeconomics', date:'2026-05-11', session:'AM', duration:120, code:'H460/01' },
+    { name:'Macroeconomics', date:'2026-05-18', session:'PM', duration:120, code:'H460/02' },
+    { name:'Themes in Economics', date:'2026-06-04', session:'AM', duration:120, code:'H460/03' },
+  ]},
+  { board:'OCR', subject:'English Language', qualification:'A-Level', gradingSystem:'ALEVEL', papers:[
+    { name:'Exploring Language', date:'2026-05-11', session:'AM', duration:150, code:'H470/01' },
+    { name:'Dimensions of Linguistic Variation', date:'2026-05-22', session:'AM', duration:150, code:'H470/02' },
+  ]},
+  { board:'OCR', subject:'English Literature', qualification:'A-Level', gradingSystem:'ALEVEL', papers:[
+    { name:'Drama and Poetry Pre-1900', date:'2026-05-13', session:'AM', duration:150, code:'H472/01' },
+    { name:'Comparative and Contextual Study', date:'2026-06-01', session:'AM', duration:150, code:'H472/02' },
+  ]},
+  { board:'OCR', subject:'Film Studies', qualification:'A-Level', gradingSystem:'ALEVEL', papers:[
+    { name:'Film History', date:'2026-05-22', session:'AM', duration:120, code:'H410/01' },
+    { name:'Critical Approaches to Film', date:'2026-06-02', session:'AM', duration:120, code:'H410/02' },
+  ]},
+  { board:'OCR', subject:'Further Mathematics A', qualification:'A-Level', gradingSystem:'ALEVEL', papers:[
+    { name:'Pure Core 1', date:'2026-05-14', session:'PM', duration:90, code:'H245/Y540' },
+    { name:'Pure Core 2', date:'2026-05-21', session:'PM', duration:90, code:'H245/Y541' },
+    { name:'Statistics (option)', date:'2026-06-05', session:'PM', duration:90, code:'H245/Y542' },
+    { name:'Mechanics (option)', date:'2026-06-12', session:'PM', duration:90, code:'H245/Y543' },
+    { name:'Discrete Mathematics (option)', date:'2026-06-16', session:'PM', duration:90, code:'H245/Y544' },
+  ]},
+  { board:'OCR', subject:'Geography', qualification:'A-Level', gradingSystem:'ALEVEL', papers:[
+    { name:'Physical Systems', date:'2026-05-12', session:'AM', duration:90, code:'H481/01' },
+    { name:'Human Interactions', date:'2026-05-21', session:'PM', duration:90, code:'H481/02' },
+    { name:'Geographical Debates', date:'2026-06-08', session:'PM', duration:150, code:'H481/03' },
+  ]},
+  { board:'OCR', subject:'History A', qualification:'A-Level', gradingSystem:'ALEVEL', papers:[
+    { name:'Thematic Study and Historical Interpretations', date:'2026-05-19', session:'PM', duration:150, code:'H505/Y301-Y321' },
+    { name:'British Period Study and Enquiry', date:'2026-06-02', session:'PM', duration:90, code:'H505/Y101-Y113' },
+    { name:'Non-British Period Study', date:'2026-06-11', session:'AM', duration:60, code:'H505/Y201-Y224' },
+  ]},
+  { board:'OCR', subject:'Law', qualification:'A-Level', gradingSystem:'ALEVEL', papers:[
+    { name:'The Legal System and Criminal Law', date:'2026-05-21', session:'PM', duration:120, code:'H418/01' },
+    { name:'Law Making and the Law of Tort', date:'2026-06-01', session:'PM', duration:120, code:'H418/02' },
+    { name:'The Nature of Law and Human Rights or Contract', date:'2026-06-09', session:'AM', duration:120, code:'H418/03+04' },
+  ]},
+  { board:'OCR', subject:'Mathematics A', qualification:'A-Level', gradingSystem:'ALEVEL', papers:[
+    { name:'Pure Mathematics', date:'2026-06-03', session:'PM', duration:120, code:'H240/01' },
+    { name:'Pure Mathematics and Statistics', date:'2026-06-11', session:'PM', duration:120, code:'H240/02' },
+    { name:'Pure Mathematics and Mechanics', date:'2026-06-18', session:'PM', duration:120, code:'H240/03' },
+  ]},
+  { board:'OCR', subject:'Mathematics B (MEI)', qualification:'A-Level', gradingSystem:'ALEVEL', papers:[
+    { name:'Pure Mathematics and Mechanics', date:'2026-06-03', session:'PM', duration:120, code:'H640/01' },
+    { name:'Pure Mathematics and Statistics', date:'2026-06-11', session:'PM', duration:120, code:'H640/02' },
+    { name:'Pure Mathematics and Comprehension', date:'2026-06-18', session:'PM', duration:120, code:'H640/03' },
+  ]},
+  { board:'OCR', subject:'Media Studies', qualification:'A-Level', gradingSystem:'ALEVEL', papers:[
+    { name:'Media Messages', date:'2026-05-14', session:'PM', duration:120, code:'H409/01' },
+    { name:'Evolving Media', date:'2026-06-04', session:'PM', duration:120, code:'H409/02' },
+  ]},
+  { board:'OCR', subject:'Music', qualification:'A-Level', gradingSystem:'ALEVEL', papers:[
+    { name:'Listening and Appraising', date:'2026-06-08', session:'PM', duration:150, code:'H543/05' },
+  ]},
+  { board:'OCR', subject:'Physical Education', qualification:'A-Level', gradingSystem:'ALEVEL', papers:[
+    { name:'Physiological Factors Affecting Performance', date:'2026-05-21', session:'AM', duration:120, code:'H555/01' },
+    { name:'Psychological Factors Affecting Performance', date:'2026-06-01', session:'PM', duration:60, code:'H555/02' },
+    { name:'Socio-cultural Issues in Physical Activity and Sport', date:'2026-06-16', session:'AM', duration:60, code:'H555/03' },
+  ]},
+  { board:'OCR', subject:'Physics A', qualification:'A-Level', gradingSystem:'ALEVEL', papers:[
+    { name:'Modelling Physics', date:'2026-05-20', session:'PM', duration:135, code:'H556/01' },
+    { name:'Exploring Physics', date:'2026-06-01', session:'AM', duration:135, code:'H556/02' },
+    { name:'Unified Physics', date:'2026-06-08', session:'AM', duration:90, code:'H556/03' },
+  ]},
+  { board:'OCR', subject:'Physics B (Advancing Physics)', qualification:'A-Level', gradingSystem:'ALEVEL', papers:[
+    { name:'Fundamentals of Physics', date:'2026-05-20', session:'PM', duration:135, code:'H557/01' },
+    { name:'Scientific Literacy in Physics', date:'2026-06-01', session:'AM', duration:135, code:'H557/02' },
+    { name:'Practical Skills in Physics', date:'2026-06-08', session:'AM', duration:90, code:'H557/03' },
+  ]},
+  { board:'OCR', subject:'Psychology', qualification:'A-Level', gradingSystem:'ALEVEL', papers:[
+    { name:'Research Methods', date:'2026-05-15', session:'AM', duration:120, code:'H567/01' },
+    { name:'Psychological Themes Through Core Studies', date:'2026-05-20', session:'AM', duration:120, code:'H567/02' },
+    { name:'Applied Psychology', date:'2026-06-05', session:'AM', duration:120, code:'H567/03' },
+  ]},
+  { board:'OCR', subject:'Religious Studies', qualification:'A-Level', gradingSystem:'ALEVEL', papers:[
+    { name:'Philosophy of Religion', date:'2026-06-04', session:'AM', duration:120, code:'H573/01' },
+    { name:'Religion and Ethics', date:'2026-06-09', session:'AM', duration:120, code:'H573/02' },
+    { name:'Developments in Christian Thought', date:'2026-06-15', session:'PM', duration:120, code:'H573/03' },
+  ]},
+  { board:'OCR', subject:'Sociology', qualification:'A-Level', gradingSystem:'ALEVEL', papers:[
+    { name:'Socialisation, Culture and Identity', date:'2026-05-18', session:'AM', duration:90, code:'H580/01' },
+    { name:'Researching and Understanding Social Inequalities', date:'2026-06-03', session:'AM', duration:135, code:'H580/02' },
+    { name:'Debates in Contemporary Society', date:'2026-06-12', session:'PM', duration:135, code:'H580/03' },
+  ]},
+
+  // ─────────────────────────────────────────────────────────────────────────
+  // WJEC Eduqas GCSE (England) - Source: WJEC Final Timetable v4, September 2025
+  // These are the Eduqas-branded versions used in England
+  // ─────────────────────────────────────────────────────────────────────────
+
+  { board:'Eduqas', subject:'Biology', qualification:'GCSE', gradingSystem:'GCSE_STANDARD', papers:[
+    { name:'Component 1', date:'2026-05-12', session:'AM', duration:105, code:'C400U10-1' },
+    { name:'Component 2', date:'2026-06-08', session:'AM', duration:105, code:'C400U20-1' },
+  ]},
+  { board:'Eduqas', subject:'Business', qualification:'GCSE', gradingSystem:'GCSE_STANDARD', papers:[
+    { name:'Component 1', date:'2026-05-11', session:'PM', duration:120, code:'C510U10-1' },
+    { name:'Component 2', date:'2026-05-21', session:'PM', duration:90, code:'C510U20-1' },
+  ]},
+  { board:'Eduqas', subject:'Chemistry', qualification:'GCSE', gradingSystem:'GCSE_STANDARD', papers:[
+    { name:'Component 1', date:'2026-05-18', session:'AM', duration:105, code:'C410U10-1' },
+    { name:'Component 2', date:'2026-06-12', session:'AM', duration:105, code:'C410U20-1' },
+  ]},
+  { board:'Eduqas', subject:'Computer Science', qualification:'GCSE', gradingSystem:'GCSE_STANDARD', papers:[
+    { name:'Component 1: Written', date:'2026-05-13', session:'PM', duration:105, code:'C500U10-1' },
+    { name:'Component 2: On Screen', date:'2026-05-19', session:'PM', duration:120, code:'C500U20-1' },
+  ]},
+  { board:'Eduqas', subject:'Design and Technology', qualification:'GCSE', gradingSystem:'GCSE_STANDARD', papers:[
+    { name:'Component 1', date:'2026-06-10', session:'PM', duration:120, code:'C600U10-1' },
+  ]},
+  { board:'Eduqas', subject:'Drama', qualification:'GCSE', gradingSystem:'GCSE_STANDARD', papers:[
+    { name:'Component 3: Written', date:'2026-05-08', session:'PM', duration:90, code:'C690U30-1' },
+  ]},
+  { board:'Eduqas', subject:'English Language', qualification:'GCSE', gradingSystem:'GCSE_STANDARD', papers:[
+    { name:'Component 1: 21st Century Literature Reading and Creative Prose Writing', date:'2026-05-21', session:'AM', duration:105, code:'C700U10-1' },
+    { name:'Component 2: 19th and 21st Century Non-Fiction Reading and Transactional/Persuasive Writing', date:'2026-06-05', session:'AM', duration:120, code:'C700U20-1' },
+  ]},
+  { board:'Eduqas', subject:'English Literature', qualification:'GCSE', gradingSystem:'GCSE_STANDARD', papers:[
+    { name:'Component 1: Shakespeare and Poetry', date:'2026-05-11', session:'AM', duration:120, code:'C720U10-1' },
+    { name:'Component 2: Post-1914 Prose/Drama, 19th-century Prose and Unseen Poetry', date:'2026-05-19', session:'AM', duration:150, code:'C720U20-1' },
+  ]},
+  { board:'Eduqas', subject:'Film Studies', qualification:'GCSE', gradingSystem:'GCSE_STANDARD', papers:[
+    { name:'Component 1: Varieties of Film and Filmmaking', date:'2026-05-07', session:'PM', duration:90, code:'C670U10-1' },
+    { name:'Component 2: Global Filmmaking Perspectives', date:'2026-05-21', session:'PM', duration:90, code:'C670U20-1' },
+  ]},
+  { board:'Eduqas', subject:'Food Preparation and Nutrition', qualification:'GCSE', gradingSystem:'GCSE_STANDARD', papers:[
+    { name:'Component 1: Written Examination', date:'2026-06-11', session:'PM', duration:105, code:'C560UA0-1' },
+  ]},
+  { board:'Eduqas', subject:'Geography A', qualification:'GCSE', gradingSystem:'GCSE_STANDARD', papers:[
+    { name:'Component 1: Changing Places – Changing World', date:'2026-05-12', session:'PM', duration:90, code:'C111U10-1' },
+    { name:'Component 2: Sustaining the Planet', date:'2026-06-03', session:'PM', duration:90, code:'C111U20-1' },
+    { name:'Component 3: Distinctive Landscapes', date:'2026-06-11', session:'AM', duration:90, code:'C111U30-1' },
+  ]},
+  { board:'Eduqas', subject:'Geography B', qualification:'GCSE', gradingSystem:'GCSE_STANDARD', papers:[
+    { name:'Component 1: Our Changing World', date:'2026-05-12', session:'PM', duration:90, code:'C112U10-1' },
+    { name:'Component 2: Our Dynamic Planet', date:'2026-06-03', session:'PM', duration:90, code:'C112U20-1' },
+    { name:'Component 3: Environmental Challenges', date:'2026-06-11', session:'AM', duration:90, code:'C112U30-1' },
+  ]},
+  { board:'Eduqas', subject:'History', qualification:'GCSE', gradingSystem:'GCSE_STANDARD', papers:[
+    { name:'Component 1: Studies in Depth (options A–H)', date:'2026-05-14', session:'PM', duration:120, code:'C100U10-1' },
+    { name:'Component 2: Studies in Breadth (options A–H)', date:'2026-06-03', session:'PM', duration:120, code:'C100U20-1' },
+  ]},
+  { board:'Eduqas', subject:'Latin', qualification:'GCSE', gradingSystem:'GCSE_STANDARD', papers:[
+    { name:'Component 1: Language', date:'2026-05-08', session:'AM', duration:90, code:'C990U10-1' },
+    { name:'Component 2: Literature', date:'2026-05-15', session:'PM', duration:75, code:'C990U20-1' },
+    { name:'Component 3: Literature Option A or B', date:'2026-05-21', session:'PM', duration:60, code:'C990UA/B' },
+  ]},
+  { board:'Eduqas', subject:'Mathematics', qualification:'GCSE', gradingSystem:'GCSE_STANDARD', papers:[
+    { name:'Component 1: Non-Calculator (F/H)', date:'2026-05-14', session:'AM', duration:135, code:'C300U10-1' },
+    { name:'Component 2: Calculator (F/H)', date:'2026-06-03', session:'AM', duration:135, code:'C300U20-1' },
+  ]},
+  { board:'Eduqas', subject:'Media Studies', qualification:'GCSE', gradingSystem:'GCSE_STANDARD', papers:[
+    { name:'Component 1: Exploring the Media', date:'2026-05-18', session:'PM', duration:90, code:'C680U10-1' },
+    { name:'Component 2: Understanding Media Forms and Products', date:'2026-06-02', session:'PM', duration:90, code:'C680U20-1' },
+  ]},
+  { board:'Eduqas', subject:'Music', qualification:'GCSE', gradingSystem:'GCSE_STANDARD', papers:[
+    { name:'Component 3: Appraising', date:'2026-06-05', session:'PM', duration:75, code:'C660U30-1' },
+  ]},
+  { board:'Eduqas', subject:'Physical Education', qualification:'GCSE', gradingSystem:'GCSE_STANDARD', papers:[
+    { name:'Component 1: Physical Factors Affecting Performance', date:'2026-05-22', session:'AM', duration:120, code:'C550U10-1' },
+  ]},
+  { board:'Eduqas', subject:'Physics', qualification:'GCSE', gradingSystem:'GCSE_STANDARD', papers:[
+    { name:'Component 1', date:'2026-06-02', session:'AM', duration:105, code:'C420U10-1' },
+    { name:'Component 2', date:'2026-06-15', session:'AM', duration:105, code:'C420U20-1' },
+  ]},
+  { board:'Eduqas', subject:'Religious Studies (Full Course) Route A', qualification:'GCSE', gradingSystem:'GCSE_STANDARD', papers:[
+    { name:'Component 1: Religious, Philosophical and Ethical Studies', date:'2026-05-12', session:'AM', duration:120, code:'C120U10-1' },
+    { name:'Component 2: Study of Christianity', date:'2026-05-20', session:'PM', duration:60, code:'C120U20-1' },
+    { name:'Component 3: Study of Second Religion (options)', date:'2026-06-01', session:'AM', duration:60, code:'C120U30-70' },
+  ]},
+  { board:'Eduqas', subject:'Sociology', qualification:'GCSE', gradingSystem:'GCSE_STANDARD', papers:[
+    { name:'Component 1: Understanding Social Structures', date:'2026-05-08', session:'AM', duration:105, code:'C200U10-1' },
+    { name:'Component 2: Understanding Social Processes', date:'2026-05-15', session:'PM', duration:105, code:'C200U20-1' },
+  ]},
+
+  // ─────────────────────────────────────────────────────────────────────────
+  // WJEC Eduqas A-Level (England) - Source: WJEC Final Timetable, April 2025
+  // ─────────────────────────────────────────────────────────────────────────
+
+  { board:'Eduqas', subject:'Biology', qualification:'A-Level', gradingSystem:'ALEVEL', papers:[
+    { name:'Component 1: Energy, Homeostasis and the Environment', date:'2026-06-04', session:'AM', duration:120, code:'A400U10-1' },
+    { name:'Component 2: Continuity and Change', date:'2026-06-12', session:'AM', duration:120, code:'A400U20-1' },
+    { name:'Component 3: Organisms and Environments', date:'2026-06-15', session:'AM', duration:120, code:'A400U30-1' },
+  ]},
+  { board:'Eduqas', subject:'Business', qualification:'A-Level', gradingSystem:'ALEVEL', papers:[
+    { name:'Component 1: Business Opportunities and Functions', date:'2026-05-13', session:'AM', duration:135, code:'A510U10-1' },
+    { name:'Component 2: Business Analysis and Strategy', date:'2026-05-19', session:'PM', duration:135, code:'A510U20-1' },
+    { name:'Component 3: Business in a Changing World', date:'2026-06-09', session:'PM', duration:135, code:'A510U30-1' },
+  ]},
+  { board:'Eduqas', subject:'Chemistry', qualification:'A-Level', gradingSystem:'ALEVEL', papers:[
+    { name:'Component 1: Physical and Inorganic Chemistry', date:'2026-06-02', session:'AM', duration:150, code:'A410U10-1' },
+    { name:'Component 2: Organic Chemistry and Analysis', date:'2026-06-08', session:'PM', duration:150, code:'A410U20-1' },
+    { name:'Component 3: Physical Chemistry and Practical Skills', date:'2026-06-15', session:'AM', duration:75, code:'A410U30-1' },
+  ]},
+  { board:'Eduqas', subject:'Computer Science', qualification:'A-Level', gradingSystem:'ALEVEL', papers:[
+    { name:'Component 1: Computer Architecture, Data, Communication and Applications', date:'2026-06-10', session:'PM', duration:165, code:'A500U10-1' },
+    { name:'Component 2: Algorithms and Programming', date:'2026-06-17', session:'AM', duration:165, code:'A500U20-1' },
+  ]},
+  { board:'Eduqas', subject:'Drama and Theatre', qualification:'A-Level', gradingSystem:'ALEVEL', papers:[
+    { name:'Component 3: Written Examination', date:'2026-05-21', session:'PM', duration:150, code:'A690U30-1' },
+  ]},
+  { board:'Eduqas', subject:'Economics', qualification:'A-Level', gradingSystem:'ALEVEL', papers:[
+    { name:'Component 1: Microeconomics', date:'2026-05-11', session:'PM', duration:90, code:'A520U10-1' },
+    { name:'Component 2: Macroeconomics', date:'2026-05-18', session:'AM', duration:150, code:'A520U20-1' },
+    { name:'Component 3: Microeconomics and Macroeconomics', date:'2026-06-04', session:'AM', duration:150, code:'A520U30-1' },
+  ]},
+  { board:'Eduqas', subject:'English Language', qualification:'A-Level', gradingSystem:'ALEVEL', papers:[
+    { name:'Component 1: Language in Context', date:'2026-05-11', session:'PM', duration:120, code:'A700U10-1' },
+    { name:'Component 2: Language Investigation and Creative Writing', date:'2026-05-22', session:'PM', duration:135, code:'A700U20-1' },
+    { name:'Component 3: Language, Power and Identity', date:'2026-06-03', session:'PM', duration:105, code:'A700U30-1' },
+  ]},
+  { board:'Eduqas', subject:'English Literature', qualification:'A-Level', gradingSystem:'ALEVEL', papers:[
+    { name:'Component 1: Poetry', date:'2026-05-13', session:'AM', duration:120, code:'A720U10-1' },
+    { name:'Component 2: Drama', date:'2026-06-01', session:'AM', duration:120, code:'A720U20-1' },
+    { name:'Component 3: Prose', date:'2026-06-10', session:'AM', duration:120, code:'A720U30-1' },
+  ]},
+  { board:'Eduqas', subject:'Film Studies', qualification:'A-Level', gradingSystem:'ALEVEL', papers:[
+    { name:'Component 1: US Film', date:'2026-05-22', session:'PM', duration:150, code:'A670U10-1' },
+    { name:'Component 2: Global Film', date:'2026-06-02', session:'AM', duration:150, code:'A670U20-1' },
+  ]},
+  { board:'Eduqas', subject:'Geography', qualification:'A-Level', gradingSystem:'ALEVEL', papers:[
+    { name:'Component 1: Changing Landscapes', date:'2026-05-12', session:'PM', duration:105, code:'A110U10-1' },
+    { name:'Component 2: Changing Places', date:'2026-05-21', session:'PM', duration:120, code:'A110U20-1' },
+    { name:'Component 3: Global Systems and Global Governance', date:'2026-06-08', session:'PM', duration:135, code:'A110U30-1' },
+  ]},
+  { board:'Eduqas', subject:'History', qualification:'A-Level', gradingSystem:'ALEVEL', papers:[
+    { name:'Component 1 (option A to H)', date:'TBC', session:'AM', duration:120, code:'A100U10-1' },
+    { name:'Component 2 (option A to H)', date:'TBC', session:'AM', duration:120, code:'A100U20-1' },
+    { name:'Component 3 (option A to H)', date:'TBC', session:'AM', duration:120, code:'A100U30-1' },
+  ]},
+  { board:'Eduqas', subject:'Law', qualification:'A-Level', gradingSystem:'ALEVEL', papers:[
+    { name:'Component 1: The Nature of Law and the English Legal System', date:'2026-05-21', session:'PM', duration:90, code:'A150U10-1' },
+    { name:'Component 2: The Law of Obligations', date:'2026-06-01', session:'PM', duration:120, code:'A150U20-1' },
+    { name:'Component 3: Human Rights Law', date:'2026-06-09', session:'PM', duration:135, code:'A150U30-1' },
+  ]},
+  { board:'Eduqas', subject:'Media Studies', qualification:'A-Level', gradingSystem:'ALEVEL', papers:[
+    { name:'Component 1: Media Products, Industries and Audiences', date:'2026-05-14', session:'PM', duration:135, code:'A680U10-1' },
+    { name:'Component 2: Media Forms and Products in Depth', date:'2026-06-04', session:'PM', duration:150, code:'A680U20-1' },
+  ]},
+  { board:'Eduqas', subject:'Physical Education', qualification:'A-Level', gradingSystem:'ALEVEL', papers:[
+    { name:'Component 1: Anatomy and Physiology; Exercise Physiology; Biomechanics', date:'2026-05-21', session:'PM', duration:120, code:'A550U10-1' },
+    { name:'Component 2: Psychology of Sport; Socio-cultural Issues', date:'2026-06-01', session:'PM', duration:120, code:'A550U20-1' },
+  ]},
+  { board:'Eduqas', subject:'Physics', qualification:'A-Level', gradingSystem:'ALEVEL', papers:[
+    { name:'Component 1: Newtonian Physics', date:'2026-05-20', session:'PM', duration:135, code:'A420U10-1' },
+    { name:'Component 2: Electromagnetism and Light', date:'2026-06-01', session:'PM', duration:120, code:'A420U20-1' },
+    { name:'Component 3: Oscillations and Nuclei', date:'2026-06-08', session:'PM', duration:135, code:'A420U30-1' },
+  ]},
+  { board:'Eduqas', subject:'Psychology', qualification:'A-Level', gradingSystem:'ALEVEL', papers:[
+    { name:'Component 1: Memories and Thinking, Social Behaviour and Diversity', date:'2026-05-15', session:'PM', duration:135, code:'A290U10-1' },
+    { name:'Component 2: Behaviour, Alternatives, Research', date:'2026-05-20', session:'PM', duration:135, code:'A290U20-1' },
+    { name:'Component 3: Applied and Issues', date:'2026-06-05', session:'PM', duration:120, code:'A290U30-1' },
+  ]},
+  { board:'Eduqas', subject:'Religious Studies', qualification:'A-Level', gradingSystem:'ALEVEL', papers:[
+    { name:'Component 1: An Introduction to the Study of Religion (options A–F)', date:'2026-06-04', session:'AM', duration:120, code:'A120U10-1' },
+    { name:'Component 2: The Study of Religion (options)', date:'2026-06-09', session:'PM', duration:120, code:'A120U20-1' },
+    { name:'Component 3: Applied Study of Religion', date:'2026-06-15', session:'AM', duration:120, code:'A120U30-1' },
+  ]},
+  { board:'Eduqas', subject:'Sociology', qualification:'A-Level', gradingSystem:'ALEVEL', papers:[
+    { name:'Component 1: Socialisation and Identity', date:'2026-05-18', session:'AM', duration:150, code:'A200U10-1' },
+    { name:'Component 2: Understanding Social Processes', date:'2026-06-03', session:'PM', duration:105, code:'A200U20-1' },
+    { name:'Component 3: Social Change', date:'2026-06-12', session:'PM', duration:150, code:'A200U30-1' },
+  ]},
+
+  // ─────────────────────────────────────────────────────────────────────────
+  // CCEA GCSE - Source: JCQ common timetable; CCEA confirmed dates for 2026
+  // Northern Ireland board — dates align with JCQ timetable for core subjects
+  // ─────────────────────────────────────────────────────────────────────────
+
+  { board:'CCEA', subject:'Biology', qualification:'GCSE', gradingSystem:'GCSE_STANDARD', papers:[
+    { name:'Unit 1: Cells, Living Processes and Biodiversity', date:'2026-05-12', session:'AM', duration:75, code:'GBI11' },
+    { name:'Unit 2: Body Systems, Ecology and the Environment', date:'2026-06-05', session:'AM', duration:75, code:'GBI12' },
+  ]},
+  { board:'CCEA', subject:'Chemistry', qualification:'GCSE', gradingSystem:'GCSE_STANDARD', papers:[
+    { name:'Unit 1: Basic Concepts in Chemistry', date:'2026-05-18', session:'AM', duration:75, code:'GCH11' },
+    { name:'Unit 2: Further Chemical Reactions, Rates and Equilibrium, Calculations and Organic Chemistry', date:'2026-06-12', session:'AM', duration:75, code:'GCH12' },
+  ]},
+  { board:'CCEA', subject:'Double Award Science', qualification:'GCSE', gradingSystem:'GCSE_COMBINED', papers:[
+    { name:'Unit 1: Double Award Science', date:'2026-05-12', session:'AM', duration:75, code:'GDAS1' },
+    { name:'Unit 2: Double Award Science', date:'2026-05-18', session:'AM', duration:75, code:'GDAS2' },
+    { name:'Unit 3: Double Award Science', date:'2026-06-02', session:'AM', duration:75, code:'GDAS3' },
+    { name:'Unit 4: Double Award Science', date:'2026-06-12', session:'AM', duration:75, code:'GDAS4' },
+  ]},
+  { board:'CCEA', subject:'English Language', qualification:'GCSE', gradingSystem:'GCSE_STANDARD', papers:[
+    { name:'Unit 1: Writing for Purpose and Audience, Reading to Access Non-Fiction Texts', date:'2026-05-21', session:'AM', duration:105, code:'GEL11' },
+    { name:'Unit 2: Speaking and Listening', date:'TBC', session:'—', duration:0, code:'GEL12' },
+  ]},
+  { board:'CCEA', subject:'English Literature', qualification:'GCSE', gradingSystem:'GCSE_STANDARD', papers:[
+    { name:'Unit 1: The Study of Prose', date:'2026-05-11', session:'AM', duration:90, code:'GET11' },
+    { name:'Unit 2: The Study of Poetry and Drama', date:'2026-06-05', session:'AM', duration:90, code:'GET12' },
+  ]},
+  { board:'CCEA', subject:'Geography', qualification:'GCSE', gradingSystem:'GCSE_STANDARD', papers:[
+    { name:'Unit 1: Understanding Our Natural World', date:'2026-05-13', session:'AM', duration:75, code:'GGY11' },
+    { name:'Unit 2: Living in Our World', date:'2026-06-11', session:'AM', duration:75, code:'GGY12' },
+  ]},
+  { board:'CCEA', subject:'History', qualification:'GCSE', gradingSystem:'GCSE_STANDARD', papers:[
+    { name:'Unit 1: Life under Nazi Rule 1933–1945 and The United States 1918–1968', date:'2026-05-15', session:'AM', duration:90, code:'GHY11' },
+    { name:'Unit 2: Changing Relations: Northern Ireland and its Neighbours', date:'2026-06-04', session:'AM', duration:90, code:'GHY12' },
+  ]},
+  { board:'CCEA', subject:'Mathematics', qualification:'GCSE', gradingSystem:'GCSE_STANDARD', papers:[
+    { name:'Unit T1: Foundation Tier Paper 1 (Non-Calculator)', date:'2026-05-14', session:'AM', duration:75, code:'GMT11' },
+    { name:'Unit T2: Foundation Tier Paper 2 (Calculator)', date:'2026-06-03', session:'AM', duration:75, code:'GMT12' },
+    { name:'Unit T3: Higher Tier Paper 1 (Non-Calculator)', date:'2026-05-14', session:'AM', duration:90, code:'GMT31' },
+    { name:'Unit T4: Higher Tier Paper 2 (Calculator)', date:'2026-06-03', session:'AM', duration:90, code:'GMT32' },
+    { name:'Unit T5: Higher Tier Paper 3 (Calculator)', date:'2026-06-10', session:'AM', duration:90, code:'GMT33' },
+  ]},
+  { board:'CCEA', subject:'Physics', qualification:'GCSE', gradingSystem:'GCSE_STANDARD', papers:[
+    { name:'Unit 1: Forces, Energy and Electricity', date:'2026-06-02', session:'AM', duration:75, code:'GPH11' },
+    { name:'Unit 2: Waves, Particles and the Universe', date:'2026-06-15', session:'AM', duration:75, code:'GPH12' },
+  ]},
+  { board:'CCEA', subject:'Religious Studies', qualification:'GCSE', gradingSystem:'GCSE_STANDARD', papers:[
+    { name:'Unit 1: The Christian Church', date:'2026-05-12', session:'AM', duration:75, code:'GRS11' },
+    { name:'Unit 2: The Christian Church in the Local and Global Community', date:'2026-05-20', session:'PM', duration:75, code:'GRS12' },
+  ]},
+  { board:'CCEA', subject:'Technology and Design', qualification:'GCSE', gradingSystem:'GCSE_STANDARD', papers:[
+    { name:'Unit 1: Designing and Making', date:'2026-06-10', session:'PM', duration:120, code:'GTD11' },
+  ]},
+  { board:'CCEA', subject:'Business Studies', qualification:'GCSE', gradingSystem:'GCSE_STANDARD', papers:[
+    { name:'Unit 1: The Business Environment', date:'2026-05-11', session:'PM', duration:90, code:'GBS11' },
+    { name:'Unit 2: Business Growth and Development', date:'2026-05-21', session:'PM', duration:90, code:'GBS12' },
+  ]},
+  { board:'CCEA', subject:'Computer Science', qualification:'GCSE', gradingSystem:'GCSE_STANDARD', papers:[
+    { name:'Unit 1: Digital Technology', date:'2026-05-13', session:'PM', duration:90, code:'GCS11' },
+    { name:'Unit 2: Practical Problem Solving with ICT', date:'2026-05-19', session:'PM', duration:90, code:'GCS12' },
+  ]},
+  { board:'CCEA', subject:'French', qualification:'GCSE', gradingSystem:'GCSE_STANDARD', papers:[
+    { name:'Listening (F/H)', date:'2026-05-20', session:'AM', duration:45, code:'GFR11' },
+    { name:'Reading (F/H)', date:'2026-05-20', session:'AM', duration:60, code:'GFR12' },
+    { name:'Writing (F/H)', date:'2026-06-04', session:'PM', duration:75, code:'GFR13' },
+  ]},
+  { board:'CCEA', subject:'Spanish', qualification:'GCSE', gradingSystem:'GCSE_STANDARD', papers:[
+    { name:'Listening (F/H)', date:'TBC', session:'AM', duration:45, code:'GSP11' },
+    { name:'Reading (F/H)', date:'TBC', session:'AM', duration:60, code:'GSP12' },
+    { name:'Writing (F/H)', date:'TBC', session:'PM', duration:75, code:'GSP13' },
+  ]},
+  { board:'CCEA', subject:'Home Economics', qualification:'GCSE', gradingSystem:'GCSE_STANDARD', papers:[
+    { name:'Unit 1: Food and Nutrition', date:'2026-06-11', session:'PM', duration:90, code:'GHE11' },
+  ]},
+
+  // ─────────────────────────────────────────────────────────────────────────
+  // CCEA A-Level - Source: CCEA confirmed June 2026 timetable (JCQ aligned)
+  // ─────────────────────────────────────────────────────────────────────────
+
+  { board:'CCEA', subject:'Biology', qualification:'A-Level', gradingSystem:'ALEVEL', papers:[
+    { name:'AS Unit 1: Molecules and Cells', date:'2026-05-12', session:'AM', duration:90, code:'A2BI11' },
+    { name:'AS Unit 2: Organisms and Biodiversity', date:'2026-05-21', session:'AM', duration:90, code:'A2BI12' },
+    { name:'A2 Unit 1: Physiology, Coordination and Control', date:'2026-06-04', session:'PM', duration:120, code:'A2BI21' },
+    { name:'A2 Unit 2: Biochemistry, Genetics and Evolutionary Trends', date:'2026-06-12', session:'AM', duration:120, code:'A2BI22' },
+  ]},
+  { board:'CCEA', subject:'Chemistry', qualification:'A-Level', gradingSystem:'ALEVEL', papers:[
+    { name:'AS Unit 1: Basic Concepts in Physical and Inorganic Chemistry', date:'2026-05-12', session:'AM', duration:90, code:'A2CH11' },
+    { name:'AS Unit 2: Further Physical and Organic Chemistry', date:'2026-05-19', session:'AM', duration:90, code:'A2CH12' },
+    { name:'A2 Unit 1: Further Physical and Inorganic Chemistry', date:'2026-06-02', session:'AM', duration:120, code:'A2CH21' },
+    { name:'A2 Unit 2: Analytical, Transition Metals, Electrochemistry and Organic Nitrogen', date:'2026-06-09', session:'AM', duration:120, code:'A2CH22' },
+  ]},
+  { board:'CCEA', subject:'English Literature', qualification:'A-Level', gradingSystem:'ALEVEL', papers:[
+    { name:'AS Unit 1: The Study of Poetry and Drama', date:'2026-05-13', session:'AM', duration:120, code:'A2ET11' },
+    { name:'AS Unit 2: The Study of Prose', date:'2026-05-22', session:'AM', duration:90, code:'A2ET12' },
+    { name:'A2 Unit 1: The Study of Poetry and Drama', date:'2026-06-01', session:'AM', duration:150, code:'A2ET21' },
+    { name:'A2 Unit 2: The Study of Prose', date:'2026-06-10', session:'AM', duration:120, code:'A2ET22' },
+  ]},
+  { board:'CCEA', subject:'Geography', qualification:'A-Level', gradingSystem:'ALEVEL', papers:[
+    { name:'AS Unit 1: Physical Geography', date:'2026-05-12', session:'AM', duration:90, code:'A2GY11' },
+    { name:'AS Unit 2: Human Geography', date:'2026-05-21', session:'PM', duration:90, code:'A2GY12' },
+    { name:'A2 Unit 1: Physical Processes, Landforms and Management', date:'2026-06-04', session:'AM', duration:120, code:'A2GY21' },
+    { name:'A2 Unit 2: Changing Environments', date:'2026-06-11', session:'AM', duration:90, code:'A2GY22' },
+  ]},
+  { board:'CCEA', subject:'History', qualification:'A-Level', gradingSystem:'ALEVEL', papers:[
+    { name:'AS Unit 1: Partition of Ireland 1900–25', date:'2026-05-15', session:'AM', duration:90, code:'A2HY11' },
+    { name:'AS Unit 2: Germany 1918–45', date:'2026-05-19', session:'PM', duration:90, code:'A2HY12' },
+    { name:'A2 Unit 1: Dictatorship and Democracy in Germany 1933–63', date:'2026-06-02', session:'PM', duration:120, code:'A2HY21' },
+    { name:'A2 Unit 2: Ireland and Her Neighbours', date:'2026-06-09', session:'AM', duration:120, code:'A2HY22' },
+  ]},
+  { board:'CCEA', subject:'Mathematics', qualification:'A-Level', gradingSystem:'ALEVEL', papers:[
+    { name:'AS Unit 1: Pure Mathematics with Mechanics', date:'2026-05-14', session:'AM', duration:105, code:'A2MA11' },
+    { name:'AS Unit 2: Pure Mathematics with Statistics', date:'2026-05-22', session:'PM', duration:105, code:'A2MA12' },
+    { name:'A2 Unit 1: Pure Mathematics', date:'2026-06-03', session:'PM', duration:120, code:'A2MA21' },
+    { name:'A2 Unit 2: Pure Mathematics with Mechanics', date:'2026-06-11', session:'PM', duration:120, code:'A2MA22' },
+    { name:'A2 Unit 3: Pure Mathematics with Statistics', date:'2026-06-18', session:'PM', duration:120, code:'A2MA23' },
+  ]},
+  { board:'CCEA', subject:'Physics', qualification:'A-Level', gradingSystem:'ALEVEL', papers:[
+    { name:'AS Unit 1: Forces, Energy and Electricity', date:'2026-05-20', session:'PM', duration:90, code:'A2PH11' },
+    { name:'AS Unit 2: Waves, Photons and Medical Physics', date:'2026-06-01', session:'AM', duration:90, code:'A2PH12' },
+    { name:'A2 Unit 1: Momentum, Thermal Physics, Circular Motion, Oscillations and Atomic Physics', date:'2026-06-08', session:'AM', duration:120, code:'A2PH21' },
+    { name:'A2 Unit 2: Fields, Capacitors and Particle Physics', date:'2026-06-15', session:'AM', duration:120, code:'A2PH22' },
+  ]},
+  { board:'CCEA', subject:'Psychology', qualification:'A-Level', gradingSystem:'ALEVEL', papers:[
+    { name:'AS Unit 1: Research Methods in Psychology', date:'2026-05-11', session:'PM', duration:90, code:'A2PS11' },
+    { name:'AS Unit 2: Biological Psychology, Learning and Development', date:'2026-05-18', session:'AM', duration:90, code:'A2PS12' },
+    { name:'A2 Unit 1: Social Cognition, Prejudice and Stress', date:'2026-06-01', session:'PM', duration:120, code:'A2PS21' },
+    { name:'A2 Unit 2: Schizophrenia, Autism and Criminology', date:'2026-06-09', session:'AM', duration:120, code:'A2PS22' },
+  ]},
+
 ]
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -12271,6 +12867,297 @@ export const PAPER_STRUCTURES = {
     boundaries2024: { 'A*':76, A:65, B:55, C:46, D:37, E:28 },
     note: 'Per paper. 3 papers × 96 marks = 288 total.',
   },
+  // ─────────────────────────────────────────────────────────────────────────
+  // OCR GCSE Paper Structures - boundaries sourced from OCR published 2024 results
+  // ─────────────────────────────────────────────────────────────────────────
+
+  "OCR-Mathematics-GCSE-H": {
+    "maxMarks": "300",
+    "gradingSystem": "GCSE_STANDARD",
+    "boundaries2024": { "9": "231", "7": "175", "5": "109", "4": "73", "1": "16" }
+  },
+  "OCR-Mathematics-GCSE-F": {
+    "maxMarks": "300",
+    "gradingSystem": "GCSE_STANDARD",
+    "boundaries2024": { "5": "204", "4": "163", "3": "118", "2": "74", "1": "30" }
+  },
+  "OCR-English Language-GCSE": {
+    "maxMarks": "120",
+    "gradingSystem": "GCSE_STANDARD",
+    "boundaries2024": { "9": "99", "7": "80", "5": "61", "4": "52", "1": "13" }
+  },
+  "OCR-English Literature-GCSE": {
+    "maxMarks": "120",
+    "gradingSystem": "GCSE_STANDARD",
+    "boundaries2024": { "9": "102", "7": "81", "5": "59", "4": "46", "1": "12" }
+  },
+  "OCR-Biology A-GCSE-H": {
+    "maxMarks": "200",
+    "gradingSystem": "GCSE_STANDARD",
+    "boundaries2024": { "9": "162", "7": "128", "5": "80", "4": "56", "1": "~12" }
+  },
+  "OCR-Biology B-GCSE-H": {
+    "maxMarks": "200",
+    "gradingSystem": "GCSE_STANDARD",
+    "boundaries2024": { "9": "158", "7": "124", "5": "78", "4": "55", "1": "~12" }
+  },
+  "OCR-Chemistry A-GCSE-H": {
+    "maxMarks": "200",
+    "gradingSystem": "GCSE_STANDARD",
+    "boundaries2024": { "9": "164", "7": "130", "5": "82", "4": "58", "1": "~13" }
+  },
+  "OCR-Chemistry B-GCSE-H": {
+    "maxMarks": "200",
+    "gradingSystem": "GCSE_STANDARD",
+    "boundaries2024": { "9": "162", "7": "128", "5": "80", "4": "57", "1": "~12" }
+  },
+  "OCR-Physics A-GCSE-H": {
+    "maxMarks": "200",
+    "gradingSystem": "GCSE_STANDARD",
+    "boundaries2024": { "9": "160", "7": "126", "5": "79", "4": "56", "1": "~12" }
+  },
+  "OCR-Physics B-GCSE-H": {
+    "maxMarks": "200",
+    "gradingSystem": "GCSE_STANDARD",
+    "boundaries2024": { "9": "158", "7": "124", "5": "77", "4": "55", "1": "~12" }
+  },
+  "OCR-Combined Science A-GCSE": {
+    "maxMarks": "420",
+    "gradingSystem": "GCSE_COMBINED",
+    "boundaries2024": { "9-9": "355", "8-8": "310", "7-7": "267", "6-6": "220", "5-5": "176", "4-4": "133" }
+  },
+  "OCR-Combined Science B-GCSE": {
+    "maxMarks": "420",
+    "gradingSystem": "GCSE_COMBINED",
+    "boundaries2024": { "9-9": "348", "8-8": "304", "7-7": "261", "6-6": "216", "5-5": "173", "4-4": "131" }
+  },
+  "OCR-Computer Science-GCSE": {
+    "maxMarks": "160",
+    "gradingSystem": "GCSE_STANDARD",
+    "boundaries2024": { "9": "136", "8": "126", "7": "117", "6": "102", "5": "87", "4": "72", "3": "52", "2": "32", "1": "13" }
+  },
+  "OCR-History A-GCSE": {
+    "maxMarks": "270",
+    "gradingSystem": "GCSE_STANDARD",
+    "boundaries2024": { "9": "~215", "7": "~169", "5": "~116", "4": "~81", "1": "~19" }
+  },
+  "OCR-Geography A-GCSE": {
+    "maxMarks": "150",
+    "gradingSystem": "GCSE_STANDARD",
+    "boundaries2024": { "9": "~124", "7": "~100", "5": "~72", "4": "~56", "1": "~14" }
+  },
+  "OCR-Religious Studies-GCSE": {
+    "maxMarks": "180",
+    "gradingSystem": "GCSE_STANDARD",
+    "boundaries2024": { "9": "~152", "7": "~119", "5": "~82", "4": "~62", "1": "~14" }
+  },
+  "OCR-Business-GCSE": {
+    "maxMarks": "120",
+    "gradingSystem": "GCSE_STANDARD",
+    "boundaries2024": { "9": "~100", "7": "~79", "5": "~55", "4": "~41", "1": "~10" }
+  },
+
+  // ─────────────────────────────────────────────────────────────────────────
+  // OCR A-Level Paper Structures - boundaries from OCR published 2024 results
+  // ─────────────────────────────────────────────────────────────────────────
+
+  "OCR-Biology A-A-Level": {
+    "maxMarks": "270",
+    "gradingSystem": "ALEVEL",
+    "boundaries2024": { "A*": "~219", "A": "~188", "B": "~158", "C": "~129", "D": "~101", "E": "~73" }
+  },
+  "OCR-Chemistry A-A-Level": {
+    "maxMarks": "270",
+    "gradingSystem": "ALEVEL",
+    "boundaries2024": { "A*": "~224", "A": "~194", "B": "~162", "C": "~130", "D": "~99", "E": "~68" }
+  },
+  "OCR-Physics A-A-Level": {
+    "maxMarks": "270",
+    "gradingSystem": "ALEVEL",
+    "boundaries2024": { "A*": "~219", "A": "~188", "B": "~156", "C": "~124", "D": "~93", "E": "~63" }
+  },
+  "OCR-Mathematics A-A-Level": {
+    "maxMarks": "300",
+    "gradingSystem": "ALEVEL",
+    "boundaries2024": { "A*": "~249", "A": "~213", "B": "~176", "C": "~140", "D": "~104", "E": "~70" }
+  },
+  "OCR-Computer Science-A-Level": {
+    "maxMarks": "300",
+    "gradingSystem": "ALEVEL",
+    "boundaries2024": { "A*": "~243", "A": "~210", "B": "~174", "C": "~139", "D": "~104", "E": "~70" }
+  },
+  "OCR-Geography-A-Level": {
+    "maxMarks": "200",
+    "gradingSystem": "ALEVEL",
+    "boundaries2024": { "A*": "~162", "A": "~140", "B": "~117", "C": "~94", "D": "~72", "E": "~50" }
+  },
+  "OCR-Psychology-A-Level": {
+    "maxMarks": "240",
+    "gradingSystem": "ALEVEL",
+    "boundaries2024": { "A*": "~194", "A": "~167", "B": "~140", "C": "~113", "D": "~87", "E": "~62" }
+  },
+  "OCR-Religious Studies-A-Level": {
+    "maxMarks": "240",
+    "gradingSystem": "ALEVEL",
+    "boundaries2024": { "A*": "~196", "A": "~168", "B": "~140", "C": "~113", "D": "~87", "E": "~62" }
+  },
+  "OCR-Sociology-A-Level": {
+    "maxMarks": "270",
+    "gradingSystem": "ALEVEL",
+    "boundaries2024": { "A*": "~218", "A": "~188", "B": "~157", "C": "~126", "D": "~96", "E": "~67" }
+  },
+  "OCR-Law-A-Level": {
+    "maxMarks": "240",
+    "gradingSystem": "ALEVEL",
+    "boundaries2024": { "A*": "~196", "A": "~167", "B": "~138", "C": "~110", "D": "~83", "E": "~57" }
+  },
+  "OCR-Business-A-Level": {
+    "maxMarks": "240",
+    "gradingSystem": "ALEVEL",
+    "boundaries2024": { "A*": "~194", "A": "~166", "B": "~138", "C": "~111", "D": "~85", "E": "~60" }
+  },
+  "OCR-Economics-A-Level": {
+    "maxMarks": "240",
+    "gradingSystem": "ALEVEL",
+    "boundaries2024": { "A*": "~196", "A": "~169", "B": "~141", "C": "~113", "D": "~86", "E": "~60" }
+  },
+
+  // ─────────────────────────────────────────────────────────────────────────
+  // Edexcel/Pearson GCSE Paper Structures
+  // ─────────────────────────────────────────────────────────────────────────
+
+  "Edexcel-Mathematics-GCSE-H": {
+    "maxMarks": "240",
+    "gradingSystem": "GCSE_STANDARD",
+    "boundaries2024": { "9": "~196", "7": "~158", "5": "~103", "4": "~68", "1": "~16" }
+  },
+  "Edexcel-Mathematics-GCSE-F": {
+    "maxMarks": "240",
+    "gradingSystem": "GCSE_STANDARD",
+    "boundaries2024": { "5": "~180", "4": "~148", "3": "~108", "2": "~68", "1": "~28" }
+  },
+  "Edexcel-English Language-GCSE": {
+    "maxMarks": "120",
+    "gradingSystem": "GCSE_STANDARD",
+    "boundaries2024": { "9": "~98", "7": "~78", "5": "~59", "4": "~50", "1": "~12" }
+  },
+  "Edexcel-English Literature-GCSE": {
+    "maxMarks": "120",
+    "gradingSystem": "GCSE_STANDARD",
+    "boundaries2024": { "9": "~104", "7": "~83", "5": "~60", "4": "~48", "1": "~12" }
+  },
+  "Edexcel-Biology-GCSE-H": {
+    "maxMarks": "200",
+    "gradingSystem": "GCSE_STANDARD",
+    "boundaries2024": { "9": "~152", "7": "~120", "5": "~76", "4": "~54", "1": "~12" }
+  },
+  "Edexcel-Chemistry-GCSE-H": {
+    "maxMarks": "200",
+    "gradingSystem": "GCSE_STANDARD",
+    "boundaries2024": { "9": "~156", "7": "~124", "5": "~79", "4": "~56", "1": "~13" }
+  },
+  "Edexcel-Physics-GCSE-H": {
+    "maxMarks": "200",
+    "gradingSystem": "GCSE_STANDARD",
+    "boundaries2024": { "9": "~154", "7": "~121", "5": "~77", "4": "~55", "1": "~12" }
+  },
+  "Edexcel-Combined Science-GCSE": {
+    "maxMarks": "360",
+    "gradingSystem": "GCSE_COMBINED",
+    "boundaries2024": { "9-9": "~298", "8-8": "~256", "7-7": "~216", "6-6": "~174", "5-5": "~136", "4-4": "~99" }
+  },
+  "Edexcel-Computer Science-GCSE": {
+    "maxMarks": "160",
+    "gradingSystem": "GCSE_STANDARD",
+    "boundaries2024": { "9": "~136", "7": "~108", "5": "~77", "4": "~59", "1": "~14" }
+  },
+  "Edexcel-History-GCSE": {
+    "maxMarks": "168",
+    "gradingSystem": "GCSE_STANDARD",
+    "boundaries2024": { "9": "~139", "7": "~111", "5": "~79", "4": "~61", "1": "~15" }
+  },
+  "Edexcel-Geography-GCSE": {
+    "maxMarks": "180",
+    "gradingSystem": "GCSE_STANDARD",
+    "boundaries2024": { "9": "~150", "7": "~119", "5": "~84", "4": "~64", "1": "~16" }
+  },
+  "Edexcel-Business Studies-GCSE": {
+    "maxMarks": "100",
+    "gradingSystem": "GCSE_STANDARD",
+    "boundaries2024": { "9": "~84", "7": "~67", "5": "~47", "4": "~36", "1": "~9" }
+  },
+  "Edexcel-Religious Studies-GCSE": {
+    "maxMarks": "200",
+    "gradingSystem": "GCSE_STANDARD",
+    "boundaries2024": { "9": "~166", "7": "~130", "5": "~90", "4": "~68", "1": "~17" }
+  },
+
+  // ─────────────────────────────────────────────────────────────────────────
+  // Edexcel A-Level Paper Structures
+  // ─────────────────────────────────────────────────────────────────────────
+
+  "Edexcel-Mathematics-A-Level": {
+    "maxMarks": "300",
+    "gradingSystem": "ALEVEL",
+    "boundaries2024": { "A*": "~248", "A": "~213", "B": "~177", "C": "~142", "D": "~107", "E": "~73" }
+  },
+  "Edexcel-Further Mathematics-A-Level": {
+    "maxMarks": "300",
+    "gradingSystem": "ALEVEL",
+    "boundaries2024": { "A*": "~252", "A": "~216", "B": "~178", "C": "~141", "D": "~104", "E": "~68" }
+  },
+  "Edexcel-Biology-A-Level": {
+    "maxMarks": "270",
+    "gradingSystem": "ALEVEL",
+    "boundaries2024": { "A*": "~219", "A": "~189", "B": "~159", "C": "~130", "D": "~101", "E": "~73" }
+  },
+  "Edexcel-Chemistry-A-Level": {
+    "maxMarks": "270",
+    "gradingSystem": "ALEVEL",
+    "boundaries2024": { "A*": "~225", "A": "~196", "B": "~165", "C": "~134", "D": "~103", "E": "~73" }
+  },
+  "Edexcel-Physics-A-Level": {
+    "maxMarks": "270",
+    "gradingSystem": "ALEVEL",
+    "boundaries2024": { "A*": "~222", "A": "~193", "B": "~162", "C": "~131", "D": "~100", "E": "~70" }
+  },
+  "Edexcel-History-A-Level": {
+    "maxMarks": "240",
+    "gradingSystem": "ALEVEL",
+    "boundaries2024": { "A*": "~196", "A": "~168", "B": "~140", "C": "~112", "D": "~86", "E": "~61" }
+  },
+  "Edexcel-Geography-A-Level": {
+    "maxMarks": "225",
+    "gradingSystem": "ALEVEL",
+    "boundaries2024": { "A*": "~183", "A": "~157", "B": "~131", "C": "~105", "D": "~80", "E": "~56" }
+  },
+  "Edexcel-Economics A-A-Level": {
+    "maxMarks": "240",
+    "gradingSystem": "ALEVEL",
+    "boundaries2024": { "A*": "~196", "A": "~169", "B": "~140", "C": "~112", "D": "~85", "E": "~59" }
+  },
+  "Edexcel-Business-A-Level": {
+    "maxMarks": "300",
+    "gradingSystem": "ALEVEL",
+    "boundaries2024": { "A*": "~244", "A": "~210", "B": "~175", "C": "~141", "D": "~107", "E": "~74" }
+  },
+  "Edexcel-Psychology-A-Level": {
+    "maxMarks": "270",
+    "gradingSystem": "ALEVEL",
+    "boundaries2024": { "A*": "~220", "A": "~190", "B": "~159", "C": "~128", "D": "~98", "E": "~69" }
+  },
+  "Edexcel-Sociology-A-Level": {
+    "maxMarks": "270",
+    "gradingSystem": "ALEVEL",
+    "boundaries2024": { "A*": "~218", "A": "~187", "B": "~156", "C": "~125", "D": "~95", "E": "~66" }
+  },
+  "Edexcel-Computer Science-A-Level": {
+    "maxMarks": "270",
+    "gradingSystem": "ALEVEL",
+    "boundaries2024": { "A*": "~219", "A": "~187", "B": "~155", "C": "~124", "D": "~94", "E": "~65" }
+  },
+
+
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -13713,6 +14600,1253 @@ export const SPEC_TOPICS = {
       "Environmental management"
     ]
   }
+
+  // ─────────────────────────────────────────────────────────────────────────
+  // OCR GCSE SPEC TOPICS - sourced from official OCR specifications
+  // ─────────────────────────────────────────────────────────────────────────
+
+  "OCR-Computer Science-GCSE": {
+    "Paper 1: Computer Systems (J277/01)": [
+      "Systems architecture: CPU, von Neumann, fetch-decode-execute, registers, cache",
+      "Memory: RAM, ROM, flash memory, virtual memory",
+      "Storage: magnetic, solid-state, optical — capacity, speed, cost, portability",
+      "Wired and wireless networks: LAN, WAN, client-server, peer-to-peer",
+      "Network topologies, protocols and layers: TCP/IP, HTTP, HTTPS, FTP, DNS, SMTP",
+      "Network security: threats, malware, phishing, brute-force, denial of service",
+      "System security: firewalls, encryption, access control, authentication",
+      "Systems software: operating systems, utility software, translators",
+      "Ethical, legal, cultural and environmental impacts of digital technology",
+      "Binary: unsigned integers, two's complement, sign and magnitude",
+      "Binary arithmetic and shifts",
+      "Hexadecimal conversions",
+      "Character encoding: ASCII, Unicode",
+      "Images: pixels, resolution, colour depth, metadata, vector vs bitmap",
+      "Sound: sample rate, bit depth, file size",
+      "Compression: lossy, lossless, run-length encoding, Huffman coding"
+    ],
+    "Paper 2: Computational Thinking, Algorithms and Programming (J277/02)": [
+      "Computational thinking: abstraction, decomposition, algorithmic thinking",
+      "Algorithms: searching (linear, binary), sorting (bubble, merge, insertion)",
+      "Flow charts and pseudocode",
+      "Data types: integer, real, Boolean, character, string",
+      "Programming constructs: sequence, selection, iteration",
+      "String manipulation: concatenation, substrings, length, upper/lower case",
+      "Arrays: 1D and 2D, accessing, traversing",
+      "File I/O: read, write, open, close",
+      "Procedures and functions: parameters, return values, scope",
+      "Random number generation",
+      "Structured programming, maintainability",
+      "Data structures: records, lists, stacks, queues",
+      "Boolean logic: AND, OR, NOT, truth tables",
+      "Logic gates: AND, OR, NOT, XOR, NAND, NOR",
+      "Trace tables and debugging",
+      "Validation and verification"
+    ]
+  },
+
+  "OCR-Biology A-GCSE": {
+    "Paper 1 (Foundation / Higher — J247/01 or J247/03)": [
+      "Cell structure: animal, plant, bacterial cells; size and scale; microscopy",
+      "Cell division: mitosis, meiosis, stem cells",
+      "Biological molecules: carbohydrates, lipids, proteins, DNA",
+      "Enzymes: lock and key, induced fit, temperature, pH, substrate concentration",
+      "Transport in cells: diffusion, osmosis, active transport",
+      "Organisation: levels of organisation, specialised cells and tissues",
+      "The digestive system: enzymes, absorption",
+      "The heart and blood vessels: structure, function, coronary heart disease",
+      "Blood components and functions",
+      "Breathing system: gas exchange in lungs",
+      "Plant organisation: leaves, roots, stems",
+      "Photosynthesis: equation, limiting factors, inverse square law",
+      "Transpiration: factors affecting, measuring",
+      "Communicable diseases: bacteria, viruses, fungi, protists",
+      "Immune system: antibodies, vaccination",
+      "Antibiotics and drug development"
+    ],
+    "Paper 2 (Foundation / Higher — J247/02 or J247/04)": [
+      "Hormones: endocrine system, insulin and blood glucose, Type 1 and Type 2 diabetes",
+      "Nervous system: neurones, reflex arc, brain structure",
+      "Homeostasis: thermoregulation, water balance, kidneys",
+      "Reproduction: sexual and asexual, fertilisation, gestation",
+      "Inheritance: alleles, dominant/recessive, monohybrid crosses, sex determination",
+      "Variation: continuous/discontinuous, mutation, natural selection",
+      "Evolution: Darwin, evidence, speciation, antibiotic resistance",
+      "Ecology: communities, habitats, biotic/abiotic factors",
+      "Sampling techniques: quadrats, transects",
+      "Food chains and webs, trophic levels, biomass",
+      "Carbon cycle, water cycle, nitrogen cycle",
+      "Biodiversity: extinction, conservation",
+      "Biotic and abiotic factors affecting populations",
+      "Human impact on ecosystems: deforestation, global warming, pollution",
+      "Practical skills: data collection, graph interpretation, experimental design"
+    ]
+  },
+
+  "OCR-Chemistry A-GCSE": {
+    "Paper 1 (Foundation / Higher — J248/01 or J248/03)": [
+      "Atomic structure: protons, neutrons, electrons, atomic number, mass number",
+      "Periodic table: groups, periods, properties of elements",
+      "Electronic configuration: shells, dot-and-cross diagrams",
+      "Ionic bonding: formation, properties of ionic compounds",
+      "Covalent bonding: simple molecular, giant covalent structures",
+      "Metallic bonding and properties of metals",
+      "Structure and bonding: giant ionic, giant covalent, metallic, simple molecular",
+      "The mole: relative formula mass, molar mass, Avogadro constant",
+      "Empirical and molecular formulae",
+      "Concentration and solution calculations",
+      "Acids and bases: pH scale, neutralisation, indicators",
+      "Reactions of acids: metals, carbonates, bases",
+      "Electrolysis: ionic compounds, aqueous solutions, half equations",
+      "Chemical analysis: flame tests, gas tests, precipitation",
+      "Rates of reaction: collision theory, temperature, concentration, catalysts, surface area"
+    ],
+    "Paper 2 (Foundation / Higher — J248/02 or J248/04)": [
+      "Energy in reactions: exothermic, endothermic, bond energies, Hess's law (H)",
+      "Reversible reactions and equilibrium: Le Chatelier's principle (H)",
+      "Organic chemistry: alkanes, alkenes, alcohols, carboxylic acids",
+      "Crude oil: fractional distillation, cracking",
+      "Addition polymerisation, condensation polymerisation",
+      "The atmosphere: evolution, composition, greenhouse gases",
+      "Climate change and pollution",
+      "The Earth's resources: finite and renewable, life cycle assessment",
+      "Water purification: filtration, chlorination",
+      "Extraction of metals: carbon reduction, electrolysis",
+      "Alloys: steel, brass, bronze",
+      "Ceramic materials, polymers, composites",
+      "Chromatography: Rf values, paper and thin-layer",
+      "Titration calculations",
+      "Practical skills and required practicals"
+    ]
+  },
+
+  "OCR-Physics A-GCSE": {
+    "Paper 1 (Foundation / Higher — J249/01 or J249/03)": [
+      "Energy stores and transfers: kinetic, gravitational potential, elastic, chemical, thermal, nuclear",
+      "Energy calculations: efficiency, specific heat capacity, specific latent heat",
+      "Power: watts, energy transfer rates",
+      "Electricity: charge, current, voltage, resistance",
+      "Ohm's law: I-V characteristics, series and parallel circuits",
+      "Electrical components: diodes, thermistors, LDRs",
+      "Domestic electricity: AC/DC, UK mains, power, energy, cost",
+      "Electrical safety: earthing, fuses, circuit breakers",
+      "Particle model: density, states of matter, pressure in gases",
+      "Pressure: atmospheric, hydraulic systems",
+      "Atoms: atomic structure, isotopes, radioactive decay, nuclear radiation",
+      "Half-life: calculation, radioactive decay graphs",
+      "Nuclear fission and fusion",
+      "Background radiation, ionising radiation hazards, uses"
+    ],
+    "Paper 2 (Foundation / Higher — J249/02 or J249/04)": [
+      "Forces: weight, gravity, friction, resultant forces, free body diagrams",
+      "Newton's three laws of motion",
+      "Momentum: conservation, collisions, impulse (H)",
+      "Motion: distance-time, velocity-time graphs, equations of motion",
+      "Stopping distance: thinking distance, braking distance",
+      "Waves: transverse, longitudinal, amplitude, frequency, wavelength, speed",
+      "Electromagnetic spectrum: properties and uses of each region",
+      "Light: reflection, refraction, total internal reflection, lenses",
+      "Sound: speed in different media, ultrasound",
+      "Magnetism: permanent magnets, electromagnets",
+      "Electromagnetic induction: generators, transformers",
+      "Space: solar system, life cycle of stars, Big Bang theory",
+      "Pressure in fluids: upthrust, floating",
+      "Practical skills: uncertainties, significant figures, graphs"
+    ]
+  },
+
+  "OCR-English Language-GCSE": {
+    "Component 1: Communicating Information and Ideas (J351/01)": [
+      "Reading: 19th century non-fiction text",
+      "Reading: 21st century non-fiction text",
+      "Comparing writers' perspectives and methods",
+      "Understanding and evaluating writer's craft",
+      "Writing to communicate information, ideas, viewpoints",
+      "Writing for specific forms: articles, reports, speeches, letters",
+      "Accurate grammar, punctuation and spelling",
+      "Vocabulary choices and register"
+    ],
+    "Component 2: Exploring Effects and Impact (J351/02)": [
+      "Reading: 20th or 21st century literary prose",
+      "Analysing language effects in fiction",
+      "Evaluating writers' choices and their impact",
+      "Creative writing: descriptive or narrative",
+      "Structural features in writing",
+      "Tone, voice and style",
+      "Cohesive devices and paragraphing",
+      "Proofreading and accurate writing"
+    ]
+  },
+
+  "OCR-English Literature-GCSE": {
+    "Component 1: Exploring Modern and Literary Heritage Texts (J352/01)": [
+      "Modern prose or drama (post-1914) — set text (school choice)",
+      "19th century prose fiction — set text (school choice)",
+      "Characterisation and motivation",
+      "Themes and context",
+      "Writers' methods: structure, language, form",
+      "Close reading and quotation"
+    ],
+    "Component 2: Exploring Poetry and Shakespeare (J352/02)": [
+      "Shakespeare play — set text (school choice)",
+      "Poetry anthology: contemporary and literary heritage poems",
+      "Comparative analysis of poems",
+      "Themes, attitudes and contexts in poetry",
+      "Unseen poetry: analysis of an unknown poem",
+      "Dramatic technique in Shakespeare",
+      "Soliloquies, dramatic irony, stagecraft"
+    ]
+  },
+
+  "OCR-Mathematics-GCSE": {
+    "Papers 1–3 (Foundation: J560/01–03 / Higher: J560/04–06)": [
+      "Number: integers, fractions, decimals, powers, roots, standard form, surds (H)",
+      "Algebra: expressions, equations, formulae, functions, sequences",
+      "Graphs: plotting, gradient, y-intercept, quadratics, cubic, reciprocal",
+      "Solving equations: linear, quadratic, simultaneous",
+      "Ratio, proportion, rates of change: percentage, direct/inverse proportion",
+      "Geometry: angles, triangles, polygons, circles, transformations",
+      "Mensuration: perimeter, area, volume, surface area",
+      "Trigonometry: SOHCAHTOA, sine/cosine rules (H)",
+      "Vectors (H)",
+      "Probability: experimental, theoretical, tree diagrams, Venn diagrams",
+      "Statistics: averages, range, cumulative frequency, box plots, histograms",
+      "Constructions and loci",
+      "Congruence and similarity",
+      "Pythagoras' theorem",
+      "Higher tier only: calculus, proof, iteration, algebraic fractions"
+    ]
+  },
+
+  "OCR-Geography A-GCSE": {
+    "Component 1: Living in the UK Today (J383/01)": [
+      "The UK's evolving physical landscape: upland and lowland landscapes, rock types",
+      "Coasts: processes (erosion, deposition, transportation), landforms, coastal management",
+      "Rivers: processes, flooding, river management",
+      "The UK's evolving human landscape: deindustrialisation, service economy",
+      "Urbanisation in the UK: regeneration, smart cities"
+    ],
+    "Component 2: The World Around Us (J383/02)": [
+      "Global hazards: plate tectonics, earthquakes, volcanoes, tropical storms",
+      "Climate change: causes, effects, mitigation, adaptation",
+      "Ecosystems: tropical rainforests, hot deserts — characteristics, uses, threats",
+      "Changing cities: global patterns of urbanisation, mega-cities",
+      "Development: indicators, uneven development, trade, aid",
+      "Global resource management: food, water, energy security"
+    ],
+    "Component 3: Geographical Skills (J383/03)": [
+      "Fieldwork: techniques, data collection, presentation and analysis",
+      "OS maps: grid references, scale, relief, symbols",
+      "Graphs and statistical methods",
+      "Geographical enquiry process",
+      "Issue evaluation using pre-release materials"
+    ]
+  },
+
+  "OCR-History A-GCSE": {
+    "Paper 1: Period Study with Non-British Depth Study": [
+      "Period study options (chosen by school): e.g. The People's Health 1250–present, or Migration to Britain c.1000–present, or Power and the People c.1170–present",
+      "Non-British depth study options: e.g. The USA 1954–75, Germany 1925–55, Elizabethan England",
+      "Change and continuity over time",
+      "Causation and consequence",
+      "Source analysis: usefulness, reliability"
+    ],
+    "Paper 2: Thematic Study": [
+      "Thematic study options (chosen by school): focuses on a single theme across ~100 years",
+      "Analysis of change over time",
+      "Interpretations of history"
+    ],
+    "Paper 3: British Depth Study with Historic Environment": [
+      "British depth study (chosen by school): e.g. The Norman Conquest, The Elizabethans, The English Civil War",
+      "Historic environment source investigation",
+      "Significance and interpretation"
+    ]
+  },
+
+  "OCR-Religious Studies-GCSE": {
+    "Beliefs and Teachings & Practices (J625/01–05)": [
+      "Christianity: beliefs (Trinity, Incarnation, Atonement, Resurrection), practices (worship, prayer, sacraments, festivals)",
+      "Islam: beliefs (Tawhid, prophethood, holy books, Day of Judgement, Akhirah), practices (Five Pillars, Jihad)",
+      "Judaism: beliefs (God, covenant, Torah, Messiah), practices (Shabbat, festivals, dietary laws)",
+      "Hinduism: beliefs (Brahman, atman, dharma, karma, samsara, moksha), practices (puja, pilgrimage, festivals)",
+      "Buddhism: beliefs (Four Noble Truths, Eightfold Path, Three Marks of Existence), practices (meditation, precepts, festivals)"
+    ],
+    "Religion, Philosophy and Ethics (J625/06–10)": [
+      "Arguments for God's existence: design, cosmological, ontological",
+      "Arguments against: problem of evil, suffering",
+      "Miracles and revelation",
+      "Ethics: situation ethics, Kantian ethics, natural law, utilitarianism",
+      "Sexual ethics: relationships, marriage, divorce, same-sex relationships",
+      "Life and death: sanctity of life, euthanasia, capital punishment",
+      "Human rights, justice, peace and conflict",
+      "Religion and science: creation vs evolution, environmental ethics"
+    ]
+  },
+
+  "OCR-Computer Science-A-Level": {
+    "Component 1: Computer Systems (H446/01)": [
+      "The characteristics of contemporary processors: Von Neumann, Harvard, CISC, RISC, pipelining, parallel processing",
+      "Types of processor: CPU, GPU, multicore",
+      "Input, output and storage: secondary storage types, cloud vs local",
+      "Software: system software, OS functions, utility software, translation software",
+      "Types of programming language: low and high level, imperative, OO, functional, declarative",
+      "Boolean algebra: De Morgan's laws, simplification, Karnaugh maps",
+      "Logic gates and circuits",
+      "Data representation: unsigned and signed binary, BCD, floating point, normalisation",
+      "Transmission and networking: TCP/IP stack, protocols, IP, MAC, packet switching, circuit switching",
+      "Databases: relational model, SQL, normalisation, ACID, referential integrity",
+      "Big Data: characteristics, processing, distributed systems",
+      "Functional programming: pure functions, immutability, higher-order functions, lambda calculus",
+      "Legal, moral, ethical and cultural issues in computing"
+    ],
+    "Component 2: Algorithms and Programming (H446/02)": [
+      "Computational thinking: decomposition, abstraction, algorithmic thinking",
+      "Problem-solving and programming: recursion, Big-O notation",
+      "Programming paradigms: OOP (encapsulation, inheritance, polymorphism), procedural, functional",
+      "Data structures: arrays, lists, stacks, queues, linked lists, graphs, trees, hash tables",
+      "Searching algorithms: linear, binary, depth-first, breadth-first",
+      "Sorting algorithms: bubble, insertion, merge, quick sort",
+      "Dijkstra's shortest path algorithm",
+      "Optimisation: A* search, genetic algorithms",
+      "Regular languages: finite state machines, regular expressions",
+      "Context-free languages: Backus-Naur Form, syntax diagrams",
+      "The Turing machine and computability",
+      "Encryption: Caesar cipher, Vernam cipher, public-key cryptography"
+    ]
+  },
+
+  "OCR-Biology A-A-Level": {
+    "Paper 1: Biological Processes (H420/01)": [
+      "Cell structure: ultrastructure, organelles and their functions",
+      "Biological molecules: water, carbohydrates, lipids, proteins, nucleic acids",
+      "Enzymes: mechanism, factors affecting activity, inhibition",
+      "Cell membranes: fluid-mosaic model, transport mechanisms",
+      "Cell division: mitosis, meiosis, the cell cycle",
+      "DNA replication and protein synthesis: transcription, translation, codons",
+      "Gene expression: operon model, epigenetics",
+      "Photosynthesis: light-dependent and light-independent reactions, Calvin cycle",
+      "Respiration: glycolysis, Krebs cycle, oxidative phosphorylation, anaerobic pathways"
+    ],
+    "Paper 2: Biological Diversity (H420/02)": [
+      "Classification: taxonomy, phylogeny, three-domain system",
+      "Evolution: natural selection, speciation, Hardy-Weinberg principle",
+      "Biodiversity: sampling, Simpson's diversity index",
+      "Exchange and transport: surface area to volume, gas exchange (insects, fish, mammals, plants)",
+      "Mass transport systems: blood, xylem, phloem — structure and function",
+      "Immune response: innate and adaptive immunity, B and T cells, vaccination",
+      "Hormonal control: endocrine system, insulin, blood glucose regulation",
+      "Nervous coordination: neurones, synapses, action potential, reflexes",
+      "Homeostasis: temperature, water, blood glucose regulation"
+    ],
+    "Paper 3: Unified Biology (H420/03)": [
+      "Genetics: monohybrid and dihybrid crosses, sex linkage, epistasis",
+      "Mutation and variation",
+      "Biotechnology and genetic technology: PCR, gel electrophoresis, genetic engineering",
+      "Ecology: populations, communities, energy flow, carbon and nitrogen cycles",
+      "Human impact on ecosystems: conservation, sustainability",
+      "Synoptic: integration of topics from Papers 1 and 2",
+      "Practical skills: analysis of data, evaluation of experimental design"
+    ]
+  },
+
+  "OCR-Chemistry A-A-Level": {
+    "Paper 1: Periodic Table, Elements and Physical Chemistry (H432/01)": [
+      "Atomic structure: subatomic particles, mass spectrometry, electronic configuration",
+      "Periodicity: physical properties across periods, trends in group 2 and 7",
+      "Group 2: reactions, uses of compounds",
+      "Group 17 (halogens): properties, reactions, uses",
+      "Qualitative analysis: test tube reactions, flame tests, spectroscopy",
+      "Amount of substance: moles, empirical formula, percentage yield, atom economy",
+      "Acids, bases and pH: strong/weak acids, buffer solutions",
+      "Equilibria: Kc, Le Chatelier's principle, Kp (H), acid-base equilibria",
+      "Electrochemistry: electrode potentials, standard electrode potential, electrochemical cells",
+      "Transition metals: properties, complex ions, ligand substitution, catalysis"
+    ],
+    "Paper 2: Synthesis and Analytical Techniques (H432/02)": [
+      "Thermodynamics: enthalpy, entropy, Gibbs free energy, Born-Haber cycles",
+      "Rate equations: orders of reaction, rate constants, Arrhenius equation",
+      "Organic chemistry: nomenclature, isomerism, reaction mechanisms",
+      "Functional groups: alkanes, alkenes, alcohols, halogenoalkanes, carbonyl compounds, carboxylic acids, esters, amines",
+      "Benzene chemistry: electrophilic substitution, directing effects",
+      "Condensation polymers: polyesters, polyamides",
+      "Organic synthesis: multi-step routes, protecting groups",
+      "Spectroscopy: mass spectrometry, IR, 1H NMR, 13C NMR",
+      "Chromatography: GC, HPLC, Rf values"
+    ],
+    "Paper 3: Unified Chemistry (H432/03)": [
+      "Synoptic application of all physical, inorganic and organic topics",
+      "Data analysis: graphs, calculations, significant figures, errors",
+      "Practical skills: required practicals, evaluation",
+      "Extended problem solving drawing on whole specification"
+    ]
+  },
+
+  "OCR-Physics A-A-Level": {
+    "Paper 1: Modelling Physics (H556/01)": [
+      "Measurements and their errors: SI units, uncertainties, significant figures",
+      "Particles and radiation: atomic model, particles, photons, photoelectric effect",
+      "Waves: progressive, stationary, superposition, diffraction, interference",
+      "Mechanics: scalars/vectors, moments, equilibrium",
+      "Kinematics: equations of motion, projectiles",
+      "Forces and Newton's laws",
+      "Work, energy and power",
+      "Materials: stress, strain, Young's modulus, elastic/plastic behaviour",
+      "Electricity: current, pd, resistance, resistivity, I-V characteristics",
+      "Circuits: Kirchhoff's laws, potential dividers"
+    ],
+    "Paper 2: Exploring Physics (H556/02)": [
+      "Circular motion: angular velocity, centripetal force",
+      "Simple harmonic motion: displacement, velocity, acceleration, energy",
+      "Gravitational fields: Newton's law, field strength, potential, orbits, escape velocity",
+      "Electric fields: Coulomb's law, field strength, potential, capacitors",
+      "Capacitors: charge and discharge, time constant",
+      "Magnetic fields: flux density, force on current and charge, electromagnetic induction",
+      "Thermal physics: internal energy, specific heat capacity, ideal gas law, kinetic theory",
+      "Nuclear physics: radioactive decay, fission, fusion, binding energy, mass-energy equivalence"
+    ],
+    "Paper 3: Unified Physics (H556/03)": [
+      "Optional topic (school choice): Astrophysics / Medical physics / Engineering physics / Turning Points in Physics / Electronics",
+      "Synoptic: integration of all topics",
+      "Practical skills and experimental methods"
+    ]
+  },
+
+  "OCR-Mathematics A-A-Level": {
+    "Paper 1: Pure Mathematics (H240/01)": [
+      "Proof: methods including contradiction and mathematical induction",
+      "Algebra and functions: polynomials, factor theorem, partial fractions, mappings",
+      "Coordinate geometry: circles, parametric equations",
+      "Sequences and series: arithmetic, geometric, sigma notation, binomial expansion",
+      "Trigonometry: radians, exact values, identities, double angle formulae, R sin(θ + α)",
+      "Exponentials and logarithms: laws, equations, modelling",
+      "Differentiation: product/quotient/chain rule, implicit, parametric, rates of change",
+      "Integration: definite and indefinite, by substitution and parts, volumes of revolution",
+      "Differential equations: separable, forming and solving",
+      "Vectors: 3D, dot product, equations of lines and planes"
+    ],
+    "Paper 2: Pure Mathematics and Statistics (H240/02)": [
+      "Applied pure: numerical methods, iteration, Newton-Raphson",
+      "Statistics: population vs sample, sampling methods",
+      "Data presentation: frequency tables, cumulative frequency, histograms, box plots",
+      "Probability: conditional, Bayes' theorem",
+      "Distributions: binomial, normal distribution — standardisation, inverse normal",
+      "Hypothesis testing: binomial, normal, correlation coefficient",
+      "Regression and correlation: PMCC, interpretation"
+    ],
+    "Paper 3: Pure Mathematics and Mechanics (H240/03)": [
+      "Applied pure: further algebra and calculus review",
+      "Mechanics: forces, Newton's laws, connected particles, pulleys",
+      "Kinematics: constant and variable acceleration, 2D motion",
+      "Projectile motion",
+      "Friction: limiting equilibrium, coefficient of friction",
+      "Moments: equilibrium of rigid bodies",
+      "Impulse and momentum: conservation, collisions"
+    ]
+  },
+
+  "OCR-Psychology-A-Level": {
+    "Paper 1: Research Methods (H567/01)": [
+      "Research methods: experiments (lab, field, natural, quasi), observations, surveys, case studies, correlation",
+      "Research design: IV, DV, controls, extraneous variables, demand characteristics",
+      "Sampling: random, systematic, opportunity, volunteer",
+      "Data analysis: levels of measurement, descriptive statistics, inferential statistics",
+      "Statistical tests: Mann-Whitney, Wilcoxon, Chi-squared, Spearman's rho",
+      "Ethical guidelines: BPS code, informed consent, debriefing",
+      "Quantitative vs qualitative data"
+    ],
+    "Paper 2: Psychological Themes Through Core Studies (H567/02)": [
+      "Core studies: Milgram (obedience), Zimbardo (prison simulation), Asch (conformity)",
+      "Core studies: Loftus & Palmer (EWT), Grant et al. (context-dependent memory)",
+      "Core studies: Baron-Cohen et al. (ToM in autism), Savage-Rumbaugh (language in primates)",
+      "Core studies: Freud (Little Hans), Bandura et al. (Bobo doll), Chaney et al. (medication adherence)",
+      "Core studies: Sperry (split brain), Casey et al. (impulse control), Dement & Kleitman (dreaming)",
+      "Core studies: Griffiths (gambling), Rosenhan (sane in insane places)",
+      "Core studies: Thigpen & Cleckley (multiple personality), Watson & Rayner (Little Albert)",
+      "Themes: issues and debates in psychology"
+    ],
+    "Paper 3: Applied Psychology (H567/03)": [
+      "Issues in mental health: classification, cultural variations in diagnosis",
+      "Disorders: schizophrenia (Rosenhan, Gottesman), depression, phobias",
+      "Treatments: biological (drugs, ECT), cognitive (CBT), behavioural (systematic desensitisation)",
+      "Option 1: Criminal psychology — criminal behaviour theories, eyewitness testimony, jury decision-making",
+      "Option 2: Sport and exercise — motivation, stress, team dynamics",
+      "Option 3: Health psychology — stress, smoking, eating behaviour",
+      "Option 4: Educational psychology — learning theories, exam performance, teaching strategies"
+    ]
+  },
+
+  "OCR-Geography-A-Level": {
+    "Paper 1: Physical Systems (H481/01)": [
+      "Landscape systems: either coastal landscapes or glaciated landscapes (choice)",
+      "Earth's life support systems: water and carbon cycles — stores, fluxes, feedbacks",
+      "Coastal systems: littoral cells, erosion and deposition processes, landforms, management",
+      "Glaciated landscapes: glacial processes, landforms, paraglacial and periglacial landscapes",
+      "Quantitative skills: statistical measures, graphs, GIS"
+    ],
+    "Paper 2: Human Interactions (H481/02)": [
+      "Changing spaces, making places: place character, local and global connections",
+      "Global connections: trade, migration, global governance",
+      "Processes and patterns of migration",
+      "Power and borders: superpower geopolitics, emerging powers",
+      "Fieldwork: independent investigation methodology"
+    ],
+    "Paper 3: Geographical Debates (H481/03)": [
+      "Climate change: physical causes, consequences, mitigation and adaptation strategies",
+      "Disease dilemmas: global patterns of disease, mitigation, big data",
+      "Exploring oceans: ocean acidification, governance, resources",
+      "Future of food: global food systems, food security, sustainable strategies",
+      "Hazardous Earth: tectonics, climate hazards, multiple hazard zones",
+      "Technology in a changing world: digital world, ICT, technology and development"
+    ]
+  },
+
+  "OCR-Religious Studies-A-Level": {
+    "Paper 1: Philosophy of Religion (H573/01)": [
+      "Ancient philosophical influences: Plato (Forms, Analogy of the Cave), Aristotle (causation, Prime Mover)",
+      "The nature of the soul, mind and body: dualism, monism, Descartes, Hume",
+      "Arguments for the existence of God: cosmological, teleological (Paley, Swinburne), ontological (Anselm, Kant's critique)",
+      "Religious experience: visions, miracles, Swinburne's cumulative argument",
+      "The problem of evil: theodicies (Irenaeus, Augustine), responses (Hick, Swinburne)",
+      "Religious language: via negativa, analogy, myth, verification/falsification, Wittgenstein"
+    ],
+    "Paper 2: Religion and Ethics (H573/02)": [
+      "Ethical theories: natural law (Aquinas, absolute/relative), Situation Ethics (Fletcher, Christian context)",
+      "Kantian ethics: categorical imperative, deontological approach",
+      "Utilitarianism: Bentham, Mill, preference utilitarianism",
+      "Applied ethics: sexual ethics (Christian and secular), medical ethics (euthanasia, abortion)",
+      "Free will and moral responsibility: compatibilism, hard determinism",
+      "Conscience: Aquinas, Freud, Newman",
+      "Virtue ethics: Aristotle, MacIntyre, Neo-Aristotelian revival",
+      "Moral decision-making frameworks: comparison of theories"
+    ],
+    "Paper 3: Developments in Religious Thought (H573/03)": [
+      "Option: Christianity, Islam, Judaism, Buddhism or Hinduism",
+      "Christian thought: sources of authority, the person of Jesus, Christian moral principles",
+      "Liberation theology: political and social implications",
+      "Gender, sexuality and Christian thought",
+      "Pluralism, secularism and Christian mission",
+      "The challenge of science to religious thought"
+    ]
+  },
+
+  "OCR-Law-A-Level": {
+    "Paper 1: The Legal System and Criminal Law (H418/01)": [
+      "The nature of law: law and morality, law and justice",
+      "The court structure and jurisdiction: civil and criminal courts, hierarchy",
+      "The legal profession: barristers, solicitors, judiciary",
+      "Legal personnel: magistrates, juries — role, selection, reform",
+      "Access to justice: legal aid, funding",
+      "Criminal law: actus reus, mens rea, strict liability",
+      "Non-fatal offences: assault, battery, ABH (s.47), GBH (s.20 and s.18)",
+      "Fatal offences: murder, voluntary manslaughter, involuntary manslaughter",
+      "Defences: insanity, automatism, intoxication, consent, self-defence"
+    ],
+    "Paper 2: Law Making and the Law of Tort (H418/02)": [
+      "Parliamentary law making: Green/White Papers, Bills, Acts, delegated legislation",
+      "Statutory interpretation: literal, golden, mischief rules; purposive approach; aids",
+      "Judicial precedent: ratio decidendi, obiter dicta, hierarchy, advantages/disadvantages",
+      "Influences on law making: law reform, Law Commission",
+      "Tort: negligence — duty of care (Caparo), breach, causation, remoteness, defences",
+      "Occupiers' liability: Occupiers Liability Acts 1957 and 1984",
+      "Nuisance: private and public nuisance, Rylands v Fletcher",
+      "Vicarious liability: course of employment, frolic of own"
+    ],
+    "Paper 3: The Nature of Law and Further Options (H418/03+04)": [
+      "Human rights: European Convention, HRA 1998, balancing rights",
+      "Contract law: offer and acceptance, consideration, intention, terms",
+      "Vitiating factors: misrepresentation, duress, undue influence",
+      "Discharge: performance, breach, frustration",
+      "Remedies: damages, injunction, specific performance",
+      "Comparison of civil and criminal law systems"
+    ]
+  },
+
+  // ─────────────────────────────────────────────────────────────────────────
+  // Edexcel GCSE SPEC TOPICS - sourced from official Pearson specifications
+  // ─────────────────────────────────────────────────────────────────────────
+
+  "Edexcel-Computer Science-GCSE": {
+    "Paper 1: Principles of Computer Science (1CP1/01)": [
+      "Algorithms: flowcharts, pseudocode, decomposition, abstraction",
+      "Data representation: binary, hexadecimal, ASCII, Unicode, image and sound encoding",
+      "Computer systems: hardware components, CPU architecture, fetch-execute cycle",
+      "Networks: types (LAN, WAN), topologies, protocols (TCP/IP, HTTP, DNS), network hardware",
+      "Cyber security: threats, prevention, encryption types",
+      "Software engineering: programming, testing, IDE tools",
+      "Databases: entity-relationship diagrams, SQL (SELECT, UPDATE, INSERT, DELETE)",
+      "Boolean logic: truth tables, logic gates, De Morgan's laws",
+      "Programming: data types, variables, sequence, selection, iteration, procedures",
+      "Data structures: arrays, records, stacks, queues, linked lists, binary trees",
+      "Algorithms: searching and sorting, Big O notation",
+      "Computer science ethics: intellectual property, privacy, environmental impact"
+    ],
+    "Paper 2: Application of Computational Thinking (1CP1/02)": [
+      "Programming constructs: all Paper 1 constructs applied to problems",
+      "Decomposition of complex problems",
+      "Algorithm design: efficiency, trace tables",
+      "String manipulation and file handling",
+      "Sub-programs: functions, procedures, parameters, return values",
+      "Object-oriented programming: classes, objects, encapsulation, inheritance, polymorphism",
+      "Recursive algorithms",
+      "Pattern recognition",
+      "Translators: assembler, compiler, interpreter — pros/cons"
+    ]
+  },
+
+  "Edexcel-Biology-GCSE": {
+    "Paper 1: Topics 1–5 (1BI0/1F+H)": [
+      "Topic 1: Key concepts in biology — cell structure, biological molecules, enzymes, cell division, microscopy",
+      "Topic 2: Cells and control — mitosis, cell differentiation, stem cells, nervous system, synapses",
+      "Topic 3: Genetics — meiosis, inheritance, genetic crosses, mutations, genetic disorders",
+      "Topic 4: Natural selection and genetic modification — Darwin, evolution, GM organisms",
+      "Topic 5: Health, disease and the development of medicines — communicable diseases, immune response, drugs, vaccines"
+    ],
+    "Paper 2: Topics 1 and 6–9 (1BI0/2F+H)": [
+      "Topic 1 revisited: key concepts applied",
+      "Topic 6: Plant structures and their functions — photosynthesis, transpiration, plant hormones",
+      "Topic 7: Animal coordination, control and homeostasis — hormones, menstrual cycle, diabetes, thermoregulation, kidneys",
+      "Topic 8: Exchange and transport in animals — heart, blood vessels, respiratory system, gas exchange",
+      "Topic 9: Ecosystems and material cycles — food chains, biodiversity, carbon cycle, decomposition, human impact"
+    ]
+  },
+
+  "Edexcel-Chemistry-GCSE": {
+    "Paper 1: Topics 1–5 (1CH0/1F+H)": [
+      "Topic 1: Atomic structure and the periodic table — atomic models, electronic structure, isotopes, groups and periods",
+      "Topic 2: Bonding, structure and the properties of matter — ionic, covalent, metallic bonding, alloys, polymers, fullerenes",
+      "Topic 3: Quantitative chemistry — moles, formulae, percentage yield, atom economy, limiting reagents, titration calculations",
+      "Topic 4: Chemical changes — reactivity series, extraction of metals, displacement reactions, electrolysis, acids and bases",
+      "Topic 5: Energy changes — exothermic, endothermic, energy profiles, bond enthalpies, Hess's law (H)"
+    ],
+    "Paper 2: Topics 1 and 6–10 (1CH0/2F+H)": [
+      "Topic 1 revisited: applied knowledge",
+      "Topic 6: Rates of reaction — collision theory, temperature, concentration, pressure, catalyst, surface area",
+      "Topic 7: Organic chemistry — hydrocarbons, crude oil, cracking, addition/condensation polymers, alcohols",
+      "Topic 8: Chemical analysis — purity, separating mixtures, chromatography, testing for ions and gases",
+      "Topic 9: Chemistry of the atmosphere — early atmosphere, greenhouse effect, carbon footprint",
+      "Topic 10: Using resources — sustainable development, water purification, ceramics, composites, LCA"
+    ]
+  },
+
+  "Edexcel-Physics-GCSE": {
+    "Paper 1: Topics 1–7 (1PH0/1F+H)": [
+      "Topic 1: Key concepts of physics — units, equations, energy, power, efficiency",
+      "Topic 2: Motion and forces — speed, velocity, acceleration, Newton's laws, stopping distances",
+      "Topic 3: Conservation of energy — energy stores, work done, gravitational PE, elastic PE",
+      "Topic 4: Waves — transverse/longitudinal, EM spectrum, reflection, refraction, sound",
+      "Topic 5: Light and the EM spectrum — uses and hazards of each region, lenses",
+      "Topic 6: Radioactivity — atomic model, types of radiation, half-life, uses, nuclear equations",
+      "Topic 7: Astronomy — solar system, life cycle of stars, Big Bang"
+    ],
+    "Paper 2: Topics 1 and 8–15 (1PH0/2F+H)": [
+      "Topic 1 revisited: applied concepts",
+      "Topic 8: Energy — national and global energy resources",
+      "Topic 9: Forces and their effects — density, pressure, moments, hooke's law",
+      "Topic 10: Electricity and circuits — charge, current, pd, resistance, circuit components, power",
+      "Topic 11: Static electricity — charging, sparking, lightning",
+      "Topic 12: Magnetism and the motor effect — magnetic fields, motors, generators",
+      "Topic 13: Electromagnetic induction — transformers, National Grid",
+      "Topic 14: Particle model — states of matter, specific heat capacity, specific latent heat",
+      "Topic 15: Forces and matter — Hooke's law, Young's modulus (H)"
+    ]
+  },
+
+  "Edexcel-History-GCSE": {
+    "Paper 1: Thematic Study and Historic Environment (1HI0/10–13+20–22)": [
+      "Thematic study (choice): Medicine in Britain c.1250–present, Migrants in Britain c.800–present",
+      "Changes in understanding of disease and treatment over time",
+      "Key individuals: e.g. Pasteur, Fleming, NHS",
+      "Historic environment (tied to thematic study): e.g. The British sector of the Western Front",
+      "Factors: science, technology, war, government, chance, attitudes in society"
+    ],
+    "Paper 2: Period Study and British Depth Study (1HI0/2A–2W+30–33)": [
+      "Period study (choice): Early Elizabethan England 1558–88, The American West c.1835–95, Superpower Relations and the Cold War 1941–91",
+      "British depth study (choice): Anglo-Saxon and Norman England c.1060–88, Henry VIII and his ministers 1509–40, Elizabethan England c.1568–1603",
+      "Historical causation, consequence, significance",
+      "Source analysis and evaluation"
+    ],
+    "Paper 3: Modern Depth Study (1HI0/30–33)": [
+      "Modern depth study (choice): Weimar and Nazi Germany 1918–39, Mao's China 1945–76, The USA 1954–75",
+      "Political, social and economic change",
+      "Historical interpretations"
+    ]
+  },
+
+  "Edexcel-English Language-GCSE": {
+    "Paper 1: Fiction and Imaginative Writing (1EN0/01)": [
+      "Reading: 20th or 21st century fiction text",
+      "Identifying and interpreting explicit and implicit information",
+      "Analysing writers' methods: language, structure, form",
+      "Evaluating a writer's use of language for effect",
+      "Imaginative writing: descriptive or narrative — full range of vocabulary and punctuation"
+    ],
+    "Paper 2: Non-Fiction and Transactional Writing (1EN0/02)": [
+      "Reading two unseen non-fiction texts (21st century and 19th century)",
+      "Summarising differences and similarities between texts",
+      "Comparing writers' perspectives and methods",
+      "Transactional writing: articles, speeches, letters, reports — purpose, audience, form"
+    ]
+  },
+
+  "Edexcel-English Literature-GCSE": {
+    "Paper 1: Shakespeare and Post-1914 Literature (1ET0/01)": [
+      "Shakespeare play: one of — Macbeth, Romeo and Juliet, The Merchant of Venice, The Tempest, Othello, A Midsummer Night's Dream",
+      "Post-1914 British novel or play: e.g. An Inspector Calls, Lord of the Flies, Of Mice and Men",
+      "Extract plus whole text question",
+      "Themes, characterisation, stagecraft"
+    ],
+    "Paper 2: 19th-Century Novel and Poetry since 1789 (1ET0/02)": [
+      "19th-century novel: e.g. A Christmas Carol, Great Expectations, Dr Jekyll and Mr Hyde",
+      "Poetry anthology: Conflict cluster or Love and Relationships cluster",
+      "Comparison of two anthology poems",
+      "Unseen poem analysis",
+      "Context and interpretation"
+    ]
+  },
+
+  "Edexcel-Mathematics-GCSE": {
+    "Paper 1: Non-Calculator (1MA1/1F or 1H), Paper 2 and 3: Calculator (1MA1/2F+3F or 2H+3H)": [
+      "Number: place value, surds, fractions, recurring decimals, standard form, HCF/LCM",
+      "Algebra: expressions, expanding, factorising, equations, inequalities, functions",
+      "Sequences: nth term, arithmetic and geometric, Fibonacci",
+      "Graphs: linear, quadratic, cubic, reciprocal, exponential, trigonometric",
+      "Ratio, proportion: direct and inverse, exchange rates, best buys",
+      "Percentage: compound interest, reverse percentage, percentage change",
+      "Geometry: angles, parallel lines, polygons, circle theorems (H)",
+      "Mensuration: area, volume, surface area of 3D shapes",
+      "Trigonometry: SOHCAHTOA, exact values, sine/cosine rules (H), 3D trig (H)",
+      "Transformations: rotation, reflection, translation, enlargement, vectors",
+      "Vectors: column, magnitude, direction (H)",
+      "Probability: sample space, tree diagrams, conditional probability (H)",
+      "Statistics: averages, frequency polygons, cumulative frequency, box plots, histograms"
+    ]
+  },
+
+  "Edexcel-Geography-GCSE": {
+    "Paper 1: Physical Geography (1GB0/01)": [
+      "The challenge of natural hazards: tectonic hazards, weather hazards, climate change",
+      "The living world: ecosystems, tropical rainforests, hot deserts or cold environments",
+      "Physical landscapes in the UK: coastal change and conflict, river landscape and processes",
+      "Fieldwork: at least one physical geography investigation"
+    ],
+    "Paper 2: Human Geography (1GB0/02)": [
+      "Urban issues and challenges: global urbanisation, UK city case study, sustainable urban development",
+      "The changing economic world: global development gap, economic development strategies, UK change",
+      "The challenge of resource management: food, water, energy — global and UK focus",
+      "Fieldwork: at least one human geography investigation"
+    ],
+    "Paper 3: Geographical Applications (1GB0/03)": [
+      "Issue evaluation: pre-release resource booklet (12 weeks before exam), decision making",
+      "Fieldwork: written questions on student's own investigations",
+      "Geographical skills: OS maps, graphs, statistical methods, GIS"
+    ]
+  },
+
+  "Edexcel-Business Studies-GCSE": {
+    "Paper 1: Investigating Small Business (1BS0/01)": [
+      "Enterprise and entrepreneurship: business aims and objectives, stakeholders",
+      "Spotting a business opportunity: market research, customer needs, competitive market",
+      "Putting a business idea into practice: business plans, sources of finance",
+      "Making the business effective: location, organisation, marketing mix (4Ps)",
+      "Understanding external influences: legislation, economic climate, technology, ethical issues"
+    ],
+    "Paper 2: Building a Business (1BS0/02)": [
+      "Growing the business: business growth, changes in business aims",
+      "Making marketing decisions: branding, advertising, pricing strategies",
+      "Making operational decisions: production methods, lean production, procurement",
+      "Making financial decisions: gross profit, net profit, financial statements, cash flow",
+      "Making human resource decisions: organisational structures, motivation, training"
+    ]
+  },
+
+  // ─────────────────────────────────────────────────────────────────────────
+  // Edexcel A-Level SPEC TOPICS
+  // ─────────────────────────────────────────────────────────────────────────
+
+  "Edexcel-Mathematics-A-Level": {
+    "Paper 1: Pure Mathematics 1 (9MA0/01)": [
+      "Algebra and functions: surds, indices, quadratics, simultaneous equations, inequalities, partial fractions",
+      "Coordinate geometry: circles, parametric equations",
+      "Further algebra: binomial expansion (positive and fractional powers)",
+      "Trigonometry: radians, sec/cosec/cot, inverse trig, small angle approximations",
+      "Differentiation: chain/product/quotient rule, implicit, parametric",
+      "Integration: by inspection, substitution, parts",
+      "Vectors: 3D vectors, dot product, angle between lines"
+    ],
+    "Paper 2: Pure Mathematics 2 (9MA0/02)": [
+      "Proof: proof by exhaustion, contradiction, counter-example",
+      "Functions: domain, range, composite, inverse, graph transformations",
+      "Sequences and series: geometric and arithmetic sequences, sigma notation",
+      "Exponentials and logarithms: equations, models, change of base",
+      "Further differentiation: e^x, ln x, trig functions, rates of change",
+      "Further integration: definite integrals, trapezium rule, differential equations",
+      "Numerical methods: iteration, Newton-Raphson"
+    ],
+    "Paper 3: Statistics and Mechanics (9MA0/03)": [
+      "Statistics: data collection, sampling, measures of central tendency and spread",
+      "Probability: conditional probability, Bayes' theorem",
+      "Statistical distributions: binomial B(n,p), Normal distribution N(μ,σ²)",
+      "Statistical hypothesis testing: one-tailed and two-tailed tests",
+      "Correlation and regression",
+      "Mechanics: kinematics (constant and variable acceleration), projectiles",
+      "Forces and Newton's laws, friction, connected particles",
+      "Moments and equilibrium of rigid bodies"
+    ]
+  },
+
+  "Edexcel-Biology-A-Level": {
+    "Paper 1: The Natural Environment and Species (9BI0/01)": [
+      "Topic 1: Biological molecules — carbohydrates, lipids, proteins, DNA, water",
+      "Topic 2: Cells — ultrastructure, cell division (mitosis/meiosis), transport across membranes",
+      "Topic 3: Organisms exchange substances — surface area:volume, gas exchange, digestion, circulatory system",
+      "Topic 4: Genetic information, variation and relationships — DNA replication, protein synthesis, genetic code, mutations",
+      "Topic 5: Energy transfers in and between organisms — photosynthesis (light-dependent and independent), respiration"
+    ],
+    "Paper 2: Energy, Exercise and Coordination (9BI0/02)": [
+      "Topic 5 continued: cellular respiration in detail, ATP synthesis",
+      "Topic 6: Organisms respond to changes in their internal and external environments — nervous system, muscle contraction, hormones, homeostasis",
+      "Topic 7: Genetics, populations, evolution and ecosystems — Hardy-Weinberg, speciation, population dynamics, succession",
+      "Topic 8: The control of gene expression — epigenetics, gene expression, recombinant DNA technology, ethics"
+    ],
+    "Paper 3: General and Practical Principles in Biology (9BI0/03)": [
+      "Synoptic: drawing on all topics from Papers 1 and 2",
+      "Practical skills: experimental design, data analysis, error analysis",
+      "Extended essay: one choice from Topics 5, 6, 7 or 8"
+    ]
+  },
+
+  "Edexcel-Chemistry-A-Level": {
+    "Paper 1: Advanced Inorganic and Physical Chemistry (9CH0/01)": [
+      "Topic 1: Atomic structure and periodic table",
+      "Topic 2: Bonding and structure",
+      "Topic 3: Redox and electrochemistry: electrode potentials, electrolytic cells, electrochemical cells",
+      "Topic 4: Inorganic chemistry and the periodic table: reactions of groups 1, 2, 17, transition metals",
+      "Topic 5: Formulae, equations and amounts of substance: moles, yield, atom economy",
+      "Topic 10: Equilibrium: Kc, Kp, Le Chatelier, acid-base equilibria, buffer solutions, Kw",
+      "Topic 12: Kinetics: rate equations, Arrhenius equation, mechanisms"
+    ],
+    "Paper 2: Advanced Organic and Physical Chemistry (9CH0/02)": [
+      "Topic 5: Formulae, equations and amounts of substance",
+      "Topic 6: Organic chemistry: nomenclature, isomerism, functional groups",
+      "Topic 7: Modern analytical techniques: NMR, IR, MS, chromatography",
+      "Topic 8: Thermodynamics: Born-Haber cycles, Hess's law, entropy, Gibbs free energy",
+      "Topic 9: Organic chemistry 2: carbonyls, carboxylic acids, esters, amines, polymers",
+      "Topic 11: Organic synthesis: multi-step routes, retrosynthesis"
+    ],
+    "Paper 3: General and Practical Principles (9CH0/03)": [
+      "Synoptic questions drawing on all topics",
+      "Practical skills: required practicals, data analysis, evaluation"
+    ]
+  },
+
+  "Edexcel-Physics-A-Level": {
+    "Paper 1: Advanced Physics I (9PH0/01)": [
+      "Topic 1: Working as a physicist — units, prefixes, measurements, uncertainties",
+      "Topic 2: Mechanics — kinematics, Newton's laws, momentum, work, energy, power",
+      "Topic 3: Electric circuits — charge, current, resistance, circuits, capacitors",
+      "Topic 4: Materials — density, Hooke's law, Young's modulus, viscosity",
+      "Topic 5: Waves and particle nature of light — waves, refraction, diffraction, EM spectrum, photoelectric effect"
+    ],
+    "Paper 2: Advanced Physics II (9PH0/02)": [
+      "Topic 6: Further mechanics — circular motion, SHM, resonance",
+      "Topic 7: Electric and magnetic fields — electric fields, capacitor charging, magnetic fields, electromagnetic induction, transformers",
+      "Topic 8: Nuclear and particle physics — radioactive decay, nuclear radius, binding energy, particle physics"
+    ],
+    "Paper 3: General and Practical Principles in Physics (9PH0/03)": [
+      "Topics 1–8 synoptic",
+      "Option topic: Astrophysics / Space / Nuclear / Medical / Engineering / Telecommunications",
+      "Practical skills assessment"
+    ]
+  },
+
+  "Edexcel-Psychology-A-Level": {
+    "Paper 1: Introductory Topics in Psychology (9PS0/01)": [
+      "Social influence: conformity (Asch), obedience (Milgram), explanations, minority influence",
+      "Memory: models (multi-store, working memory), EWT, improving memory",
+      "Attachment: caregiver interactions, stages (Ainsworth), Strange Situation, cultural variations",
+      "Psychopathology: definitions of abnormality, phobias, depression, OCD — characteristics and treatments"
+    ],
+    "Paper 2: Psychology in Context (9PS0/02)": [
+      "Approaches: origins, behaviourist, SLT, cognitive, biological, psychodynamic, humanist",
+      "Biopsychology: nervous system, brain structure, fight/flight, hemispheres, split brain, neuroimaging",
+      "Research methods: experiments, observations, surveys, correlations, case studies",
+      "Statistical analysis: measures of central tendency and dispersion, sign test, statistical significance"
+    ],
+    "Paper 3: Issues and Options in Psychology (9PS0/03)": [
+      "Issues and debates: gender bias, cultural bias, ethics, free will vs determinism, reductionism, nature-nurture",
+      "Option 1: Relationships / Gender / Cognition and development",
+      "Option 2: Schizophrenia / Eating behaviour / Stress",
+      "Option 3: Aggression / Forensic / Addiction"
+    ]
+  },
+
+  "Edexcel-Economics A-A-Level": {
+    "Paper 1: Markets and Business Behaviour (9EC0/01)": [
+      "Demand, supply and price: elasticities (PED, PES, YED, XED), consumer and producer surplus",
+      "Market structures: perfect competition, monopolistic competition, oligopoly, monopoly",
+      "Labour markets: demand and supply of labour, wage determination, trade unions",
+      "Government intervention: taxes, subsidies, price controls, regulation",
+      "Firm behaviour: costs, revenues, profit maximisation, economies of scale",
+      "Market failure: externalities, public goods, information failure"
+    ],
+    "Paper 2: The National and Global Economy (9EC0/02)": [
+      "Macroeconomic objectives: growth, inflation, unemployment, current account",
+      "AD/AS model: shifts, equilibrium, demand-side and supply-side shocks",
+      "Fiscal policy: government spending, taxation, budget deficit/surplus",
+      "Monetary policy: interest rates, quantitative easing, inflation targeting",
+      "International trade: comparative advantage, protectionism, exchange rates",
+      "Balance of payments, globalisation, development"
+    ],
+    "Paper 3: Synoptic/Theme (9EC0/03)": [
+      "Integration of microeconomics and macroeconomics",
+      "Economic agents: consumers, firms, government, global institutions",
+      "Policy trade-offs and limitations",
+      "Case study analysis and evaluation"
+    ]
+  },
+
+  "Edexcel-Business-A-Level": {
+    "Paper 1: Marketing, People and Global Businesses (9BS0/01)": [
+      "Analysing the strategic position of a business: mission, objectives, strategy",
+      "Marketing: market analysis, segmentation, targeting, positioning",
+      "Marketing mix: product, price, place, promotion decisions",
+      "Managing people: motivation theories, leadership styles, organisational design, recruitment",
+      "Global business: reasons for growth, trading blocs, emerging markets, multinational companies"
+    ],
+    "Paper 2: Business Activities, Decisions and Strategy (9BS0/02)": [
+      "Raising finance: sources (debt vs equity), financial markets",
+      "Financial decision-making: investment appraisal (NPV, ARR, payback period), financial ratios",
+      "Choosing strategic direction: Ansoff matrix, competitive advantage, diversification",
+      "Managing change: internal and external change, Kotter's model",
+      "Operations and supply chain management: lean, JIT, total quality management"
+    ],
+    "Paper 3: Investigating Business in a Competitive Environment (9BS0/03)": [
+      "Synoptic assessment drawing on Papers 1 and 2",
+      "Case study analysis: a pre-seen business context",
+      "Evaluating strategic options: integration of marketing, finance, HR, operations",
+      "Ethics and corporate social responsibility"
+    ]
+  },
+
+  "Edexcel-Geography-A-Level": {
+    "Paper 1: Dynamic Landscapes (9GE0/01)": [
+      "Tectonic processes and hazards: plate tectonics, earthquakes, volcanoes, risk management",
+      "Landscape systems (choice): Glaciated landscapes or Coastal landscapes",
+      "Glaciated landscapes: processes, landforms, periglacial, management",
+      "Coastal landscapes: erosion and deposition, landform development, coastal management, sea-level change"
+    ],
+    "Paper 2: Dynamic Places (9GE0/02)": [
+      "Globalisation: trade, TNCs, inequality, cultural convergence",
+      "Shaping places (choice): regenerating places or diverse places",
+      "Regenerating places: economic change, place identity, strategies for regeneration",
+      "Diverse places: demographic change, cultural diversity, social inequality, managing change"
+    ],
+    "Paper 3: Synoptic Investigation (9GE0/03)": [
+      "Players, attitudes and actions on a contemporary geographical issue",
+      "Pre-release resource booklet: analysing connections between geographic themes",
+      "Evaluation of options and sustainable development"
+    ]
+  },
+
+  "Edexcel-History-A-Level": {
+    "Paper 1: Breadth Study (9HI0/1A–1O)": [
+      "Option: e.g. Britain Transformed c.1918–97, Russia and its Rulers 1855–1964, The American Dream 1945–80",
+      "Historical change over an extended period",
+      "Continuity, causation, significance",
+      "Historiographical interpretations"
+    ],
+    "Paper 2: Depth Study (9HI0/2A–2T)": [
+      "Option: e.g. The USA c.1920–55, Germany 1914–45, Mao's China 1945–76",
+      "Historical significance and causation",
+      "Primary source analysis",
+      "Short and medium-length responses"
+    ],
+    "Paper 3: Historical Controversies (9HI0/3A–3I)": [
+      "Option: e.g. The Origins of the First World War, The Witch Craze c.1500–1700",
+      "Historiographical interpretations and debates",
+      "Evaluating historians' arguments",
+      "Extended essay: sustained analytical argument"
+    ]
+  },
+
+  "Edexcel-Sociology-A-Level": {
+    "Paper 1: Education with Theory and Methods (9SO0/01)": [
+      "Education: role and purpose of education, sociological perspectives (functionalism, Marxism, feminism)",
+      "Differential educational achievement by class, gender, ethnicity",
+      "Internal factors: teacher labelling, streaming, pupil subcultures",
+      "External factors: home background, material deprivation, cultural capital",
+      "Role of education in social mobility",
+      "Theory and Methods 1: sociological perspectives, research methods overview"
+    ],
+    "Paper 2: Topics in Sociology (9SO0/02)": [
+      "Option: Families and Households / Health / Work, Poverty and Welfare",
+      "Families: diversity, changing patterns, demographic trends, gender roles",
+      "Health: social distribution, medicine, mental health",
+      "Poverty: definitions, causes, welfare state"
+    ],
+    "Paper 3: Crime and Deviance with Theory and Methods (9SO0/03)": [
+      "Crime and deviance: definitions, functionalist, strain, subcultural theories",
+      "Labelling theory, Marxist criminology, left/right realism, feminist perspectives",
+      "Globalisation, green crime, state crime, human rights",
+      "Theory and Methods 2: positivism vs interpretivism, research design, ethics"
+    ]
+  },
+
+  // ─────────────────────────────────────────────────────────────────────────
+  // CCEA GCSE SPEC TOPICS - sourced from official CCEA specifications
+  // ─────────────────────────────────────────────────────────────────────────
+
+  "CCEA-Mathematics-GCSE": {
+    "Unit 1: Non-Calculator + Unit 3/4/5: Calculator": [
+      "Number: integers, fractions, decimals, percentages, powers, roots, standard form",
+      "Algebra: expressions, formulae, equations (linear, quadratic), inequalities, sequences",
+      "Graphs: straight lines, quadratics, cubic, distance-time, speed-time",
+      "Proportion: direct and inverse, ratio",
+      "Geometry: angle facts, triangles, polygons, circle theorems",
+      "Mensuration: perimeter, area, volume, surface area of 2D and 3D shapes",
+      "Trigonometry: SOHCAHTOA (Foundation), sine/cosine rules (Higher)",
+      "Transformations: translation, rotation, reflection, enlargement",
+      "Probability: experimental, theoretical, tree diagrams",
+      "Statistics: averages, range, frequency tables, cumulative frequency, box plots, histograms"
+    ]
+  },
+
+  "CCEA-Biology-GCSE": {
+    "Unit 1: Cells, Living Processes and Biodiversity": [
+      "Cell structure: plant, animal, bacterial cells; organelles; microscopy",
+      "Cell division: mitosis and the cell cycle; asexual reproduction",
+      "Biological molecules: carbohydrates, proteins, lipids",
+      "Enzymes: mechanism, factors affecting activity",
+      "Transport: diffusion, osmosis, active transport",
+      "Nutrition: autotrophs, heterotrophs; photosynthesis; digestive system",
+      "Respiration: aerobic and anaerobic; ATP",
+      "Gas exchange: lungs, gills, leaves",
+      "Circulation: heart, blood vessels, blood",
+      "Classification and biodiversity"
+    ],
+    "Unit 2: Body Systems, Ecology and the Environment": [
+      "Coordination: nervous system (neurones, reflex arc), hormones",
+      "Homeostasis: thermoregulation, blood glucose, osmoregulation",
+      "Reproduction: sexual vs asexual; fertilisation; development",
+      "Genetics: DNA, chromosomes, inheritance, genetic disorders",
+      "Evolution: natural selection, mutation, speciation",
+      "Ecology: populations, food webs, energy flow, nutrient cycles",
+      "Human impact: pollution, conservation, sustainability"
+    ]
+  },
+
+  "CCEA-Chemistry-GCSE": {
+    "Unit 1: Basic Concepts in Chemistry": [
+      "Atomic structure: protons, neutrons, electrons; relative atomic mass",
+      "The periodic table: groups, periods, properties",
+      "Bonding: ionic, covalent, metallic — properties and structure",
+      "Formulae and equations: balancing, state symbols",
+      "Moles and calculations: molar mass, percentage composition",
+      "Reactions: acids, bases, salts, redox",
+      "Rates of reaction: collision theory, factors",
+      "Electrolysis: ionic compounds and aqueous solutions"
+    ],
+    "Unit 2: Further Chemical Reactions, Rates and Equilibrium, Calculations and Organic Chemistry": [
+      "Reversible reactions and equilibrium: Le Chatelier's principle",
+      "Organic chemistry: hydrocarbons, alkanes, alkenes, alcohols",
+      "Crude oil and fuels",
+      "Polymers: addition and condensation",
+      "Further calculations: titration, gas volumes",
+      "Analysis: tests for gases, ions, chromatography",
+      "Industrial chemistry: Haber process, Contact process",
+      "Environmental chemistry: greenhouse gases, acid rain"
+    ]
+  },
+
+  "CCEA-Physics-GCSE": {
+    "Unit 1: Forces, Energy and Electricity": [
+      "Forces: types, Newton's laws, weight, friction",
+      "Motion: speed, velocity, acceleration, distance-time and velocity-time graphs",
+      "Work, energy and power: calculations, conservation",
+      "Energy resources: renewable and non-renewable",
+      "Electricity: current, voltage, resistance, Ohm's law, series and parallel circuits",
+      "Domestic electricity: mains supply, power, cost, safety"
+    ],
+    "Unit 2: Waves, Particles and the Universe": [
+      "Waves: transverse, longitudinal, properties, speed equation",
+      "Electromagnetic spectrum: properties and uses",
+      "Light: reflection, refraction, total internal reflection",
+      "Sound: properties, ultrasound",
+      "Atomic structure: nucleus, isotopes, radioactive decay",
+      "Radiation: alpha, beta, gamma; uses; half-life",
+      "Nuclear fission and fusion",
+      "The Universe: solar system, stars, Big Bang theory"
+    ]
+  },
+
+  "CCEA-History-GCSE": {
+    "Unit 1: Changes in Germany 1919–45 and The USA 1918–68 (or variant)": [
+      "Weimar Republic: origins, instability, Nazi rise to power",
+      "Nazi Germany: social control, propaganda, persecution, Holocaust",
+      "USA 1918–41: economic boom, social change, Wall Street Crash, New Deal",
+      "USA 1945–68: post-war prosperity, Cold War fears, civil rights movement",
+      "Source skills: reliability, usefulness, interpretation"
+    ],
+    "Unit 2: Northern Ireland and its Neighbours 1920–present": [
+      "Partition of Ireland and establishment of Northern Ireland",
+      "Political developments: Stormont, civil rights movement, Troubles",
+      "Role of British and Irish governments",
+      "Peace process: Good Friday Agreement, devolution",
+      "Changing relationships between Northern Ireland, Ireland, Britain and Europe"
+    ]
+  },
+
+  "CCEA-Geography-GCSE": {
+    "Unit 1: Understanding Our Natural World": [
+      "River environments: processes (erosion, transportation, deposition), landforms, flooding, management",
+      "Coastal environments: marine and sub-aerial processes, landforms, coastal management",
+      "Our dynamic planet: plate tectonics, earthquakes, volcanoes",
+      "Weather and climate: UK weather, tropical storms, climate change",
+      "Ecosystems: tropical rainforest, coral reef, deciduous woodland — characteristics, human impact"
+    ],
+    "Unit 2: Living in Our World": [
+      "Population: distribution, change, migration, population policy",
+      "Settlement: urban growth, urbanisation, planning issues",
+      "Contrasts in development: development indicators, causes of inequality, aid",
+      "Tourism: growth, management, sustainable tourism",
+      "Managing our natural resources: food, energy and water security"
+    ]
+  },
+
+  // ─────────────────────────────────────────────────────────────────────────
+  // Eduqas GCSE SPEC TOPICS
+  // ─────────────────────────────────────────────────────────────────────────
+
+  "Eduqas-Computer Science-GCSE": {
+    "Component 1: Computer Systems (C500U10-1)": [
+      "Hardware and software: components, OS functions, file management",
+      "CPU: fetch-decode-execute cycle, registers, cache, clock speed, cores",
+      "Memory and storage: RAM, ROM, types of secondary storage",
+      "Networks: topologies, types, protocols, TCP/IP, DNS, MAC/IP addresses",
+      "Cybersecurity: malware types, social engineering, network security, encryption",
+      "Data representation: binary, denary, hexadecimal conversion; ASCII; Unicode",
+      "Representing images: pixels, resolution, colour depth; calculating file size",
+      "Representing sound: sample rate, bit depth, file size",
+      "Compression: lossy, lossless, run-length encoding",
+      "Boolean logic: NOT, AND, OR, XOR; truth tables; logic circuits"
+    ],
+    "Component 2: Computational Thinking and Programming (C500U20-1 — on screen)": [
+      "Problem-solving: decomposition, abstraction, pattern recognition, algorithmic design",
+      "Programming fundamentals: variables, data types, input/output, arithmetic operators",
+      "Sequence, selection (if/elif/else), iteration (while/for)",
+      "Subprograms: functions and procedures, parameters, return values",
+      "Data structures: arrays, records, stacks, queues",
+      "String handling: concatenation, length, slicing, upper/lower",
+      "File handling: open, read, write, close",
+      "Searching: linear and binary search",
+      "Sorting: bubble sort, merge sort",
+      "Testing and debugging: trace tables, dry runs"
+    ]
+  },
+
+  "Eduqas-Mathematics-GCSE": {
+    "Component 1: Non-Calculator (F/H) + Component 2: Calculator (F/H)": [
+      "Number: integers, fractions, decimals, percentages, surds (H), standard form, indices",
+      "Algebra: simplifying, expanding, factorising, equations, inequalities, sequences (nth term)",
+      "Proportion: ratio, direct and inverse proportion, percentage problems",
+      "Graphs: plotting, gradient, y=mx+c, quadratic, exponential, transformations",
+      "Geometry: angle properties, bearings, Pythagoras, trigonometry, circle theorems (H)",
+      "Mensuration: area, volume, surface area",
+      "Vectors (H)",
+      "Probability: Venn diagrams, tree diagrams, conditional probability (H)",
+      "Statistics: averages, cumulative frequency, box plots, histograms, correlation"
+    ]
+  },
+
+  "Eduqas-English Language-GCSE": {
+    "Component 1: 21st Century Literature Reading and Creative Prose Writing (C700U10-1)": [
+      "Reading: 21st century literary fiction extract",
+      "Analysing language and structure for effect",
+      "Evaluation of writer's choices",
+      "Creative prose writing: descriptive or narrative",
+      "Writing craft: vocabulary, grammar, structure"
+    ],
+    "Component 2: 19th and 21st Century Non-Fiction Reading and Transactional/Persuasive Writing (C700U20-1)": [
+      "Reading: two non-fiction texts (19th and 21st century)",
+      "Comparing perspectives and methods",
+      "Summarising information",
+      "Transactional writing: articles, reports, speeches, letters",
+      "Audience, purpose and form"
+    ]
+  },
+
+  "Eduqas-English Literature-GCSE": {
+    "Component 1: Shakespeare and Poetry (C720U10-1)": [
+      "Shakespeare play: one choice (school decision)",
+      "Poetry: collection of poems from the Eduqas anthology",
+      "Close textual analysis",
+      "Contextual factors",
+      "Comparison of poems"
+    ],
+    "Component 2: Drama, Prose and Unseen Poetry (C720U20-1)": [
+      "Post-1914 drama: school choice",
+      "19th century prose: school choice",
+      "Unseen prose and poetry",
+      "Language, structure and form analysis",
+      "Thematic exploration"
+    ]
+  },
+
+  "Eduqas-Biology-GCSE": {
+    "Component 1": [
+      "Cell structure and organisation: prokaryotic, eukaryotic, cell specialisation",
+      "Biological molecules: carbohydrates, lipids, proteins, DNA",
+      "Enzymes: specificity, factors, investigations",
+      "Cell division: mitosis, meiosis, cancer",
+      "Transport: diffusion, osmosis, active transport",
+      "Photosynthesis: chloroplasts, light and dark reactions, limiting factors",
+      "Respiration: aerobic and anaerobic, ATP"
+    ],
+    "Component 2": [
+      "The nervous system: structure, reflex arcs, voluntary action",
+      "Hormonal control: endocrine system, blood glucose (insulin/glucagon), diabetes",
+      "Homeostasis: kidney function, thermoregulation",
+      "Disease and immunity: pathogens, non-specific and specific defences, vaccines",
+      "Genetics: DNA structure, inheritance, genetic diagrams, sex-linked traits",
+      "Evolution and ecosystems: natural selection, adaptation, food webs, nutrient cycles",
+      "Human impact: biodiversity, conservation, global warming"
+    ]
+  },
+
+  "Eduqas-Geography A-GCSE": {
+    "Component 1: Changing Places — Changing World": [
+      "Changing cities: urbanisation, megacities, urban issues and solutions",
+      "Changing rural areas: rural depopulation, tourism, development",
+      "Changing UK: deindustrialisation, investment, regeneration",
+      "Water: supply, demand, water stress, management"
+    ],
+    "Component 2: Sustaining the Planet": [
+      "Ecosystems: tropical rainforests, coral reefs, savanna grasslands",
+      "Biodiversity under threat: habitat loss, conservation",
+      "Climate change: causes, consequences, mitigation",
+      "Natural hazards: tectonic hazards, tropical storms"
+    ],
+    "Component 3: Distinctive Landscapes": [
+      "Coastal landscapes: processes, landforms, management",
+      "River landscapes: drainage basins, flooding, valley landforms",
+      "Fieldwork: planning, data collection, analysis, evaluation"
+    ]
+  },
+
+  "Eduqas-History-GCSE": {
+    "Component 1: Depth Study": [
+      "Options include: The development of the USA 1929–2000, Weimar Germany and Rise of the Third Reich 1918–39",
+      "Germany 1933–45: Nazi control, persecution, Second World War consequences",
+      "USA: New Deal, civil rights, Cold War, Vietnam",
+      "Causation, consequence, change and continuity, significance, evidence"
+    ],
+    "Component 2: Breadth Study": [
+      "Options: Migration and identity in Britain from c.600 to present, or The British Empire from c.1500 to 1968",
+      "Change and continuity over an extended time period",
+      "Role of individuals, events and factors",
+      "Interpretation and evaluation of historical sources"
+    ]
+  },
+
 }
 
 // ─────────────────────────────────────────────────────────────────────────────

@@ -11,7 +11,8 @@ export default function Signup() {
   const [form, setForm] = useState({ name:'', email:'', password:'', confirm:'' })
   const [showPw, setShowPw] = useState(false)
   const [loading, setLoading] = useState(false)
-  const [errors, setErrors] = useState({})
+  const [errors,  setErrors]  = useState({})
+  const [consent, setConsent] = useState(false)
 
   function validate() {
     const e = {}
@@ -19,6 +20,7 @@ export default function Signup() {
     if (!form.email.includes('@'))      e.email    = 'Valid email required'
     if (form.password.length < 6)      e.password = 'At least 6 characters'
     if (form.password !== form.confirm) e.confirm  = 'Passwords do not match'
+    if (!consent) e.consent = 'You must accept the Privacy Policy to create an account'
     return e
   }
 
@@ -99,6 +101,20 @@ export default function Signup() {
                 {errors[key] && <span className="form-error">{errors[key]}</span>}
               </div>
             ))}
+
+            {/* GDPR consent */}
+            <label style={{display:'flex',alignItems:'flex-start',gap:10,cursor:'pointer',padding:'10px 12px',background:'var(--bg-surface)',borderRadius:'var(--radius-md)',border:`1px solid ${errors.consent?'var(--danger)':'var(--border)'}`}}>
+              <input type="checkbox" checked={consent} onChange={e=>setConsent(e.target.checked)}
+                style={{marginTop:2,width:16,height:16,accentColor:'var(--accent)',flexShrink:0}}/>
+              <span style={{fontSize:'0.82rem',color:'var(--text-secondary)',lineHeight:1.5}}>
+                I have read and agree to the{' '}
+                <a href="/privacy" target="_blank" rel="noreferrer" style={{color:'var(--accent-light)',fontWeight:600}}>
+                  Privacy Policy
+                </a>
+                {' '}and understand how my data is used. I confirm I am aged 13 or over.
+              </span>
+            </label>
+            {errors.consent && <span className="form-error" style={{fontSize:'0.78rem'}}>{errors.consent}</span>}
 
             <button className="btn btn-primary" type="submit" disabled={loading} style={{width:'100%',marginTop:4}}>
               {loading ? 'Creating account…' : 'Create free account'}
