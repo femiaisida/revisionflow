@@ -2,7 +2,7 @@
 import React, { useState, useEffect, useRef } from 'react'
 import Skeleton from '../components/Skeleton'
 import { useAuth } from '../context/AuthContext'
-import { completeSession, completeTask, updateSession } from '../utils/firestore'
+import { completeSession, completeTask, updateSession, deleteSession } from '../utils/firestore'
 import { collection, getDocs, deleteDoc, doc, addDoc, serverTimestamp, writeBatch } from 'firebase/firestore'
 import { db } from '../firebase'
 import { getMonthDays, getWeekDays, sessionsForDay, downloadICS, parseICS, parseCSV } from '../utils/calendar'

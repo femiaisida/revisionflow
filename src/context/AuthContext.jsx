@@ -114,8 +114,6 @@ export function AuthProvider({ children }) {
         sentFriendRequests: [],
         settings: { theme: 'dark', profilePublic: true, friendsCanSeeGrades: true },
         onboardingComplete: false,
-        streak: 0,
-        lastSessionDate: '',
         startingGrades: {},
         ...extra,
       }
