@@ -9,7 +9,7 @@ import { getTopicAdvice } from '../utils/ai'
 import { getAllTopicsFlat } from '../data/topics'
 import { SUBJECT_COLOURS } from '../data/subjects'
 import toast from 'react-hot-toast'
-import { Plus, X, Brain, Zap, Trash2, Grid, BarChart2, Star } from 'lucide-react'
+import { Plus, X, Brain, Zap, Trash2, Grid, BarChart2, Star, ExternalLink } from 'lucide-react'
 
 const CONF_LABELS = ['','Struggling','Needs work','Getting there','Good','Strong']
 const CONF_COLOURS = ['','var(--danger)','#f97316','var(--warning)','#84cc16','var(--success)']
