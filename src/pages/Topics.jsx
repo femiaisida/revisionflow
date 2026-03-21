@@ -217,7 +217,7 @@ export default function Topics() {
   async function getAIAdvice(topic) {
     setLoadingAI(topic.id)
     const confLabel = ['','Very weak','Weak','Building','Strong','Mastered'][topic.confidence||3]
-    const { callAI } = await import('../utils/ai')
+    const { getTopicAdvice: _unused } = await import('../utils/ai')
     const prompt = `You are a GCSE/A-Level tutor. A student is revising "${topic.name}" in ${selSubj}. Their confidence is ${confLabel} (${topic.confidence||3}/5).
 
 Give a focused, topic-specific response with:
