@@ -273,6 +273,35 @@ Provide a detailed marking breakdown with ALL of the following:
     setFlashLoad(false)
   }
 
+  async function handleTechniques() {
+    if (!techSubj) return
+    setTechLoading(true)
+    setTechResult('')
+    const prompt = `You are an expert in evidence-based revision strategies. A GCSE/A-Level student studying ${techSubj} wants to know the most effective revision techniques for this specific subject.
+
+Provide a focused, practical guide with these sections:
+
+**Why students struggle with ${techSubj}**
+One or two sentences on the most common mistakes or difficult parts.
+
+**The best revision techniques for ${techSubj}**
+For each technique: explain WHY it works for this specific subject (not just in general). At least 4 techniques tailored to ${techSubj} — e.g. if it involves calculations, explain how to practise under timed conditions; if it involves essays, explain how to build argument frameworks.
+
+**Spaced repetition schedule for ${techSubj}**
+A concrete weekly schedule — what to review and when.
+
+**Active recall methods specific to ${techSubj}**
+3 concrete self-testing strategies that work for this subject's content.
+
+**What NOT to do**
+2-3 common but ineffective revision habits for ${techSubj}.
+
+Keep under 350 words. Be specific to ${techSubj}, never generic.`
+    const res = await callGemini(prompt)
+    setTechResult(res.text || res.error || 'No response — check your API key')
+    setTechLoading(false)
+  }
+
   const subjects = profile?.subjects?.map(s=>s.name)||[]
 
   return (

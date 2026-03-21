@@ -6,7 +6,7 @@ import { doc, updateDoc, setDoc, serverTimestamp } from 'firebase/firestore'
 import { db } from '../firebase'
 import { generateCalendarPlan } from '../utils/ai'
 import { GCSE_SUBJECTS, ALEVEL_SUBJECTS, BTEC_L2_SUBJECTS, BTEC_L3_SUBJECTS, EXAM_BOARDS, getGradeOptions, getSubjectList } from '../data/subjects'
-import { isTiered } from '../data/examDates2026'
+import { isTiered, EXAM_DATES_2026 } from '../data/examDates2026'
 import { getAllTopicsFlat } from '../data/topics'
 import toast from 'react-hot-toast'
 import { Zap, Plus, X, ChevronRight, ChevronLeft, Check, Users, Brain } from 'lucide-react'
@@ -31,6 +31,11 @@ export default function Onboarding() {
   const [subjects, setSubjects] = useState([])
   const [newSubj, setNewSubj] = useState({ name:'', board:'AQA', tier:'N/A', currentGrade:'', targetGrade:'' })
   const [globalTarget, setGlobalTarget] = useState('9')
+  // Keep globalTarget valid when qual changes
+  React.useEffect(() => {
+    const opts = getGradeOptions('', qual, 'N/A')
+    if (!opts.includes(globalTarget)) setGlobalTarget(opts[0] || '9')
+  }, [qual])
   // gradeOptions is now computed per-subject via getGradeOptions
   const [availability, setAvailability] = useState(
     Object.fromEntries(DAYS.map(d => [d, { enabled: d!=='Sunday', startTime: DEFAULT_TIMES[d], endTime: '21:00' }]))
@@ -38,6 +43,19 @@ export default function Onboarding() {
   const [username, setUsername] = useState('')
 
   const subjectList  = qual==='A-Level' ? ALEVEL_SUBJECTS : qual==='BTEC-L2' ? BTEC_L2_SUBJECTS : qual==='BTEC-L3' ? BTEC_L3_SUBJECTS : GCSE_SUBJECTS
+
+  // Filter subjects to only those with exam dates for the selected board
+  const subjectsForBoard = React.useMemo(() => {
+    if (qual === 'BTEC-L2' || qual === 'BTEC-L3') return subjectList
+    const level = qual === 'A-Level' ? 'A-Level' : 'GCSE'
+    const withDates = new Set(
+      EXAM_DATES_2026
+        .filter(e => e.board === newSubj.board && e.level === level)
+        .map(e => e.subject)
+    )
+    if (withDates.size === 0) return subjectList // fallback to all if board unknown
+    return subjectList.filter(s => withDates.has(s))
+  }, [newSubj.board, qual, subjectList])
   const gradeOptions = getGradeOptions(newSubj.name, qual, newSubj.tier)
   const globalGradeOptions = getGradeOptions('', qual, 'N/A')
 
@@ -186,7 +204,7 @@ export default function Onboarding() {
                     <label className="label">Subject</label>
                     <select className="select" value={newSubj.name} onChange={e=>onSubjName(e.target.value)}>
                       <option value="">Select…</option>
-                      {subjectList.map(s=><option key={s} value={s}>{s}</option>)}
+                      {subjectsForBoard.map(s=><option key={s} value={s}>{s}</option>)}
                     </select>
                   </div>
                   <div>

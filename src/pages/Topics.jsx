@@ -216,34 +216,10 @@ export default function Topics() {
 
   async function getAIAdvice(topic) {
     setLoadingAI(topic.id)
-    const confLabel = ['','Very weak','Weak','Building','Strong','Mastered'][topic.confidence||3]
-    const { getTopicAdvice: _unused } = await import('../utils/ai')
-    const prompt = `You are a GCSE/A-Level tutor. A student is revising "${topic.name}" in ${selSubj}. Their confidence is ${confLabel} (${topic.confidence||3}/5).
-
-Give a focused, topic-specific response with:
-
-**Why students struggle with this topic**
-One or two sentences on the most common misconceptions or difficult parts of "${topic.name}".
-
-**Key points to master**
-3-5 bullet points of the most important things to know about "${topic.name}" for the exam.
-
-**Best revision technique for this specific topic**
-One specific, concrete technique that works especially well for "${topic.name}" (e.g. if it's a process, draw a flow diagram; if it's definitions, use flashcards; if it's calculations, do timed practice questions).
-
-**Exam technique tip**
-One specific tip for how examiners assess "${topic.name}" and what students often lose marks on.
-
-**Free revision resources**
-List 2-3 specific free resources for "${topic.name}" in ${selSubj}. Format each as: [Resource name](URL) — one line description.
-Use real, working URLs from: BBC Bitesize (bbc.co.uk/bitesize), Save My Exams (savemyexams.com), Physics & Maths Tutor (physicsandmathstutor.com), Seneca Learning (app.senecalearning.com), YouTube channels like Cognito, FreeScienceLessons, Dr Sabiha, or subject-specific channels.
-
-Keep the whole response under 300 words. Be specific to "${topic.name}", not generic.`
-    const res = await callAI(prompt)
-    setAiAdvice(a=>({...a,[topic.id]:res.text||res.error}))
+    const res = await getTopicAdvice(selSubj, topic.name, topic.confidence||3, [])
+    setAiAdvice(a=>({...a,[topic.id]:res.text||res.error||'Could not load advice — check your connection'}))
     setLoadingAI(null)
   }
-
   function toggleSelect(id) { setSelected(s=>s.includes(id)?s.filter(x=>x!==id):[...s,id]) }
 
   const sorted = [...topics].sort((a,b)=>(a.confidence||3)-(b.confidence||3))

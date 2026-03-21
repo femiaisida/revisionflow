@@ -133,19 +133,30 @@ Keep the total response under 600 words. Be specific and actionable.`
 }
 
 export async function getTopicAdvice(subject, topic, confidence, mistakes) {
-  const prompt = `A student needs advice on this topic:
-Subject: ${subject}
-Topic: ${topic}
-Confidence level: ${confidence}/5
-Recent mistakes: ${mistakes?.join(', ') || 'None logged'}
+  const confLabel = ['','Very weak — needs urgent attention','Weak — gaps in understanding','Building — some understanding but not secure','Strong — mostly secure','Mastered — confident'][confidence] || 'Building'
+  const prompt = `You are an expert GCSE/A-Level tutor. A student is revising the topic "${topic}" within ${subject}. Their current confidence is: ${confLabel}.
 
-Give:
-1. A clear explanation of the key concepts
-2. Common mistakes students make and how to avoid them
-3. The 3 best free resources for this specific topic
-4. 3 practice questions (easy, medium, hard)
-5. Exam technique tips for this topic`
-  return callAI(prompt)
+Give a focused, exam-targeted response with these sections:
+
+**Why students struggle with "${topic}"**
+1-2 sentences on the most common misconceptions or hardest parts. Be specific to this exact topic.
+
+**What you must know for the exam**
+4-6 bullet points of the essential knowledge/skills for "${topic}". Use exact terminology the examiner expects.
+
+**Best way to revise this specific topic**
+One concrete, actionable technique tailored to the nature of this content (e.g. for a process: draw and label a diagram from memory; for definitions: make flashcards with trigger words; for calculations: do 10 timed questions without notes). Explain why this works for this topic.
+
+**Exam technique tip**
+One specific, actionable tip on how marks are awarded for "${topic}" — what examiners want to see, what students commonly miss.
+
+**Free resources**
+2 specific free resources. Format exactly as: [Name](URL) — one line of what it covers.
+Only use real URLs: bbc.co.uk/bitesize, savemyexams.com, physicsandmathstutor.com, youtube.com, senecalearning.com, or subject-specific sites.
+
+Keep under 280 words total. Everything must be specific to "${topic}" — nothing generic.
+Recent mistakes to address: ${mistakes?.join(', ') || 'none logged'}`
+  return callGemini(prompt)
 }
 
 export async function analyseWeaknesses(paperAttempts, subject) {
