@@ -6,6 +6,7 @@ import { collection, getDocs, doc, updateDoc, deleteDoc, setDoc, serverTimestamp
 import { db } from '../firebase'
 import { awardXP } from '../utils/firestore'
 import { getTopicAdvice } from '../utils/ai'
+import AIOutput from '../components/AIOutput'
 import { getAllTopicsFlat } from '../data/topics'
 import { SUBJECT_COLOURS } from '../data/subjects'
 import toast from 'react-hot-toast'
@@ -345,9 +346,15 @@ export default function Topics() {
                       </div>
                     </div>
                     {aiAdvice[t.id]&&(
-                      <div style={{marginTop:10,padding:10,background:'rgba(124,58,237,0.08)',borderRadius:'var(--radius-md)',fontSize:'0.82rem',lineHeight:1.7}}>
-                        <div style={{fontWeight:600,marginBottom:6,color:'var(--accent-light)',display:'flex',alignItems:'center',gap:5}}><Zap size={12}/> AI Advice — {t.name}</div>
-                        <TopicAdviceRenderer text={aiAdvice[t.id]}/>
+                      <div style={{marginTop:10}}>
+                        <AIOutput
+                          text={aiAdvice[t.id]}
+                          label={`AI Advice — ${t.name}`}
+                          onSummarise={async (text) => {
+                            const res = await getTopicAdvice(selSubj, t.name + ' (brief summary)', 3, [])
+                            return res.text || res.error
+                          }}
+                        />
                       </div>
                     )}
                   </div>

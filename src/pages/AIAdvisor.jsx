@@ -738,12 +738,14 @@ Keep under 350 words. Be specific to ${techSubj}, never generic.`
 
           {techLoading && <div className="loading-center"><div className="spinner"/></div>}
           {techResult && (
-            <div className="card">
-              <h4 style={{marginBottom:12}}>Subject-specific techniques for {techSubj}</h4>
-              <div style={{fontSize:'0.875rem',lineHeight:1.8}}>
-                {renderMD(techResult)}
-              </div>
-            </div>
+            <AIOutput
+              text={techResult}
+              label={`Revision Techniques — ${techSubj}`}
+              onSummarise={async (t) => {
+                const res = await callGemini(`Summarise this revision techniques guide in 3 bullet points:\n${t}`)
+                return res.text || res.error
+              }}
+            />
           )}
         </div>
       )}

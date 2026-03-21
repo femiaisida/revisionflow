@@ -24,6 +24,7 @@ export default function Settings() {
   })
   const [subjects, setSubjects] = useState(profile?.subjects||[])
   const [newSubj, setNewSubj] = useState({ name:'', board:'AQA', tier:'Higher', currentGrade:'', targetGrade:'9' })
+  const [newSubjLevel, setNewSubjLevel] = useState('same') // 'same' | 'GCSE' | 'A-Level'
   const [newQualFlow, setNewQualFlow] = useState(null)
 
   const [qual, setQual] = useState(profile?.qualification || 'GCSE')
@@ -31,6 +32,9 @@ export default function Settings() {
   React.useEffect(()=>{ if(profile?.qualification) setQual(profile.qualification) },[profile?.qualification])
 
   const subjectList = getSubjectList(qual)
+  // For adding individual subjects: allow picking level independently
+  const addSubjQual = newSubjLevel === 'same' ? qual : newSubjLevel
+  const addSubjList = getSubjectList(addSubjQual)
   function getGradeOpts(subjName) { return getGradeOptions(subjName, qual) }
 
   async function saveProfile() {
@@ -51,8 +55,11 @@ export default function Settings() {
 
   function addSubj() {
     if (!newSubj.name) return
-    setSubjects(s=>[...s,{...newSubj,id:Date.now().toString()}])
-    setNewSubj({ name:'', board:'AQA', tier:'Higher', currentGrade:'', targetGrade:'9' })
+    const level = addSubjQual
+    const gradeOpts = getGradeOptions(newSubj.name, level, newSubj.tier)
+    const targetGrade = gradeOpts.includes(newSubj.targetGrade) ? newSubj.targetGrade : gradeOpts[0]
+    setSubjects(s=>[...s,{...newSubj, targetGrade, id:Date.now().toString()}])
+    setNewSubj({ name:'', board:'AQA', tier:'Higher', currentGrade:'', targetGrade: gradeOpts[0] || '9' })
   }
 
   async function handleDeleteAccount() {
@@ -128,8 +135,24 @@ export default function Settings() {
           </div>
           {/* Add */}
           <div style={{padding:12,background:'var(--bg-surface)',borderRadius:'var(--radius-md)',border:'1px solid var(--border)',display:'flex',flexDirection:'column',gap:10}}>
+            <div style={{display:'flex',gap:6,marginBottom:4}}>
+              <span style={{fontSize:'0.78rem',color:'var(--text-muted)',alignSelf:'center'}}>Level:</span>
+              {[
+                {v:'same', label: qual==='A-Level'?'A-Level':'GCSE'},
+                {v:'GCSE', label:'GCSE'},
+                {v:'A-Level', label:'A-Level'},
+              ].filter((x,i,arr)=>arr.findIndex(y=>y.label===x.label)===i).map(({v,label})=>(
+                <button key={v} onClick={()=>setNewSubjLevel(v)}
+                  style={{padding:'3px 10px',borderRadius:6,fontSize:'0.78rem',fontWeight:600,cursor:'pointer',
+                    border:`1px solid ${newSubjLevel===v?'var(--accent)':'var(--border)'}`,
+                    background:newSubjLevel===v?'rgba(124,58,237,0.15)':'transparent',
+                    color:newSubjLevel===v?'var(--accent-light)':'var(--text-muted)'}}>
+                  {label}
+                </button>
+              ))}
+            </div>
             <div className="grid-2" style={{gap:8}}>
-              <select className="select" value={newSubj.name} onChange={e=>setNewSubj(s=>({...s,name:e.target.value}))}><option value="">Subject…</option>{subjectList.map(s=><option key={s} value={s}>{s}</option>)}</select>
+              <select className="select" value={newSubj.name} onChange={e=>setNewSubj(s=>({...s,name:e.target.value}))}><option value="">Subject…</option>{addSubjList.map(s=><option key={s} value={s}>{s}</option>)}</select>
               <select className="select" value={newSubj.board} onChange={e=>setNewSubj(s=>({...s,board:e.target.value}))}>{EXAM_BOARDS.map(b=><option key={b} value={b}>{b}</option>)}</select>
               <select className="select" value={newSubj.tier} onChange={e=>setNewSubj(s=>({...s,tier:e.target.value}))}>
                 <option value="Higher">Higher</option>
@@ -138,17 +161,17 @@ export default function Settings() {
               </select>
             </div>
             <div style={{display:'flex',gap:8,alignItems:'center'}}>
-                <label style={{fontSize:'0.78rem',color:'var(--text-muted)'}}>Current:</label>
-                <select className="select" style={{flex:1}} value={newSubj.currentGrade} onChange={e=>setNewSubj(s=>({...s,currentGrade:e.target.value}))}>
-                  <option value="">--</option>
-                  {getGradeOptions(newSubj.name,qual,newSubj.tier).map(g=><option key={g} value={g}>{g}</option>)}
-                </select>
-                <label style={{fontSize:'0.78rem',color:'var(--text-muted)'}}>Target:</label>
-                <select className="select" style={{flex:1}} value={newSubj.targetGrade} onChange={e=>setNewSubj(s=>({...s,targetGrade:e.target.value}))}>
-                  {getGradeOptions(newSubj.name,qual,newSubj.tier).map(g=><option key={g} value={g}>{g}</option>)}
-                </select>
-              </div>
-              <button className="btn btn-secondary btn-sm" onClick={addSubj} disabled={!newSubj.name}><Plus size={14}/> Add subject</button>
+              <label style={{fontSize:'0.78rem',color:'var(--text-muted)'}}>Current:</label>
+              <select className="select" style={{flex:1}} value={newSubj.currentGrade} onChange={e=>setNewSubj(s=>({...s,currentGrade:e.target.value}))}>
+                <option value="">--</option>
+                {getGradeOptions(newSubj.name,addSubjQual,newSubj.tier).map(g=><option key={g} value={g}>{g}</option>)}
+              </select>
+              <label style={{fontSize:'0.78rem',color:'var(--text-muted)'}}>Target:</label>
+              <select className="select" style={{flex:1}} value={newSubj.targetGrade} onChange={e=>setNewSubj(s=>({...s,targetGrade:e.target.value}))}>
+                {getGradeOptions(newSubj.name,addSubjQual,newSubj.tier).map(g=><option key={g} value={g}>{g}</option>)}
+              </select>
+            </div>
+            <button className="btn btn-secondary btn-sm" onClick={addSubj} disabled={!newSubj.name}><Plus size={14}/> Add subject</button>
           </div>
           <button className="btn btn-primary" onClick={saveSubjects} disabled={saving}>{saving?'Saving…':'Save subjects'}</button>
         </div>

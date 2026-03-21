@@ -30,11 +30,11 @@ export default function Onboarding() {
   const [qual, setQual] = useState('GCSE')
   const [subjects, setSubjects] = useState([])
   const [newSubj, setNewSubj] = useState({ name:'', board:'AQA', tier:'N/A', currentGrade:'', targetGrade:'' })
-  const [globalTarget, setGlobalTarget] = useState('9')
+  const [globalTarget, setGlobalTarget] = useState(() => getGradeOptions('','GCSE','N/A')[0] || '9')
   // Keep globalTarget valid when qual changes
   React.useEffect(() => {
     const opts = getGradeOptions('', qual, 'N/A')
-    if (!opts.includes(globalTarget)) setGlobalTarget(opts[0] || '9')
+    setGlobalTarget(opts[0] || '9')
   }, [qual])
   // gradeOptions is now computed per-subject via getGradeOptions
   const [availability, setAvailability] = useState(
@@ -157,19 +157,38 @@ export default function Onboarding() {
           {/* Step 1 — Qualification */}
           {step===1 && (
             <div className="fade-in">
-              <h3 style={{marginBottom:8}}>What are you studying?</h3>
-              <p style={{marginBottom:16}}>Sets the right subjects, topics, and grade boundaries.</p>
+              <h3 style={{marginBottom:4}}>What are you studying?</h3>
+              <p style={{marginBottom:16,fontSize:'0.85rem',color:'var(--text-secondary)'}}>Choose one. You can add individual subjects from the other level in Settings later.</p>
+
+              <div style={{fontSize:'0.75rem',fontWeight:700,color:'var(--text-muted)',letterSpacing:'0.05em',textTransform:'uppercase',marginBottom:8}}>Secondary school (Year 10–11)</div>
               {[
-                {id:'GCSE',      label:'GCSE',                      desc:'Grades 9–1 · UK secondary school'},
-                {id:'A-Level',   label:'A-Level',                   desc:'Grades A*–E · Sixth form / college'},
-                {id:'Both',      label:'GCSE + A-Level',            desc:'Studying both simultaneously'},
-                {id:'BTEC-L2',   label:'BTEC Tech Award (Level 2)', desc:'Grades D*–U · Taken alongside GCSEs'},
-                {id:'BTEC-L3',   label:'BTEC National (Level 3)',   desc:'Grades D*D*–U · Sixth form / college'},
+                {id:'GCSE',    label:'GCSE',                      desc:'Grades 9–1 · Most common UK qualification at 16'},
+                {id:'BTEC-L2', label:'BTEC Tech Award (Level 2)', desc:'Grades D*–P · Vocational, taken alongside GCSEs'},
               ].map(({id:q,label,desc})=>(
-                <button key={q} onClick={()=>setQual(q)} className="card"
+                <button key={q} onClick={()=>setQual(q)}
                   style={{width:'100%',textAlign:'left',cursor:'pointer',marginBottom:8,
                     border:`2px solid ${qual===q?'var(--accent)':'var(--border)'}`,
                     background:qual===q?'rgba(124,58,237,0.1)':'var(--bg-card)',
+                    borderRadius:'var(--radius-md)',
+                    padding:'14px 16px',display:'flex',alignItems:'center',justifyContent:'space-between'}}>
+                  <div>
+                    <div style={{fontWeight:600}}>{label}</div>
+                    <div style={{fontSize:'0.8rem',color:'var(--text-muted)'}}>{desc}</div>
+                  </div>
+                  {qual===q&&<Check size={16} color="var(--accent-light)"/>}
+                </button>
+              ))}
+
+              <div style={{fontSize:'0.75rem',fontWeight:700,color:'var(--text-muted)',letterSpacing:'0.05em',textTransform:'uppercase',marginBottom:8,marginTop:16}}>Sixth form / college (Year 12–13)</div>
+              {[
+                {id:'A-Level', label:'A-Level',                   desc:'Grades A*–E · University entrance qualification'},
+                {id:'BTEC-L3', label:'BTEC National (Level 3)',   desc:'Grades D*D*–U · Vocational, equivalent to A-Levels'},
+              ].map(({id:q,label,desc})=>(
+                <button key={q} onClick={()=>setQual(q)}
+                  style={{width:'100%',textAlign:'left',cursor:'pointer',marginBottom:8,
+                    border:`2px solid ${qual===q?'var(--accent)':'var(--border)'}`,
+                    background:qual===q?'rgba(124,58,237,0.1)':'var(--bg-card)',
+                    borderRadius:'var(--radius-md)',
                     padding:'14px 16px',display:'flex',alignItems:'center',justifyContent:'space-between'}}>
                   <div>
                     <div style={{fontWeight:600}}>{label}</div>
