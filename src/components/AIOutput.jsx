@@ -120,7 +120,7 @@ export default function AIOutput({ text, onSummarise, loading = false, label = '
           <>
             {onSummarise && (
               <button onClick={handleSummarise} style={iconBtn(showSummary ? 'var(--accent)' : undefined)} title="Summarise">
-                📋 {showSummary ? 'Hide Summary' : 'Summarise'}
+                ✦ {showSummary ? 'Hide' : 'TL;DR'}
               </button>
             )}
             <button onClick={handleCopy} style={iconBtn()} title="Copy">

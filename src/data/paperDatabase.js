@@ -1205,23 +1205,42 @@ const TIERED = ['Mathematics','Further Mathematics','Biology','Chemistry','Physi
   'Combined Science','German','French','Spanish','Italian','Mandarin Chinese',
   'Welsh Second Language','Polish','Urdu']
 
+// Normalise subject name for boundary lookups (e.g. "Biology A" → "Biology")
+function normSubj(subject) {
+  return subject
+    .replace(/ A$/, '').replace(/ B$/, '')
+    .replace(/ \(Advancing Biology\)/, '')
+    .replace(/ \(Salters\)/, '')
+    .replace(/ A \(/, ' (')
+    .replace(/\s+A-Level$/, '')
+    .trim()
+}
+
 export function getBoundaries(board, subject, tier, year, level) {
   const yearData = GRADE_BOUNDARIES[year] || GRADE_BOUNDARIES[2024]
   if (!yearData) return null
 
-  const isTiered = TIERED.includes(subject)
+  const norm = normSubj(subject)
+  const isTiered = TIERED.includes(subject) || TIERED.includes(norm)
   const isALevel = level === 'A-Level'
-  const suffix   = isALevel ? '-N/A-Alevel' : ''
 
   if (isALevel) {
-    return yearData[`${board}-${subject}-N/A-Alevel`] || null
+    // Try exact first, then normalised
+    return yearData[`${board}-${subject}-N/A-Alevel`]
+        || yearData[`${board}-${norm}-N/A-Alevel`]
+        || null
   }
 
   if (isTiered && tier && tier !== 'N/A') {
-    const k = `${board}-${subject}-${tier}`
-    if (yearData[k]) return yearData[k]
+    return yearData[`${board}-${subject}-${tier}`]
+        || yearData[`${board}-${norm}-${tier}`]
+        || yearData[`${board}-${subject}`]
+        || yearData[`${board}-${norm}`]
+        || null
   }
-  return yearData[`${board}-${subject}`] || null
+  return yearData[`${board}-${subject}`]
+      || yearData[`${board}-${norm}`]
+      || null
 }
 
 export function getBoundariesForPaper(board, subject, tier, year, paper, level) {

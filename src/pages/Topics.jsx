@@ -351,7 +351,7 @@ export default function Topics() {
                           text={aiAdvice[t.id]}
                           label={`AI Advice — ${t.name}`}
                           onSummarise={async (text) => {
-                            const res = await getTopicAdvice(selSubj, t.name + ' (brief summary)', 3, [])
+                            const res = await getTopicAdvice(selSubj, t.name, 3, ['SUMMARY_MODE'])
                             return res.text || res.error
                           }}
                         />

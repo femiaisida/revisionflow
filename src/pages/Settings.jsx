@@ -24,7 +24,7 @@ export default function Settings() {
   })
   const [subjects, setSubjects] = useState(profile?.subjects||[])
   const [newSubj, setNewSubj] = useState({ name:'', board:'AQA', tier:'Higher', currentGrade:'', targetGrade:'9' })
-  const [newSubjLevel, setNewSubjLevel] = useState('same') // 'same' | 'GCSE' | 'A-Level'
+  const [newSubjLevel, setNewSubjLevel] = useState(null) // null = use profile qual
   const [newQualFlow, setNewQualFlow] = useState(null)
 
   const [qual, setQual] = useState(profile?.qualification || 'GCSE')
@@ -33,7 +33,7 @@ export default function Settings() {
 
   const subjectList = getSubjectList(qual)
   // For adding individual subjects: allow picking level independently
-  const addSubjQual = newSubjLevel === 'same' ? qual : newSubjLevel
+  const addSubjQual = newSubjLevel || qual
   const addSubjList = getSubjectList(addSubjQual)
   function getGradeOpts(subjName) { return getGradeOptions(subjName, qual) }
 
@@ -135,18 +135,19 @@ export default function Settings() {
           </div>
           {/* Add */}
           <div style={{padding:12,background:'var(--bg-surface)',borderRadius:'var(--radius-md)',border:'1px solid var(--border)',display:'flex',flexDirection:'column',gap:10}}>
-            <div style={{display:'flex',gap:6,marginBottom:4}}>
+            <div style={{display:'flex',gap:6,marginBottom:4,flexWrap:'wrap'}}>
               <span style={{fontSize:'0.78rem',color:'var(--text-muted)',alignSelf:'center'}}>Level:</span>
               {[
-                {v:'same', label: qual==='A-Level'?'A-Level':'GCSE'},
-                {v:'GCSE', label:'GCSE'},
-                {v:'A-Level', label:'A-Level'},
-              ].filter((x,i,arr)=>arr.findIndex(y=>y.label===x.label)===i).map(({v,label})=>(
+                {v:'GCSE',     label:'GCSE'},
+                {v:'A-Level',  label:'A-Level'},
+                {v:'BTEC-L2',  label:'BTEC (L2)'},
+                {v:'BTEC-L3',  label:'BTEC (L3)'},
+              ].map(({v,label})=>(
                 <button key={v} onClick={()=>setNewSubjLevel(v)}
                   style={{padding:'3px 10px',borderRadius:6,fontSize:'0.78rem',fontWeight:600,cursor:'pointer',
-                    border:`1px solid ${newSubjLevel===v?'var(--accent)':'var(--border)'}`,
-                    background:newSubjLevel===v?'rgba(124,58,237,0.15)':'transparent',
-                    color:newSubjLevel===v?'var(--accent-light)':'var(--text-muted)'}}>
+                    border:`1px solid ${(newSubjLevel||qual)===v?'var(--accent)':'var(--border)'}`,
+                    background:(newSubjLevel||qual)===v?'rgba(124,58,237,0.15)':'transparent',
+                    color:(newSubjLevel||qual)===v?'var(--accent-light)':'var(--text-muted)'}}>
                   {label}
                 </button>
               ))}

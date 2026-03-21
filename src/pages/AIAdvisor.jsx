@@ -466,7 +466,7 @@ Keep under 350 words. Be specific to ${techSubj}, never generic.`
                 text={markResult} 
                 label="Marking Feedback" 
                 onSummarise={async (text) => {
-                  const prompt = `Summarise this marking feedback in exactly 2-3 plain sentences. State the mark, the single best thing done, and the single most important thing to improve. No bullet points, no markdown formatting, just plain sentences:\n\n${text}`
+                  const prompt = `3 words for mark achieved, 1 sentence on best strength, 1 sentence on most important fix. No markdown, no preamble:\n\n${text}`
                   const res = await callGemini(prompt)
                   return res.text || res.error || 'Could not summarise.'
                 }}
@@ -663,6 +663,21 @@ Keep under 350 words. Be specific to ${techSubj}, never generic.`
             </div>
           </div>
 
+          {/* AI result appears at TOP once generated */}
+          {techLoading && <div className="loading-center" style={{marginBottom:16}}><div className="spinner"/></div>}
+          {techResult && (
+            <div style={{marginBottom:16}}>
+              <AIOutput
+                text={techResult}
+                label={`Revision Techniques — ${techSubj}`}
+                onSummarise={async (t) => {
+                  const res = await callGemini(`Give a 3-bullet summary of these revision techniques. Each bullet max 15 words. No preamble:\n${t}`)
+                  return res.text || res.error
+                }}
+              />
+            </div>
+          )}
+
           {/* Static evidence-based techniques overview — always visible */}
           <div className="card" style={{marginBottom:16}}>
             <h4 style={{marginBottom:12}}>The 6 most effective revision techniques (research-backed)</h4>
@@ -736,17 +751,7 @@ Keep under 350 words. Be specific to ${techSubj}, never generic.`
             </div>
           </div>
 
-          {techLoading && <div className="loading-center"><div className="spinner"/></div>}
-          {techResult && (
-            <AIOutput
-              text={techResult}
-              label={`Revision Techniques — ${techSubj}`}
-              onSummarise={async (t) => {
-                const res = await callGemini(`Summarise this revision techniques guide in 3 bullet points:\n${t}`)
-                return res.text || res.error
-              }}
-            />
-          )}
+
         </div>
       )}
 
