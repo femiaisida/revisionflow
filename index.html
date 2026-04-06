@@ -2,19 +2,69 @@
 <html lang="en">
   <head>
     <meta charset="UTF-8" />
+
+    <!-- Favicon & PWA -->
     <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
     <link rel="apple-touch-icon" sizes="180x180" href="/icons/apple-touch-icon.png" />
+    <link rel="manifest" href="/manifest.json" />
+
+    <!-- Viewport & theme -->
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <meta name="theme-color" content="#7c3aed" />
-    <meta name="description" content="RevisionFlow — AI-powered GCSE & A-Level revision tracker with smart calendars, progress analytics, and social features." />
-    <link rel="manifest" href="/manifest.json" />
+
+    <!-- Primary SEO -->
+    <title>RevisionFlow — AI-Powered GCSE & A-Level Revision Tracker</title>
+    <meta name="description" content="RevisionFlow is a free AI-powered revision tracker for GCSE and A-Level students. Track topics, log past papers, set exam countdowns and get personalised study plans. Supports AQA, Edexcel, OCR, WJEC, Eduqas and CCEA." />
+    <meta name="keywords" content="GCSE revision tracker, A-Level revision tracker, revision app, GCSE revision planner, AQA revision, Edexcel revision, OCR revision, past paper tracker, AI revision, UK exam revision, free revision tool, RevisionFlow" />
+    <meta name="author" content="RevisionFlow" />
+    <link rel="canonical" href="https://revisionflow.netlify.app/" />
+
+    <!-- Open Graph -->
+    <meta property="og:type" content="website" />
+    <meta property="og:url" content="https://revisionflow.netlify.app/" />
+    <meta property="og:title" content="RevisionFlow — AI-Powered GCSE & A-Level Revision Tracker" />
+    <meta property="og:description" content="Free AI revision tracker for GCSE and A-Level students. Track topics, past papers and exam dates. Supports all major UK exam boards." />
+    <meta property="og:image" content="https://revisionflow.netlify.app/icons/icon-512.png" />
+    <meta property="og:site_name" content="RevisionFlow" />
+    <meta property="og:locale" content="en_GB" />
+
+    <!-- Twitter / X -->
+    <meta name="twitter:card" content="summary" />
+    <meta name="twitter:title" content="RevisionFlow — AI-Powered GCSE & A-Level Revision Tracker" />
+    <meta name="twitter:description" content="Free AI revision tracker for GCSE and A-Level students. Track topics, past papers and exam dates." />
+    <meta name="twitter:image" content="https://revisionflow.netlify.app/icons/icon-512.png" />
+
+    <!-- Fonts -->
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet" />
-    <title>RevisionFlow</title>
   </head>
   <body>
     <div id="root"></div>
     <script type="module" src="/src/main.jsx"></script>
+
+    <!-- Structured data for Google -->
+    <script type="application/ld+json">
+    {
+      "@context": "https://schema.org",
+      "@type": "WebApplication",
+      "name": "RevisionFlow",
+      "url": "https://revisionflow.netlify.app",
+      "description": "AI-powered GCSE and A-Level revision tracker for UK students. Track topics, log past papers, get AI study plans and set exam countdowns. Supports AQA, Edexcel, OCR, WJEC, Eduqas and CCEA.",
+      "applicationCategory": "EducationApplication",
+      "operatingSystem": "Web, iOS, Android",
+      "offers": {
+        "@type": "Offer",
+        "price": "0",
+        "priceCurrency": "GBP"
+      },
+      "audience": {
+        "@type": "EducationalAudience",
+        "educationalRole": "student"
+      },
+      "inLanguage": "en-GB",
+      "keywords": "GCSE revision, A-Level revision, revision tracker, past paper tracker, AI revision, AQA, Edexcel, OCR"
+    }
+    </script>
   </body>
 </html>
