@@ -4,6 +4,7 @@ import { Outlet, NavLink, useNavigate } from 'react-router-dom'
 import { useAuth } from '../context/AuthContext'
 import { useTheme } from '../context/ThemeContext'
 import PWAInstallBanner from './PWAInstallBanner'
+import TopicUpdateBanner from './TopicUpdateBanner'
 import {
   LayoutDashboard, Calendar, FileText, Brain, AlertCircle,
   CheckSquare, Users, Trophy, User, MessageSquare, BookOpen,
