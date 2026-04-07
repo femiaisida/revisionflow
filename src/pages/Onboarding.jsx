@@ -31,31 +31,24 @@ export default function Onboarding() {
   const [subjects, setSubjects] = useState([])
   const [newSubj, setNewSubj] = useState({ name:'', board:'AQA', tier:'N/A', currentGrade:'', targetGrade:'' })
   const [globalTarget, setGlobalTarget] = useState(() => getGradeOptions('','GCSE','N/A')[0] || '9')
-  // Keep globalTarget valid when qual changes
+
   React.useEffect(() => {
     const opts = getGradeOptions('', qual, 'N/A')
     setGlobalTarget(opts[0] || '9')
   }, [qual])
-  // gradeOptions is now computed per-subject via getGradeOptions
+
   const [availability, setAvailability] = useState(
     Object.fromEntries(DAYS.map(d => [d, { enabled: d!=='Sunday', startTime: DEFAULT_TIMES[d], endTime: '21:00' }]))
   )
   const [username, setUsername] = useState('')
 
-  const subjectList  = qual==='A-Level' ? ALEVEL_SUBJECTS : qual==='BTEC-L2' ? BTEC_L2_SUBJECTS : qual==='BTEC-L3' ? BTEC_L3_SUBJECTS : GCSE_SUBJECTS
+  // Full subject list for the selected qualification — no filtering by exam dates.
+  // Exam dates auto-fill where available; subjects without dates still work fine.
+  const subjectList = qual==='A-Level' ? ALEVEL_SUBJECTS
+    : qual==='BTEC-L2' ? BTEC_L2_SUBJECTS
+    : qual==='BTEC-L3' ? BTEC_L3_SUBJECTS
+    : GCSE_SUBJECTS
 
-  // Filter subjects to only those with exam dates for the selected board
-  const subjectsForBoard = React.useMemo(() => {
-    if (qual === 'BTEC-L2' || qual === 'BTEC-L3') return subjectList
-    const level = qual === 'A-Level' ? 'A-Level' : 'GCSE'
-    const withDates = new Set(
-      EXAM_DATES_2026
-        .filter(e => e.board === newSubj.board && e.level === level)
-        .map(e => e.subject)
-    )
-    if (withDates.size === 0) return subjectList // fallback to all if board unknown
-    return subjectList.filter(s => withDates.has(s))
-  }, [newSubj.board, qual, subjectList])
   const gradeOptions = getGradeOptions(newSubj.name, qual, newSubj.tier)
   const globalGradeOptions = getGradeOptions('', qual, 'N/A')
 
@@ -223,7 +216,7 @@ export default function Onboarding() {
                     <label className="label">Subject</label>
                     <select className="select" value={newSubj.name} onChange={e=>onSubjName(e.target.value)}>
                       <option value="">Select…</option>
-                      {subjectsForBoard.map(s=><option key={s} value={s}>{s}</option>)}
+                      {subjectList.map(s=><option key={s} value={s}>{s}</option>)}
                     </select>
                   </div>
                   <div>
