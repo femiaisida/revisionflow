@@ -1,15 +1,10 @@
 // src/utils/ai.js
-// Primary: Mistral AI (mistral-small-latest, free tier, no regional restrictions)
-// Fallback: Google Gemini 2.5 Flash (if Mistral key missing or fails)
-//
-// Mistral free tier: https://console.mistral.ai
-// Gemini free tier:  https://aistudio.google.com/app/apikey
+// AI provider: Mistral AI (mistral-small-latest)
+// Free tier: https://console.mistral.ai
+// Add VITE_MISTRAL_API_KEY to your Netlify environment variables.
 
 const MISTRAL_KEY = import.meta.env.VITE_MISTRAL_API_KEY
-const GEMINI_KEY  = import.meta.env.VITE_GEMINI_API_KEY
-
 const MISTRAL_URL = 'https://api.mistral.ai/v1/chat/completions'
-const GEMINI_URL  = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${GEMINI_KEY}`
 
 const SYSTEM = `You are RevisionFlow's AI tutor — an expert on UK GCSE and A-Level revision.
 You give specific, practical, encouraging advice tailored to UK students.
@@ -25,8 +20,10 @@ Always reference specific free resources where relevant:
 - All subjects: Seneca, PMT, SaveMyExams`
 
 // ── Core call function ────────────────────────────────────────────────────────
-async function callMistral(prompt, systemPrompt = SYSTEM, maxTokens = 8192) {
-  if (!MISTRAL_KEY) return null  // Signal to try fallback
+async function callAI(prompt, systemPrompt = SYSTEM, maxTokens = 8192) {
+  if (!MISTRAL_KEY) {
+    return { error: 'No AI API key configured. Add VITE_MISTRAL_API_KEY to your Netlify environment variables.' }
+  }
 
   try {
     const res = await fetch(MISTRAL_URL, {
@@ -36,61 +33,30 @@ async function callMistral(prompt, systemPrompt = SYSTEM, maxTokens = 8192) {
         'Authorization': `Bearer ${MISTRAL_KEY}`,
       },
       body: JSON.stringify({
-        model:       'mistral-small-latest',
+        model:      'mistral-small-latest',
         messages: [
-          { role: 'system',  content: systemPrompt },
-          { role: 'user',    content: prompt },
+          { role: 'system', content: systemPrompt },
+          { role: 'user',   content: prompt },
         ],
-        temperature:  0.7,
-        max_tokens:   maxTokens,
+        temperature: 0.7,
+        max_tokens:  maxTokens,
       }),
     })
 
     if (!res.ok) {
       const err = await res.json().catch(() => ({}))
-      console.warn('[AI] Mistral error:', res.status, err)
-      return null  // Try fallback for any error (including 429 rate limit)
+      console.error('[AI] Mistral error:', res.status, err)
+      return { error: `AI request failed (${res.status}). Please try again shortly.` }
     }
 
     const data = await res.json()
     const text = data.choices?.[0]?.message?.content || ''
-    if (!text) return null
-    console.log('[AI] Provider: Mistral (mistral-small-latest)')
+    if (!text) return { error: 'AI returned an empty response. Please try again.' }
     return { text, provider: 'mistral' }
-  } catch {
-    return null  // Network error — try fallback
-  }
-}
-
-async function callGemini(prompt, systemPrompt = SYSTEM, maxTokens = 8192) {
-  if (!GEMINI_KEY) return { error: 'No AI API key configured. Add VITE_MISTRAL_API_KEY to your environment variables.' }
-
-  try {
-    const res = await fetch(GEMINI_URL, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        contents: [{ parts: [{ text: `${systemPrompt}\n\n${prompt}` }] }],
-        generationConfig: { temperature: 0.7, maxOutputTokens: maxTokens },
-      }),
-    })
-
-    const data = await res.json()
-    if (data.error) return { error: data.error.message }
-    const text = data.candidates?.[0]?.content?.parts?.[0]?.text || ''
-    console.log('[AI] Provider: Gemini 2.5 Flash (fallback)')
-    return { text, provider: 'gemini' }
   } catch (e) {
-    return { error: e.message }
+    console.error('[AI] Network error:', e)
+    return { error: 'Could not reach the AI service. Check your internet connection and try again.' }
   }
-}
-
-// Primary → fallback wrapper
-async function callAI(prompt, systemPrompt = SYSTEM, maxTokens = 8192) {
-  const mistralResult = await callMistral(prompt, systemPrompt, maxTokens)
-  if (mistralResult !== null) return mistralResult
-  // Mistral unavailable or not configured — use Gemini
-  return callGemini(prompt, systemPrompt, maxTokens)
 }
 
 // ── Exported functions ────────────────────────────────────────────────────────
@@ -98,7 +64,6 @@ async function callAI(prompt, systemPrompt = SYSTEM, maxTokens = 8192) {
 export async function generateStudyPlan(userData) {
   const { subjects, examDates, weakTopics, availableHours, preferences, weeksUntilFirst, firstExamDate, lastExamDate } = userData
 
-  // Calculate actual revision window
   const weeks = weeksUntilFirst || 12
   const windowDesc = firstExamDate && lastExamDate
     ? `from now until ${lastExamDate} (first exam: ${firstExamDate}, approximately ${weeks} weeks away)`
@@ -156,7 +121,7 @@ Only use real URLs: bbc.co.uk/bitesize, savemyexams.com, physicsandmathstutor.co
 
 Keep under 280 words total. Everything must be specific to "${topic}" — nothing generic.
 Recent mistakes to address: ${mistakes?.join(', ') || 'none logged'}`
-  return callGemini(prompt)
+  return callAI(prompt)
 }
 
 export async function analyseWeaknesses(paperAttempts, subject) {
@@ -227,7 +192,7 @@ export async function chatWithAI(messages, userContext) {
     ? `Student context: studying ${userContext.subjects.map(s => s.name).join(', ')}.`
     : ''
   const conversationStr = messages
-    .slice(-10)  // last 10 messages to stay within token limits
+    .slice(-10)
     .map(m => `${m.role === 'user' ? 'Student' : 'AI'}: ${m.content}`)
     .join('\n')
   const prompt = `${contextStr}\n\nConversation:\n${conversationStr}\n\nAI:`
