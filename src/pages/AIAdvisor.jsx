@@ -5,7 +5,17 @@ import { buildAIContext, getSystemPrompt } from '../utils/buildAIContext'
 import { usePriority } from '../context/PriorityContext'
 import { collection, getDocs, doc, getDoc, setDoc, serverTimestamp } from 'firebase/firestore'
 import { db } from '../firebase'
-import { chatWithAI, getResourceRecommendations, generateStudyPlan, analyseWeaknesses } from '../utils/ai'
+import {
+  chatWithAI,
+  getResourceRecommendations,
+  generateStudyPlan,
+  analyseWeaknesses,
+  getTopicAdvice,
+  predictGrade,
+  suggestNextTopic,
+  markAnswer,
+  generateFlashcards,
+} from '../utils/ai'
 import { checkAndAwardBadge } from '../utils/firestore'
 import AIOutput from '../components/AIOutput'
 import { SUBJECT_COLOURS } from '../data/subjects'
@@ -19,22 +29,6 @@ const QUICK_PROMPTS = [
   'What are my weakest subjects?',
   'Predict my likely grade',
 ]
-
-const GEMINI_KEY = import.meta.env.VITE_GEMINI_API_KEY
-const GEMINI_URL = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${GEMINI_KEY}`
-
-async function callGemini(prompt) {
-  if (!GEMINI_KEY) return { error: 'No Gemini API key configured.' }
-  try {
-    const res  = await fetch(GEMINI_URL, {
-      method:'POST', headers:{'Content-Type':'application/json'},
-      body: JSON.stringify({ contents:[{parts:[{text:prompt}]}], generationConfig:{temperature:0.7,maxOutputTokens:8192} })
-    })
-    const data = await res.json()
-    if (data.error) return { error: data.error.message }
-    return { text: data.candidates?.[0]?.content?.parts?.[0]?.text||'' }
-  } catch(e) { return { error: e.message } }
-}
 
 export default function AIAdvisor() {
   const { profile, user } = useAuth()
@@ -51,11 +45,9 @@ export default function AIAdvisor() {
     showForm: false, confirmed: false,
     hoursPerWeek: 10, preferences: 'Balanced content and exam practice'
   })
-  const [planCopied,       setPlanCopied]       = useState(false)
-  const [planSaved,        setPlanSaved]        = useState(false)
-  const [showAddCal,       setShowAddCal]       = useState(false)
-  const [addingToCal,      setAddingToCal]      = useState(false)
-  const [calAdded,         setCalAdded]         = useState(false)
+  const [planCopied,  setPlanCopied]  = useState(false)
+  const [calAdded,    setCalAdded]    = useState(false)
+  const [showAddCal,  setShowAddCal]  = useState(false)
 
   // Grade predictor
   const [gradeSubj,   setGradeSubj]   = useState('')
@@ -73,13 +65,15 @@ export default function AIAdvisor() {
   const [markA,       setMarkA]       = useState('')
   const [markResult,  setMarkResult]  = useState('')
   const [markMarks,   setMarkMarks]   = useState('')
-  const [techSubj,    setTechSubj]    = useState('')
-  const [techLoading, setTechLoading] = useState(false)
-  const [techResult,  setTechResult]  = useState('')
   const [markIsPaper, setMarkIsPaper] = useState(false)
   const [markYear,    setMarkYear]    = useState('2024')
   const [markPaperNum,setMarkPaperNum]= useState('1')
   const [markLoad,    setMarkLoad]    = useState(false)
+
+  // Techniques
+  const [techSubj,    setTechSubj]    = useState('')
+  const [techLoading, setTechLoading] = useState(false)
+  const [techResult,  setTechResult]  = useState('')
 
   // Flashcard generator
   const [flashSubj,   setFlashSubj]   = useState('')
@@ -89,13 +83,10 @@ export default function AIAdvisor() {
   const [flashCount,  setFlashCount]  = useState(10)
 
   const bottomRef = useRef()
-
-  // Build context string from real user data
   const [userContext, setUserContext] = useState('')
 
   useEffect(() => { buildContext() }, [profile, user])
 
-  // Load saved study plan from Firestore on mount
   useEffect(() => {
     if (!user) return
     const loadSaved = async () => {
@@ -109,6 +100,7 @@ export default function AIAdvisor() {
     }
     loadSaved()
   }, [user])
+
   useEffect(() => { bottomRef.current?.scrollIntoView({behavior:'smooth'}) }, [messages])
 
   async function buildContext() {
@@ -132,13 +124,12 @@ export default function AIAdvisor() {
         `Level: ${profile.level||1} | XP: ${profile.xp||0} | Streak: ${profile.streak||0} days`,
         `Subjects: ${(profile.subjects||[]).map(s=>`${s.name} (${s.board}, target: ${s.targetGrade||9})`).join(', ')}`,
         `Upcoming exams: ${(profile.examDates||[]).filter(e=>new Date(e.examDate)>new Date()).slice(0,5).map(e=>`${e.subject} P${e.paper} on ${e.examDate}`).join(', ')||'None set'}`,
-        weakTopics.length   ? `Weak topics: ${weakTopics.join(', ')}`             : '',
-        recentPapers.length ? `Recent papers: ${recentPapers.join(', ')}`         : '',
-        topMistakes.length  ? `Unresolved mistakes: ${topMistakes.join(', ')}`    : '',
+        weakTopics.length   ? `Weak topics: ${weakTopics.join(', ')}`          : '',
+        recentPapers.length ? `Recent papers: ${recentPapers.join(', ')}`      : '',
+        topMistakes.length  ? `Unresolved mistakes: ${topMistakes.join(', ')}` : '',
       ].filter(Boolean).join('\n')
       setUserContext(ctx)
 
-      // Set initial greeting with context
       setMessages([{
         role:'assistant',
         content:`Hi ${profile.displayName?.split(' ')[0]}! I'm your AI revision advisor and I can see your full profile.\n\n` +
@@ -158,12 +149,7 @@ export default function AIAdvisor() {
     const newMessages = [...messages,{role:'user',content:msg}]
     setMessages(newMessages)
     setLoading(true)
-
-    const SYSTEM = `You are RevisionFlow's AI tutor for UK GCSE and A-Level students. Be specific, practical and encouraging. Reference free resources (Dr Frost, Cognito, PMT, SaveMyExams, Seneca, Mr Bruff, Craig 'n' Dave). Use the student's real data below to give personalised advice.\n\n${userContext}`
-    const conversation = newMessages.map(m=>`${m.role==='user'?'Student':'AI'}: ${m.content}`).join('\n')
-    const prompt = `${SYSTEM}\n\nConversation:\n${conversation}\n\nAI:`
-
-    const res = await callGemini(prompt)
+    const res = await chatWithAI(newMessages, { subjects: profile?.subjects, context: userContext })
     setMessages(ms=>[...ms,{role:'assistant',content:res.text||res.error||'Sorry, I had trouble responding.'}])
     setLoading(false)
   }
@@ -179,7 +165,6 @@ export default function AIAdvisor() {
   async function handleStudyPlan() {
     if (!planPrefs.confirmed) { setPlanPrefs(p=>({...p, showForm:true})); return }
     setPlanLoading(true)
-    // Calculate weeks until first exam
     const upcomingExams = (profile?.examDates||[])
       .filter(e => new Date(e.examDate) > new Date())
       .sort((a,b) => new Date(a.examDate) - new Date(b.examDate))
@@ -202,7 +187,6 @@ export default function AIAdvisor() {
     setStudyPlan(planText)
     if (res.text && user) {
       await checkAndAwardBadge(user.uid, 'ai_plan').catch(()=>{})
-      // Persist plan to Firestore so it survives page refreshes
       try {
         await setDoc(doc(db, 'users', user.uid, 'aiData', 'studyPlan'), {
           text:         planText,
@@ -218,8 +202,17 @@ export default function AIAdvisor() {
   async function handleGradePredict() {
     if (!gradeSubj) return
     setGradeLoad(true)
-    const prompt = `${userContext}\n\nPredict the likely final GCSE grade for: ${gradeSubj}\nBased on: recent paper scores, topic confidence, and typical grade progression patterns.\nGive: predicted grade range, confidence level, what would push it higher, what risks pushing it lower. Be specific and honest.`
-    const res = await callGemini(prompt)
+    // Fetch paper attempts and topic confidences for this subject
+    let papers = [], topics = []
+    try {
+      const [ps, ts] = await Promise.all([
+        getDocs(collection(db,'users',user.uid,'paperAttempts')),
+        getDocs(collection(db,'users',user.uid,'topics')),
+      ])
+      papers = ps.docs.map(d=>d.data())
+      topics = ts.docs.map(d=>d.data())
+    } catch(e) {}
+    const res = await predictGrade(gradeSubj, papers, topics)
     setGradePred(res.text||res.error||'')
     setGradeLoad(false)
   }
@@ -227,8 +220,12 @@ export default function AIAdvisor() {
   async function handleNextTopic() {
     if (!nextSubj) return
     setNextLoad(true)
-    const prompt = `${userContext}\n\nFor subject: ${nextSubj}\nBased on: confidence ratings, exam proximity, recent mistakes, and revision history — what ONE topic should this student revise next and why? Give specific action steps for the next 45-minute session.`
-    const res = await callGemini(prompt)
+    let topics = [], examDates = profile?.examDates || []
+    try {
+      const ts = await getDocs(collection(db,'users',user.uid,'topics'))
+      topics = ts.docs.map(d=>d.data())
+    } catch(e) {}
+    const res = await suggestNextTopic(nextSubj, topics, examDates)
     setNextTopic(res.text||res.error||'')
     setNextLoad(false)
   }
@@ -237,24 +234,11 @@ export default function AIAdvisor() {
     if (!markSubj||!markQ||!markA) return
     setMarkLoad(true)
     setMarkResult('')
-    const marksCtx = markMarks ? `This question is worth ${markMarks} marks.` : 'Determine the likely mark allocation from the question.'
-    const paperCtx = markIsPaper ? `This is from a real past paper: ${markSubj} ${markYear}, Paper ${markPaperNum}.` : ''
-    const prompt = `You are a strict but fair ${markSubj} GCSE examiner marking a student's response.
-${marksCtx} ${paperCtx}
-
-Question: ${markQ}
-
-Student's answer: ${markA}
-
-Provide a detailed marking breakdown with ALL of the following:
-1. **Mark awarded**: X/${markMarks||'?'} (state clearly)
-2. **Mark scheme points hit**: list each point the student earned
-3. **Mark scheme points missed**: list each point not addressed
-4. **Specific strengths**: what was done well (be specific, quote the student's words)
-5. **Improvements needed**: exactly what to add/change to gain the missing marks
-6. **Model answer elements**: what a full-mark response would include
-7. **Exam technique tip**: one actionable tip for this question type`
-    const res = await callGemini(prompt)
+    // Build an enriched question string with optional context
+    const enrichedQ = markIsPaper
+      ? `[${markSubj} ${markYear} Paper ${markPaperNum}${markMarks ? `, ${markMarks} marks` : ''}] ${markQ}`
+      : markMarks ? `[${markMarks} marks] ${markQ}` : markQ
+    const res = await markAnswer(markSubj, enrichedQ, markA)
     setMarkResult(res.text||res.error||'')
     setMarkLoad(false)
   }
@@ -262,9 +246,7 @@ Provide a detailed marking breakdown with ALL of the following:
   async function handleFlashcards() {
     if (!flashSubj) return
     setFlashLoad(true)
-    const prompt = `Generate ${flashCount} detailed GCSE/A-Level flashcards for: ${flashSubj}${flashTopic?` — ${flashTopic}`:''}\n\nFor each card use exactly this format:\nQ: [clear, specific question]\nA: [concise but complete answer — include key terms, numbers, processes]\n\nFocus on high-frequency exam topics, key definitions, command word questions, and numbers students must know. Generate exactly ${flashCount} cards, no more.`
-    const res = await callGemini(prompt)
-    // Parse cards from response
+    const res = await generateFlashcards(flashSubj, flashTopic, flashCount)
     const text = res.text||''
     const cards = []
     const matches = text.matchAll(/Q:\s*(.+?)\nA:\s*([\s\S]+?)(?=\nQ:|$)/g)
@@ -277,28 +259,8 @@ Provide a detailed marking breakdown with ALL of the following:
     if (!techSubj) return
     setTechLoading(true)
     setTechResult('')
-    const prompt = `You are an expert in evidence-based revision strategies. A GCSE/A-Level student studying ${techSubj} wants to know the most effective revision techniques for this specific subject.
-
-Provide a focused, practical guide with these sections:
-
-**Why students struggle with ${techSubj}**
-One or two sentences on the most common mistakes or difficult parts.
-
-**The best revision techniques for ${techSubj}**
-For each technique: explain WHY it works for this specific subject (not just in general). At least 4 techniques tailored to ${techSubj} — e.g. if it involves calculations, explain how to practise under timed conditions; if it involves essays, explain how to build argument frameworks.
-
-**Spaced repetition schedule for ${techSubj}**
-A concrete weekly schedule — what to review and when.
-
-**Active recall methods specific to ${techSubj}**
-3 concrete self-testing strategies that work for this subject's content.
-
-**What NOT to do**
-2-3 common but ineffective revision habits for ${techSubj}.
-
-Keep under 350 words. Be specific to ${techSubj}, never generic.`
-    const res = await callGemini(prompt)
-    setTechResult(res.text || res.error || 'No response — check your API key')
+    const res = await getTopicAdvice(techSubj, `revision techniques for ${techSubj}`, 3, [])
+    setTechResult(res.text||res.error||'')
     setTechLoading(false)
   }
 
@@ -309,20 +271,20 @@ Keep under 350 words. Be specific to ${techSubj}, never generic.`
       <div style={{display:'flex',alignItems:'center',justifyContent:'space-between',marginBottom:20}}>
         <div>
           <h2 style={{display:'flex',alignItems:'center',gap:9}}><MessageSquare size={22} color="var(--accent-light)"/> AI Revision Advisor</h2>
-          <p style={{fontSize:'0.82rem'}}>Powered by Gemini 2.5 Flash · Sees your full profile · Free</p>
+          <p style={{fontSize:'0.82rem'}}>Powered by Mistral AI · Sees your full profile · Free</p>
         </div>
       </div>
 
       <div className="tabs" style={{marginBottom:20}}>
         {[
-          {k:'chat',    label:'Chat',         icon:MessageSquare},
-          {k:'predict', label:'Grade Predict', icon:Target},
-          {k:'next',    label:'Next Topic',    icon:Brain},
-          {k:'mark',    label:'Mark Answer',   icon:FileText},
-          {k:'flash',   label:'Flashcards',    icon:Star},
-          {k:'resources',label:'Resources',    icon:BookOpen},
-          {k:'plan',    label:'Study Plan',    icon:TrendingUp},
-          {k:'techniques', label:'Techniques',  icon:Lightbulb},
+          {k:'chat',       label:'Chat',          icon:MessageSquare},
+          {k:'predict',    label:'Grade Predict',  icon:Target},
+          {k:'next',       label:'Next Topic',     icon:Brain},
+          {k:'mark',       label:'Mark Answer',    icon:FileText},
+          {k:'flash',      label:'Flashcards',     icon:Star},
+          {k:'resources',  label:'Resources',      icon:BookOpen},
+          {k:'plan',       label:'Study Plan',     icon:TrendingUp},
+          {k:'techniques', label:'Techniques',     icon:Lightbulb},
         ].map(({k,label,icon:Icon})=>(
           <button key={k} className={`tab${tab===k?' active':''}`} onClick={()=>setTab(k)}>
             <Icon size={13}/> {label}
@@ -345,7 +307,7 @@ Keep under 350 words. Be specific to ${techSubj}, never generic.`
                   </div>
                 ) : (
                   <div style={{maxWidth:'88%'}}>
-                    <AIOutput text={m.content} label="AI Reponse" />
+                    <AIOutput text={m.content} label="AI Response" />
                   </div>
                 )}
               </div>
@@ -423,8 +385,6 @@ Keep under 350 words. Be specific to ${techSubj}, never generic.`
               <textarea className="textarea" style={{minHeight:70}} value={markQ} onChange={e=>setMarkQ(e.target.value)} placeholder="Paste or type the exam question here…"/></div>
             <div><label className="label">Your answer</label>
               <textarea className="textarea" style={{minHeight:120}} value={markA} onChange={e=>setMarkA(e.target.value)} placeholder="Write your answer here…"/></div>
-
-            {/* Marks + paper context row */}
             <div className="grid-2" style={{gap:10}}>
               <div>
                 <label className="label">Marks available (optional)</label>
@@ -454,25 +414,12 @@ Keep under 350 words. Be specific to ${techSubj}, never generic.`
                 </div>
               </div>
             )}
-
             <button className="btn btn-primary" onClick={handleMarkAnswer} disabled={markLoad||!markSubj||!markQ||!markA}>
               {markLoad?'Marking…':'Mark my answer'}
             </button>
           </div>
           {markLoad&&<div className="loading-center" style={{marginTop:16}}><div className="spinner"/></div>}
-          {markResult&&(
-            <div style={{marginTop:16}}>
-              <AIOutput 
-                text={markResult} 
-                label="Marking Feedback" 
-                onSummarise={async (text) => {
-                  const prompt = `3 words for mark achieved, 1 sentence on best strength, 1 sentence on most important fix. No markdown, no preamble:\n\n${text}`
-                  const res = await callGemini(prompt)
-                  return res.text || res.error || 'Could not summarise.'
-                }}
-              />
-            </div>
-          )}
+          {markResult&&<div style={{marginTop:16}}><AIOutput text={markResult} label="Marking Feedback" /></div>}
         </div>
       )}
 
@@ -567,7 +514,7 @@ Keep under 350 words. Be specific to ${techSubj}, never generic.`
                     Save .txt
                   </button>
                   <button className="btn btn-secondary btn-sm" onClick={()=>setShowAddCal(true)} disabled={calAdded}>
-                    {calAdded ? <><Check size={13}/> Added to calendar!</> : '+ Add to Calendar'}
+                    {calAdded ? <><Check size={13}/> Added!</> : '+ Add to Calendar'}
                   </button>
                   <button className="btn btn-ghost btn-sm"
                     style={{color:'var(--text-muted)',fontSize:'0.75rem',borderColor:'var(--border)'}}
@@ -585,7 +532,6 @@ Keep under 350 words. Be specific to ${techSubj}, never generic.`
             </div>
           </div>
 
-          {/* Preferences form */}
           {planPrefs.showForm && (
             <div style={{padding:14,background:'rgba(124,58,237,0.06)',border:'1px solid var(--border)',borderRadius:'var(--radius-md)',marginBottom:14}}>
               <h4 style={{marginBottom:12,fontSize:'0.9rem'}}>Customise your plan</h4>
@@ -637,7 +583,6 @@ Keep under 350 words. Be specific to ${techSubj}, never generic.`
         </div>
       )}
 
-      {/* ── Add to Calendar modal ── */}
       {/* ── Revision Techniques ── */}
       {tab==='techniques'&&(
         <div>
@@ -663,74 +608,23 @@ Keep under 350 words. Be specific to ${techSubj}, never generic.`
             </div>
           </div>
 
-          {/* AI result appears at TOP once generated */}
           {techLoading && <div className="loading-center" style={{marginBottom:16}}><div className="spinner"/></div>}
           {techResult && (
             <div style={{marginBottom:16}}>
-              <AIOutput
-                text={techResult}
-                label={`Revision Techniques — ${techSubj}`}
-                onSummarise={async (t) => {
-                  const res = await callGemini(`Give a 3-bullet summary of these revision techniques. Each bullet max 15 words. No preamble:\n${t}`)
-                  return res.text || res.error
-                }}
-              />
+              <AIOutput text={techResult} label={`Revision Techniques — ${techSubj}`} />
             </div>
           )}
 
-          {/* Static evidence-based techniques overview — always visible */}
           <div className="card" style={{marginBottom:16}}>
             <h4 style={{marginBottom:12}}>The 6 most effective revision techniques (research-backed)</h4>
             <div style={{display:'grid',gridTemplateColumns:'repeat(auto-fill,minmax(240px,1fr))',gap:10}}>
               {[
-                {
-                  name:'Retrieval Practice',
-                  rating:'★★★★★',
-                  ratingCol:'var(--success)',
-                  desc:'Testing yourself on content rather than re-reading it. The act of retrieving strengthens memory far more than passive review.',
-                  how:'Use flashcards, practice questions, past papers, or cover your notes and write down everything you remember.',
-                  avoid:'Passive re-reading and highlighting — these feel productive but produce almost no durable learning.',
-                },
-                {
-                  name:'Spaced Repetition',
-                  rating:'★★★★★',
-                  ratingCol:'var(--success)',
-                  desc:'Reviewing material at increasing intervals (e.g. 1 day → 3 days → 7 days → 21 days). Exploits the spacing effect to dramatically reduce forgetting.',
-                  how:'Anki, Quizlet, or RevisionFlow flashcard system. Review topics you found hard more frequently.',
-                  avoid:'Cramming the night before — this produces short-term recall but very little long-term retention.',
-                },
-                {
-                  name:'Interleaving',
-                  rating:'★★★★☆',
-                  ratingCol:'var(--success)',
-                  desc:'Mixing different topics or subjects within a single study session instead of blocking all of one topic before moving on.',
-                  how:'In a 90-minute session, spend 30 min on Topic A, 30 min on Topic B, 30 min on Topic C — not 90 min on Topic A.',
-                  avoid:'Blocked practice (finishing all of one topic before starting another) — feels easier but builds weaker memories.',
-                },
-                {
-                  name:'Elaborative Interrogation',
-                  rating:'★★★★☆',
-                  ratingCol:'var(--warning)',
-                  desc:'Asking "why?" and "how?" about facts rather than accepting them at face value. Forces deeper processing.',
-                  how:'For each fact, ask: "Why is this true? How does this connect to what I already know? What would happen if this were false?"',
-                  avoid:'Learning facts in isolation without connecting them to wider knowledge.',
-                },
-                {
-                  name:'Concrete Examples',
-                  rating:'★★★★☆',
-                  ratingCol:'var(--warning)',
-                  desc:'Grounding abstract concepts in specific, memorable examples. Particularly powerful for concepts in sciences, economics, and law.',
-                  how:'For every abstract principle, write down 2–3 real-world examples. Draw diagrams that show the concept in action.',
-                  avoid:'Abstract definitions without application — hard to recall under exam pressure.',
-                },
-                {
-                  name:'Dual Coding',
-                  rating:'★★★☆☆',
-                  ratingCol:'var(--warning)',
-                  desc:'Combining verbal and visual information — words plus diagrams, charts, or mind maps. Gives your brain two routes to the same knowledge.',
-                  how:'Draw diagrams from memory, create visual summaries, annotate your notes with sketches.',
-                  avoid:'Relying on either text OR visuals alone — the combination is what matters.',
-                },
+                {name:'Retrieval Practice',rating:'★★★★★',ratingCol:'var(--success)',desc:'Testing yourself on content rather than re-reading it. The act of retrieving strengthens memory far more than passive review.',how:'Use flashcards, practice questions, past papers, or cover your notes and write down everything you remember.',avoid:'Passive re-reading and highlighting — these feel productive but produce almost no durable learning.'},
+                {name:'Spaced Repetition',rating:'★★★★★',ratingCol:'var(--success)',desc:'Reviewing material at increasing intervals (e.g. 1 day → 3 days → 7 days → 21 days). Exploits the spacing effect to dramatically reduce forgetting.',how:'Anki, Quizlet, or RevisionFlow flashcard system. Review topics you found hard more frequently.',avoid:'Cramming the night before — this produces short-term recall but very little long-term retention.'},
+                {name:'Interleaving',rating:'★★★★☆',ratingCol:'var(--success)',desc:'Mixing different topics or subjects within a single study session instead of blocking all of one topic before moving on.',how:'In a 90-minute session, spend 30 min on Topic A, 30 min on Topic B, 30 min on Topic C — not 90 min on Topic A.',avoid:'Blocked practice — feels easier but builds weaker memories.'},
+                {name:'Elaborative Interrogation',rating:'★★★★☆',ratingCol:'var(--warning)',desc:'Asking "why?" and "how?" about facts rather than accepting them at face value. Forces deeper processing.',how:'For each fact, ask: "Why is this true? How does this connect to what I already know?"',avoid:'Learning facts in isolation without connecting them to wider knowledge.'},
+                {name:'Concrete Examples',rating:'★★★★☆',ratingCol:'var(--warning)',desc:'Grounding abstract concepts in specific, memorable examples. Particularly powerful for sciences, economics, and law.',how:'For every abstract principle, write down 2–3 real-world examples. Draw diagrams that show the concept in action.',avoid:'Abstract definitions without application — hard to recall under exam pressure.'},
+                {name:'Dual Coding',rating:'★★★☆☆',ratingCol:'var(--warning)',desc:'Combining verbal and visual information — words plus diagrams, charts, or mind maps.',how:'Draw diagrams from memory, create visual summaries, annotate your notes with sketches.',avoid:'Relying on either text OR visuals alone — the combination is what matters.'},
               ].map(t=>(
                 <div key={t.name} style={{padding:'12px 14px',background:'var(--bg-surface)',borderRadius:'var(--radius-md)',border:'1px solid var(--border)'}}>
                   <div style={{display:'flex',justifyContent:'space-between',alignItems:'center',marginBottom:6}}>
@@ -750,8 +644,6 @@ Keep under 350 words. Be specific to ${techSubj}, never generic.`
               ))}
             </div>
           </div>
-
-
         </div>
       )}
 
@@ -771,102 +663,72 @@ Keep under 350 words. Be specific to ${techSubj}, never generic.`
 
 // ── Add Plan to Calendar Modal ────────────────────────────────────────────────
 function AddPlanToCalendarModal({ studyPlan, profile, user, onClose, onDone }) {
-  const [mode,     setMode]     = useState('add')      // 'add' | 'replace'
-  const [loading,  setLoading]  = useState(false)
-  const [preview,  setPreview]  = useState(null)
+  const [mode,    setMode]    = useState('add')
+  const [loading, setLoading] = useState(false)
+  const [preview, setPreview] = useState(null)
 
   const subjects  = profile?.subjects?.map(s => s.name) || []
   const examDates = profile?.examDates || []
 
-  // Parse the AI study plan text into sessions
   function parsePlanToSessions() {
     const sessions = []
     const today    = new Date()
-
-    // Map subject mentions to session objects
-    // Strategy: for each subject, generate a sensible spread of sessions
-    // based on the weeks mentioned in the plan
     const weekMatches = studyPlan.match(/week\s+(\d+)/gi) || []
     const maxWeek = weekMatches.length
       ? Math.max(...weekMatches.map(w => parseInt(w.replace(/\D/g,''))))
       : 12
 
     subjects.forEach((subj, si) => {
-      // Check if subject is mentioned in plan
       if (!studyPlan.toLowerCase().includes(subj.toLowerCase())) return
-
-      // Find exam date for this subject
       const examEntry = examDates
         .filter(e => e.subject === subj && new Date(e.examDate) > today)
         .sort((a,b) => new Date(a.examDate) - new Date(b.examDate))[0]
-
-      const examDate   = examEntry ? new Date(examEntry.examDate) : null
-      const weeksAway  = examDate
+      const examDate  = examEntry ? new Date(examEntry.examDate) : null
+      const weeksAway = examDate
         ? Math.max(1, Math.ceil((examDate - today) / (7*86400000)))
         : maxWeek
-
-      // Generate 2 sessions per week per subject, spread across weeks
-      // Alternate: content first, then exam practice
       const sessionsPerSubj = Math.max(2, Math.floor(weeksAway * 2 / Math.max(subjects.length, 1)))
       const intervalDays    = Math.max(1, Math.floor((weeksAway * 7) / sessionsPerSubj))
 
       for (let i = 0; i < sessionsPerSubj && i < 20; i++) {
-        const dayOffset = i * intervalDays + (si % 3)  // stagger subjects
+        const dayOffset   = i * intervalDays + (si % 3)
         const sessionDate = new Date(today)
         sessionDate.setDate(today.getDate() + dayOffset)
-
-        // Skip weekends for content, allow all days for exam practice near exam
-        const dow = sessionDate.getDay()
-        if (dow === 0) sessionDate.setDate(sessionDate.getDate() + 1) // skip Sunday
-
+        if (sessionDate.getDay() === 0) sessionDate.setDate(sessionDate.getDate() + 1)
         const isExamPractice = i >= Math.floor(sessionsPerSubj * 0.6)
-        const hour = 17 + (si % 3)  // stagger start times 17:00–19:00
+        const hour = 17 + (si % 3)
         sessionDate.setHours(hour, 0, 0, 0)
-
         const endDate = new Date(sessionDate.getTime() + 45*60000)
-
         sessions.push({
-          subject:   subj,
-          type:      isExamPractice ? 'Exam Practice' : 'Content Revision',
-          title:     `${subj} – ${isExamPractice ? 'Exam Practice' : 'Content Revision'}`,
-          date:      sessionDate.toISOString().slice(0,10),
-          start:     `${String(hour).padStart(2,'0')}:00`,
-          startTime: sessionDate.toISOString(),
-          endTime:   endDate.toISOString(),
-          duration:  45,
-          source:    'ai-plan',
-          completed: false,
-          notes:     'Generated from AI Study Plan',
+          subject: subj, type: isExamPractice ? 'Exam Practice' : 'Content Revision',
+          title:   `${subj} – ${isExamPractice ? 'Exam Practice' : 'Content Revision'}`,
+          date:    sessionDate.toISOString().slice(0,10),
+          start:   `${String(hour).padStart(2,'0')}:00`,
+          startTime: sessionDate.toISOString(), endTime: endDate.toISOString(),
+          duration: 45, source: 'ai-plan', completed: false, notes: 'Generated from AI Study Plan',
         })
       }
     })
-
-    // Sort by date
     return sessions.sort((a,b) => new Date(a.startTime) - new Date(b.startTime))
   }
 
-  useEffect(() => {
-    setPreview(parsePlanToSessions())
-  }, [])
+  useEffect(() => { setPreview(parsePlanToSessions()) }, [])
 
   async function handleConfirm() {
     if (!user || !preview) return
     setLoading(true)
     try {
-      const { collection: col, addDoc: aDoc, getDocs, deleteDoc, doc: fdoc, query, where, serverTimestamp: sTs, writeBatch } = await import('firebase/firestore')
+      const { collection: col, addDoc: aDoc, getDocs, writeBatch, doc: fdoc, serverTimestamp: sTs } = await import('firebase/firestore')
       const { db: fdb } = await import('../firebase')
-
       if (mode === 'replace') {
-        const snap = await getDocs(col(fdb, 'users', user.uid, 'sessions'))
+        const snap  = await getDocs(col(fdb, 'users', user.uid, 'sessions'))
         const batch = writeBatch(fdb)
         snap.docs.forEach(d => batch.delete(fdoc(fdb, 'users', user.uid, 'sessions', d.id)))
         await batch.commit()
       }
-
       for (const s of preview) {
         await aDoc(col(fdb, 'users', user.uid, 'sessions'), { ...s, createdAt: sTs() })
       }
-
       onDone()
     } catch(err) {
       alert('Failed: ' + err.message)
@@ -875,11 +737,7 @@ function AddPlanToCalendarModal({ studyPlan, profile, user, onClose, onDone }) {
     }
   }
 
-  const bySubject = preview ? preview.reduce((acc, s) => {
-    if (!acc[s.subject]) acc[s.subject] = 0
-    acc[s.subject]++
-    return acc
-  }, {}) : {}
+  const bySubject = preview ? preview.reduce((acc, s) => { acc[s.subject] = (acc[s.subject]||0)+1; return acc }, {}) : {}
 
   return (
     <div className="modal-overlay" onClick={onClose}>
@@ -888,23 +746,19 @@ function AddPlanToCalendarModal({ studyPlan, profile, user, onClose, onDone }) {
           <span className="modal-title">Add study plan to calendar</span>
           <button className="btn btn-ghost btn-icon" onClick={onClose}>✕</button>
         </div>
-
         <p style={{fontSize:'0.875rem',marginBottom:14}}>
-          This will create revision sessions in your calendar based on the AI study plan,
-          spread across your revision period with content sessions first and exam practice closer to exams.
+          This will create revision sessions in your calendar based on the AI study plan.
         </p>
-
         {preview && (
           <>
             <div style={{padding:'8px 12px',background:'rgba(124,58,237,0.08)',border:'1px solid var(--border)',borderRadius:'var(--radius-md)',fontSize:'0.82rem',marginBottom:14}}>
-              <strong>{preview.length} sessions</strong> will be added across {Object.keys(bySubject).length} subjects:
+              <strong>{preview.length} sessions</strong> across {Object.keys(bySubject).length} subjects:
               <div style={{marginTop:6,display:'flex',flexWrap:'wrap',gap:6}}>
                 {Object.entries(bySubject).map(([s,n])=>(
                   <span key={s} className="badge badge-purple" style={{fontSize:'0.72rem'}}>{s}: {n}</span>
                 ))}
               </div>
             </div>
-
             <div style={{maxHeight:160,overflowY:'auto',borderRadius:'var(--radius-md)',border:'1px solid var(--border)',marginBottom:14}}>
               {preview.slice(0,8).map((s,i)=>(
                 <div key={i} style={{display:'flex',gap:10,padding:'5px 10px',borderBottom:'1px solid var(--border)',fontSize:'0.78rem',alignItems:'center'}}>
@@ -917,7 +771,6 @@ function AddPlanToCalendarModal({ studyPlan, profile, user, onClose, onDone }) {
             </div>
           </>
         )}
-
         <div style={{marginBottom:16}}>
           <label className="label">What to do with existing sessions?</label>
           {[
@@ -933,7 +786,6 @@ function AddPlanToCalendarModal({ studyPlan, profile, user, onClose, onDone }) {
             </button>
           ))}
         </div>
-
         <div style={{display:'flex',gap:8,justifyContent:'flex-end'}}>
           <button className="btn btn-secondary" onClick={onClose}>Cancel</button>
           <button className="btn btn-primary" onClick={handleConfirm} disabled={loading||!preview?.length}>
