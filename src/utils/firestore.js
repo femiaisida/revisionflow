@@ -7,6 +7,8 @@ import {
 } from 'firebase/firestore'
 import { db } from '../firebase'
 import { XP_REWARDS, LEVELS, BADGES } from '../data/subjects'
+import { BADGES } from '../data/badges'
+
 
 // ── USER ─────────────────────────────────────────────────────────────────────
 export async function updateUserProfile(uid, data) {
@@ -50,15 +52,18 @@ export async function awardXP(uid, amount, reason) {
 }
 
 export async function checkAndAwardBadge(uid, badgeId) {
-  const ref = doc(db, 'users', uid)
-  const snap = await getDoc(ref)
-  if (!snap.exists()) return
-  const badges = snap.data().badges || []
-  if (badges.includes(badgeId)) return
-  const badge = BADGES.find(b => b.id === badgeId)
-  if (!badge) return
-  await updateDoc(ref, { badges: arrayUnion(badgeId) })
-  await awardXP(uid, badge.xp, `Badge: ${badge.name}`)
+if (!BADGES[badgeId]) return false
+const userRef = doc(db, 'users', uid)
+const snap = await getDoc(userRef)
+const currentBadges = snap.data()?.badges || []
+if (currentBadges.includes(badgeId)) return false // already have it
+const badge = BADGES[badgeId]
+await updateDoc(userRef, {
+badges: arrayUnion(badgeId),
+xp: increment(badge.xp),
+updatedAt: serverTimestamp(),
+})
+return true // awarded
 }
 
 export async function updateStreak(uid) {
