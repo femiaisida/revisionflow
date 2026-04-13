@@ -1,40 +1,40 @@
-import PrivacyPolicy from './pages/PrivacyPolicy'
-import Help from './pages/Help'
-import { PriorityProvider } from './context/PriorityContext'
 // src/App.jsx
-import React, { Suspense, lazy, useEffect } from 'react'
+import React, { Suspense, lazy } from 'react'
 import { Routes, Route, Navigate } from 'react-router-dom'
 import { Toaster } from 'react-hot-toast'
 import { AuthProvider, useAuth } from './context/AuthContext'
 import { ThemeProvider } from './context/ThemeContext'
 import { BadgeProvider } from './context/BadgeContext'
+import { PriorityProvider } from './context/PriorityContext'
 import Layout from './components/Layout'
 import LoadingScreen from './components/LoadingScreen'
 import ErrorBoundary from './components/ErrorBoundary'
 import { usePushNotifications } from './hooks/usePushNotifications'
-const Landing      = lazy(() => import('./pages/Landing'))
-const Login        = lazy(() => import('./pages/Login'))
-const Signup       = lazy(() => import('./pages/Signup'))
-const Onboarding   = lazy(() => import('./pages/Onboarding'))
-const Dashboard    = lazy(() => import('./pages/Dashboard'))
-const Calendar     = lazy(() => import('./pages/Calendar'))
-const PastPapers   = lazy(() => import('./pages/PastPapers'))
-const Topics       = lazy(() => import('./pages/Topics'))
-const Mistakes     = lazy(() => import('./pages/Mistakes'))
-const Tasks        = lazy(() => import('./pages/Tasks'))
-const Friends      = lazy(() => import('./pages/Friends'))
-const Leaderboard  = lazy(() => import('./pages/Leaderboard'))
-const Profile      = lazy(() => import('./pages/Profile'))
-const PublicProfile= lazy(() => import('./pages/PublicProfile'))
-const AIAdvisor    = lazy(() => import('./pages/AIAdvisor'))
-const Notes        = lazy(() => import('./pages/Notes'))
-const ExamDates    = lazy(() => import('./pages/ExamDates'))
-const Settings     = lazy(() => import('./pages/Settings'))
-const TimerPage    = lazy(() => import('./pages/Timer'))
-const Analytics    = lazy(() => import('./pages/Analytics'))
-const TopicMastery = lazy(() => import('./pages/TopicMastery'))
 
-
+const Landing       = lazy(() => import('./pages/Landing'))
+const Login         = lazy(() => import('./pages/Login'))
+const Signup        = lazy(() => import('./pages/Signup'))
+const Onboarding    = lazy(() => import('./pages/Onboarding'))
+const Dashboard     = lazy(() => import('./pages/Dashboard'))
+const Calendar      = lazy(() => import('./pages/Calendar'))
+const PastPapers    = lazy(() => import('./pages/PastPapers'))
+const Topics        = lazy(() => import('./pages/Topics'))
+const Mistakes      = lazy(() => import('./pages/Mistakes'))
+const Tasks         = lazy(() => import('./pages/Tasks'))
+const Friends       = lazy(() => import('./pages/Friends'))
+const Leaderboard   = lazy(() => import('./pages/Leaderboard'))
+const Profile       = lazy(() => import('./pages/Profile'))
+const PublicProfile = lazy(() => import('./pages/PublicProfile'))
+const AIAdvisor     = lazy(() => import('./pages/AIAdvisor'))
+const Notes         = lazy(() => import('./pages/Notes'))
+const ExamDates     = lazy(() => import('./pages/ExamDates'))
+const Settings      = lazy(() => import('./pages/Settings'))
+const TimerPage     = lazy(() => import('./pages/Timer'))
+const Analytics     = lazy(() => import('./pages/Analytics'))
+const TopicMastery  = lazy(() => import('./pages/TopicMastery'))
+const EmergencyMode = lazy(() => import('./pages/EmergencyMode'))
+const Help          = lazy(() => import('./pages/Help'))
+const PrivacyPolicy = lazy(() => import('./pages/PrivacyPolicy'))
 
 function PrivateRoute({ children }) {
   const { user, loading, profile } = useAuth()
@@ -65,48 +65,53 @@ export default function App() {
     <ThemeProvider>
       <AuthProvider>
         <PriorityProvider>
-        <BadgeProvider>
-        <Toaster
-          position="top-right"
-          toastOptions={{ className:'toast-custom', duration:3500 }}
-        />
-        <ErrorBoundary>
-          <Suspense fallback={<LoadingScreen />}>
-          <Routes>
-            <Route path="/"    element={<Landing />} />
-            <Route path="/login"  element={<PublicOnlyRoute><Login /></PublicOnlyRoute>} />
-            <Route path="/signup" element={<PublicOnlyRoute><Signup /></PublicOnlyRoute>} />
-            <Route path="/u/:username" element={<PublicProfile />} />
-            <Route path="/onboarding" element={<OnboardingRoute><Onboarding /></OnboardingRoute>} />
+          <BadgeProvider>
+            <Toaster
+              position="top-right"
+              toastOptions={{ className: 'toast-custom', duration: 3500 }}
+            />
+            <ErrorBoundary>
+              <Suspense fallback={<LoadingScreen />}>
+                <Routes>
+                  {/* Public routes */}
+                  <Route path="/"    element={<Landing />} />
+                  <Route path="/login"  element={<PublicOnlyRoute><Login /></PublicOnlyRoute>} />
+                  <Route path="/signup" element={<PublicOnlyRoute><Signup /></PublicOnlyRoute>} />
+                  <Route path="/u/:username" element={<PublicProfile />} />
+                  <Route path="/onboarding"  element={<OnboardingRoute><Onboarding /></OnboardingRoute>} />
+                  <Route path="/privacy"     element={<PrivacyPolicy />} />
 
-            <Route element={<PrivateRoute><Layout /></PrivateRoute>}>
-              <Route path="/dashboard"   element={<Dashboard />} />
-              <Route path="/calendar"    element={<Calendar />} />
-              <Route path="/exams"       element={<ExamDates />} />
-              <Route path="/papers"      element={<PastPapers />} />
-              <Route path="/topics"      element={<Topics />} />
-              <Route path="/mistakes"    element={<Mistakes />} />
-              <Route path="/notes"       element={<Notes />} />
-              <Route path="/tasks"       element={<Tasks />} />
-              <Route path="/timer"       element={<TimerPage />} />
-              <Route path="/analytics"   element={<Analytics />} />
-              <Route path="/mastery"    element={<TopicMastery />} />
-              <Route path="/ai"          element={<AIAdvisor />} />
-              <Route path="/friends"     element={<Friends />} />
-              <Route path="/leaderboard" element={<Leaderboard />} />
-              <Route path="/profile"     element={<Profile />} />
-              <Route path="/settings"    element={<Settings />} />
-              <Route path="/help"        element={<Help />} />
-            </Route>
+                  {/* Private routes — wrapped in Layout */}
+                  <Route element={<PrivateRoute><Layout /></PrivateRoute>}>
+                    <Route path="/dashboard"   element={<Dashboard />} />
+                    <Route path="/calendar"    element={<Calendar />} />
+                    <Route path="/exams"       element={<ExamDates />} />
+                    <Route path="/papers"      element={<PastPapers />} />
+                    <Route path="/topics"      element={<Topics />} />
+                    <Route path="/mistakes"    element={<Mistakes />} />
+                    <Route path="/notes"       element={<Notes />} />
+                    <Route path="/tasks"       element={<Tasks />} />
+                    <Route path="/timer"       element={<TimerPage />} />
+                    <Route path="/analytics"   element={<Analytics />} />
+                    <Route path="/mastery"     element={<TopicMastery />} />
+                    <Route path="/ai"          element={<AIAdvisor />} />
+                    <Route path="/friends"     element={<Friends />} />
+                    <Route path="/leaderboard" element={<Leaderboard />} />
+                    <Route path="/profile"     element={<Profile />} />
+                    <Route path="/settings"    element={<Settings />} />
+                    <Route path="/help"        element={<Help />} />
+                    {/* Emergency Mode — accessible from dashboard banner */}
+                    <Route path="/emergency"   element={<EmergencyMode />} />
+                  </Route>
 
-            <Route path="/privacy" element={<PrivacyPolicy />} />
-            <Route path="*" element={<Navigate to="/" replace />} />
-          </Routes>
-        </Suspense>
-        </ErrorBoundary>
-        </BadgeProvider>
-      </PriorityProvider>
-        </AuthProvider>
+                  {/* Catch-all */}
+                  <Route path="*" element={<Navigate to="/" replace />} />
+                </Routes>
+              </Suspense>
+            </ErrorBoundary>
+          </BadgeProvider>
+        </PriorityProvider>
+      </AuthProvider>
     </ThemeProvider>
   )
 }
