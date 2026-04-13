@@ -7,17 +7,18 @@ import {
   getReceivedRequests
 } from '../utils/firestore'
 import { LEVELS } from '../data/subjects'
+import ReferralCard from '../components/ReferralCard'
 import toast from 'react-hot-toast'
 import { UserPlus, UserCheck, UserX, Users, Search } from 'lucide-react'
 
 export default function Friends() {
   const { user, profile, refreshProfile } = useAuth()
-  const [friends,  setFriends]  = useState([])
-  const [requests, setRequests] = useState([])
-  const [search,   setSearch]   = useState('')
+  const [friends,       setFriends]       = useState([])
+  const [requests,      setRequests]      = useState([])
+  const [search,        setSearch]        = useState('')
   const [searchResults, setSearchResults] = useState([])
-  const [searching, setSearching] = useState(false)
-  const [tab, setTab] = useState('friends')
+  const [searching,     setSearching]     = useState(false)
+  const [tab,           setTab]           = useState('friends')
 
   useEffect(() => {
     if (!profile) return
@@ -26,8 +27,6 @@ export default function Friends() {
     } else {
       setFriends([])
     }
-    
-    // Fetch virtual requests (people who sent a request TO us)
     getReceivedRequests(user.uid).then(allReqs => {
       const declined = profile.declinedFriendRequests || []
       const active = allReqs.filter(r => !declined.includes(r.id) && !profile.friends?.includes(r.id))
@@ -42,11 +41,8 @@ export default function Friends() {
     setSearching(true)
     setSearchResults([])
     try {
-      // Try username exact match first, then name search
       const byUsername = await getUserByUsername(q.toLowerCase())
       const byName     = await searchUsersByName(q)
-
-      // Merge, deduplicate, exclude self
       const seen = new Set()
       const combined = [...(byUsername ? [byUsername] : []), ...byName]
         .filter(u => {
@@ -55,7 +51,6 @@ export default function Friends() {
           seen.add(u.id)
           return true
         })
-
       setSearchResults(combined)
       if (!combined.length) toast.error('No users found')
     } catch (err) {
@@ -86,11 +81,6 @@ export default function Friends() {
     setRequests(r => r.filter(u => u.id !== fromUid))
   }
 
-  async function handleCancelRequest(toUid) {
-    await declineFriendRequest(toUid, user.uid) // decline(target, sender) removes correctly
-    toast.success('Request cancelled')
-  }
-
   async function handleRemove(friendUid) {
     if (!confirm('Remove this friend?')) return
     await removeFriend(user.uid, friendUid)
@@ -98,70 +88,76 @@ export default function Friends() {
     await refreshProfile()
   }
 
+  const isAlreadyFriend    = (uid) => profile?.friends?.includes(uid)
+  const hasIncomingRequest = (uid) => requests.some(r => r.id === uid)
+  const hasSentRequest     = (uid) => profile?.sentFriendRequests?.includes(uid)
+
   const FriendCard = ({ f, actions }) => {
-    const lvl = LEVELS[Math.min((f.level||1)-1, LEVELS.length-1)]
+    const lvl = LEVELS[Math.min((f.level || 1) - 1, LEVELS.length - 1)]
     return (
-      <div className="card" style={{display:'flex',alignItems:'center',gap:12}}>
-        <div style={{width:44,height:44,borderRadius:'50%',background:'linear-gradient(135deg,var(--purple-700),var(--purple-400))',display:'flex',alignItems:'center',justifyContent:'center',fontWeight:700,fontSize:'1.1rem',flexShrink:0}}>
-          {(f.displayName||'U')[0].toUpperCase()}
+      <div className="card" style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
+        <div style={{ width: 44, height: 44, borderRadius: '50%', background: 'linear-gradient(135deg,var(--purple-700),var(--purple-400))', display: 'flex', alignItems: 'center', justifyContent: 'center', fontWeight: 700, fontSize: '1.1rem', flexShrink: 0 }}>
+          {(f.displayName || 'U')[0].toUpperCase()}
         </div>
-        <div style={{flex:1,overflow:'hidden'}}>
-          <div style={{fontWeight:600}}>{f.displayName}</div>
-          <div style={{fontSize:'0.75rem',color:'var(--text-muted)'}}>
-            {f.username ? `@${f.username} · ` : ''}Level {f.level||1} · {lvl?.title} · 🔥 {f.streak||0}
+        <div style={{ flex: 1, overflow: 'hidden' }}>
+          <div style={{ fontWeight: 600 }}>{f.displayName}</div>
+          <div style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>
+            {f.username ? `@${f.username} · ` : ''}Level {f.level || 1} · {lvl?.title} · 🔥 {f.streak || 0}
           </div>
-          <div style={{fontSize:'0.72rem',color:'var(--text-muted)'}}>{(f.xp||0).toLocaleString()} XP</div>
+          <div style={{ fontSize: '0.72rem', color: 'var(--text-muted)' }}>{(f.xp || 0).toLocaleString()} XP</div>
         </div>
         {actions}
       </div>
     )
   }
 
-  const isAlreadyFriend   = (uid) => profile?.friends?.includes(uid)
-  const hasIncomingRequest = (uid) => requests.some(r => r.id === uid)
-  const hasSentRequest     = (uid) => profile?.sentFriendRequests?.includes(uid)
-
   return (
     <div className="fade-in">
-      <div style={{display:'flex',alignItems:'center',justifyContent:'space-between',marginBottom:24,flexWrap:'wrap',gap:12}}>
+      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 24, flexWrap: 'wrap', gap: 12 }}>
         <h2>Friends</h2>
-        <span className="badge badge-purple"><Users size={12}/> {friends.length} friends</span>
+        <span className="badge badge-purple"><Users size={12} /> {friends.length} friends</span>
       </div>
 
-      {/* Search */}
-      <div className="card" style={{marginBottom:20}}>
-        <h4 style={{marginBottom:4}}>Find a friend</h4>
-        <p style={{fontSize:'0.82rem',marginBottom:12}}>Search by username or name</p>
-        <form onSubmit={handleSearch} style={{display:'flex',gap:10,marginBottom:searchResults.length?12:0}}>
-          <input className="input" value={search} onChange={e=>setSearch(e.target.value)}
-            placeholder="Search by username or name…"/>
-          <button className="btn btn-primary" type="submit" disabled={searching||!search.trim()}>
-            {searching ? <div className="spinner" style={{width:16,height:16}}/> : <Search size={16}/>}
+      {/* ── Referral card — invite friends ── */}
+      <div style={{ marginBottom: 20 }}>
+        <ReferralCard />
+      </div>
+
+      {/* ── Search ── */}
+      <div className="card" style={{ marginBottom: 20 }}>
+        <h4 style={{ marginBottom: 4 }}>Find a friend</h4>
+        <p style={{ fontSize: '0.82rem', marginBottom: 12 }}>Search by username or name</p>
+        <form onSubmit={handleSearch} style={{ display: 'flex', gap: 10, marginBottom: searchResults.length ? 12 : 0 }}>
+          <input
+            className="input"
+            value={search}
+            onChange={e => setSearch(e.target.value)}
+            placeholder="Search by username or name…"
+          />
+          <button className="btn btn-primary" type="submit" disabled={searching || !search.trim()}>
+            {searching ? <div className="spinner" style={{ width: 16, height: 16 }} /> : <Search size={16} />}
           </button>
         </form>
 
         {searchResults.length > 0 && (
-          <div style={{display:'flex',flexDirection:'column',gap:8}}>
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
             {searchResults.map(u => (
-              <div key={u.id} style={{padding:'10px 12px',background:'var(--bg-surface)',borderRadius:'var(--radius-md)',border:'1px solid var(--border)',display:'flex',alignItems:'center',justifyContent:'space-between',gap:10,flexWrap:'wrap'}}>
+              <div key={u.id} style={{ padding: '10px 12px', background: 'var(--bg-surface)', borderRadius: 'var(--radius-md)', border: '1px solid var(--border)', display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 10, flexWrap: 'wrap' }}>
                 <div>
-                  <div style={{fontWeight:600}}>{u.displayName}</div>
-                  <div style={{fontSize:'0.75rem',color:'var(--text-muted)'}}>
-                    {u.username?`@${u.username} · `:''}Level {u.level||1}
+                  <div style={{ fontWeight: 600 }}>{u.displayName}</div>
+                  <div style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>
+                    {u.username ? `@${u.username} · ` : ''}Level {u.level || 1}
                   </div>
                 </div>
                 {isAlreadyFriend(u.id) ? (
-                  <span className="badge badge-green"><UserCheck size={12}/> Friends</span>
+                  <span className="badge badge-green"><UserCheck size={12} /> Friends</span>
                 ) : hasSentRequest(u.id) ? (
-                  <div style={{display:'flex',alignItems:'center',gap:6}}>
-                    <span className="badge badge-grey">Request sent</span>
-                    <button className="btn btn-ghost btn-danger btn-sm" onClick={()=>handleCancelRequest(u.id)} style={{fontSize:'0.65rem',padding:'2px 6px'}}>Cancel</button>
-                  </div>
+                  <span className="badge badge-grey">Request sent</span>
                 ) : hasIncomingRequest(u.id) ? (
-                  <button className="btn btn-primary btn-sm" onClick={()=>handleAccept(u.id)}>Accept request</button>
+                  <button className="btn btn-primary btn-sm" onClick={() => handleAccept(u.id)}>Accept request</button>
                 ) : (
-                  <button className="btn btn-primary btn-sm" onClick={()=>handleSendRequest(u.id)}>
-                    <UserPlus size={14}/> Add friend
+                  <button className="btn btn-primary btn-sm" onClick={() => handleSendRequest(u.id)}>
+                    <UserPlus size={14} /> Add friend
                   </button>
                 )}
               </div>
@@ -170,54 +166,56 @@ export default function Friends() {
         )}
       </div>
 
-      <div className="tabs" style={{marginBottom:20}}>
-        <button className={`tab${tab==='friends'?' active':''}`} onClick={()=>setTab('friends')}>
+      {/* ── Tabs: Friends / Requests ── */}
+      <div className="tabs" style={{ marginBottom: 20 }}>
+        <button className={`tab${tab === 'friends' ? ' active' : ''}`} onClick={() => setTab('friends')}>
           Friends ({friends.length})
         </button>
-        <button className={`tab${tab==='requests'?' active':''}`} onClick={()=>setTab('requests')}>
-          Requests{requests.length>0&&<span className="badge badge-red" style={{marginLeft:4,padding:'1px 6px'}}>{requests.length}</span>}
+        <button className={`tab${tab === 'requests' ? ' active' : ''}`} onClick={() => setTab('requests')}>
+          Requests
+          {requests.length > 0 && <span className="badge badge-red" style={{ marginLeft: 4, padding: '1px 6px' }}>{requests.length}</span>}
         </button>
       </div>
 
-      {tab==='friends' && (
-        friends.length===0 ? (
+      {tab === 'friends' && (
+        friends.length === 0 ? (
           <div className="empty-state">
-            <Users size={48} style={{opacity:0.3}}/>
+            <Users size={48} style={{ opacity: 0.3 }} />
             <h4>No friends yet</h4>
-            <p>Search for friends by username or name above</p>
+            <p>Share your referral link above or search by username to add friends.</p>
           </div>
         ) : (
-          <div style={{display:'flex',flexDirection:'column',gap:10}}>
-            {friends.map(f=>(
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
+            {friends.map(f => (
               <FriendCard key={f.id} f={f} actions={
-                <button className="btn btn-ghost btn-sm" style={{color:'var(--danger)'}} onClick={()=>handleRemove(f.id)}>
-                  <UserX size={15}/>
+                <button className="btn btn-ghost btn-sm" style={{ color: 'var(--danger)' }} onClick={() => handleRemove(f.id)}>
+                  <UserX size={15} />
                 </button>
-              }/>
+              } />
             ))}
           </div>
         )
       )}
 
-      {tab==='requests' && (
-        requests.length===0 ? (
+      {tab === 'requests' && (
+        requests.length === 0 ? (
           <div className="empty-state">
-            <UserPlus size={48} style={{opacity:0.3}}/>
+            <UserPlus size={48} style={{ opacity: 0.3 }} />
             <p>No pending friend requests</p>
           </div>
         ) : (
-          <div style={{display:'flex',flexDirection:'column',gap:10}}>
-            {requests.map(f=>(
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
+            {requests.map(f => (
               <FriendCard key={f.id} f={f} actions={
-                <div style={{display:'flex',gap:6}}>
-                  <button className="btn btn-primary btn-sm" onClick={()=>handleAccept(f.id)}>
-                    <UserCheck size={14}/> Accept
+                <div style={{ display: 'flex', gap: 6 }}>
+                  <button className="btn btn-primary btn-sm" onClick={() => handleAccept(f.id)}>
+                    <UserCheck size={14} /> Accept
                   </button>
-                  <button className="btn btn-secondary btn-sm" onClick={()=>handleDecline(f.id)}>
-                    <UserX size={14}/>
+                  <button className="btn btn-secondary btn-sm" onClick={() => handleDecline(f.id)}>
+                    <UserX size={14} />
                   </button>
                 </div>
-              }/>
+              } />
             ))}
           </div>
         )
