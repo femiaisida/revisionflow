@@ -1,0 +1,347 @@
+// src/pages/EmergencyMode.jsx
+// Shows when an exam is within 7 days.
+// Gives: predicted grade, weakest topics, today's plan, predicted questions.
+
+import { useState, useEffect, useMemo } from 'react'
+import { useNavigate } from 'react-router-dom'
+import { useAuth } from '../context/AuthContext'
+import { collection, getDocs, query, where, orderBy, limit } from 'firebase/firestore'
+import { db } from '../firebase'
+import { callAI } from '../utils/ai'
+import AIOutput from '../components/AIOutput'
+import { AlertTriangle, Zap, ChevronLeft, Clock, Target, Brain, FileText } from 'lucide-react'
+
+// ── Helpers ──────────────────────────────────────────────────────────────────
+
+function getDaysUntil(dateStr) {
+  return Math.ceil((new Date(dateStr) - new Date()) / 86400000)
+}
+
+function getHoursUntil(dateStr) {
+  return Math.round((new Date(dateStr) - new Date()) / 3600000)
+}
+
+// ── AI call ──────────────────────────────────────────────────────────────────
+
+async function generateEmergencyPlan({ subject, board, level, weakTopics, avgScore, hoursUntil, mistakes }) {
+  const days = Math.floor(hoursUntil / 24)
+  const sessionsLeft = Math.max(2, Math.min(8, Math.floor(hoursUntil / 3)))
+
+  const prompt = `You are an expert ${board} ${subject} ${level} examiner and tutor.
+A student has their exam in approximately ${days} days (${hoursUntil} hours).
+
+STUDENT DATA:
+- Recent average score: ${avgScore !== null ? Math.round(avgScore) + '%' : 'no papers logged yet'}
+- Weakest topics (confidence 1-2 out of 5): ${weakTopics.length > 0 ? weakTopics.map(t => t.name).join(', ') : 'none logged yet'}
+- Unresolved mistakes: ${mistakes.length > 0 ? mistakes.slice(0, 5).map(m => m.topic || m.description?.slice(0, 40)).join(', ') : 'none'}
+- Revision sessions available before exam: about ${sessionsLeft}
+
+Respond in EXACTLY this format — no extra text, no preamble:
+
+PREDICTED GRADE: [e.g. Grade 6]
+GRADE REASONING: [one sentence only]
+
+TOP 5 TOPICS TO REVISE:
+1. [topic name] — [one specific exam tip for this topic]
+2. [topic name] — [one specific exam tip for this topic]
+3. [topic name] — [one specific exam tip for this topic]
+4. [topic name] — [one specific exam tip for this topic]
+5. [topic name] — [one specific exam tip for this topic]
+
+TODAY'S PLAN:
+Session 1 (30 min): [very specific task — name the topic and the activity]
+Session 2 (30 min): [very specific task]
+Session 3 (30 min): [very specific task]
+
+PREDICTED EXAM QUESTIONS:
+Q1 ([X] marks): [write an actual exam-style question in ${board} style]
+Q2 ([X] marks): [write an actual exam-style question in ${board} style]
+Q3 ([X] marks): [write an actual exam-style question in ${board} style]
+
+EXAM DAY TIP: [one sentence, highly specific to ${subject}]`
+
+  return callAI(prompt)
+}
+
+// ── Parse the AI response into sections ──────────────────────────────────────
+
+function parsePlan(text) {
+  if (!text) return null
+  const get = (label, nextLabel) => {
+    const start = text.indexOf(label)
+    if (start === -1) return ''
+    const contentStart = start + label.length
+    const end = nextLabel ? text.indexOf(nextLabel, contentStart) : text.length
+    return text.slice(contentStart, end === -1 ? undefined : end).trim()
+  }
+
+  return {
+    predictedGrade:   get('PREDICTED GRADE:', 'GRADE REASONING:'),
+    gradeReasoning:   get('GRADE REASONING:', 'TOP 5 TOPICS TO REVISE:'),
+    topTopics:        get('TOP 5 TOPICS TO REVISE:', "TODAY'S PLAN:"),
+    todaysPlan:       get("TODAY'S PLAN:", 'PREDICTED EXAM QUESTIONS:'),
+    questions:        get('PREDICTED EXAM QUESTIONS:', 'EXAM DAY TIP:'),
+    examDayTip:       get('EXAM DAY TIP:', null),
+  }
+}
+
+// ── Main component ────────────────────────────────────────────────────────────
+
+export default function EmergencyMode() {
+  const { profile, user } = useAuth()
+  const navigate = useNavigate()
+  const [selectedExam, setSelectedExam] = useState(null)
+  const [loading, setLoading] = useState(false)
+  const [planText, setPlanText] = useState('')
+  const [parsed, setParsed] = useState(null)
+  const [error, setError] = useState('')
+
+  // Find exams within the next 7 days
+  const urgentExams = useMemo(() => {
+    return (profile?.examDates || [])
+      .filter(e => {
+        const d = getDaysUntil(e.examDate)
+        return d >= 0 && d <= 7
+      })
+      .sort((a, b) => new Date(a.examDate) - new Date(b.examDate))
+  }, [profile])
+
+  // Auto-select the closest exam
+  useEffect(() => {
+    if (urgentExams.length > 0 && !selectedExam) {
+      setSelectedExam(urgentExams[0])
+    }
+  }, [urgentExams])
+
+  // Generate plan when exam is selected
+  useEffect(() => {
+    if (!selectedExam || !user) return
+    generatePlan()
+  }, [selectedExam])
+
+  async function generatePlan() {
+    setLoading(true)
+    setError('')
+    setPlanText('')
+    setParsed(null)
+
+    try {
+      // Fetch student data from Firestore
+      const [topicsSnap, papersSnap, mistakesSnap] = await Promise.all([
+        getDocs(query(
+          collection(db, 'users', user.uid, 'topics'),
+          where('subjectId', '==', selectedExam.subject),
+          orderBy('confidence', 'asc'),
+          limit(10)
+        )),
+        getDocs(query(
+          collection(db, 'users', user.uid, 'paperAttempts'),
+          where('subject', '==', selectedExam.subject),
+          orderBy('createdAt', 'desc'),
+          limit(5)
+        )),
+        getDocs(query(
+          collection(db, 'users', user.uid, 'mistakes'),
+          where('subject', '==', selectedExam.subject),
+          where('resolved', '==', false),
+          limit(5)
+        )),
+      ])
+
+      const allTopics = topicsSnap.docs.map(d => d.data())
+      const weakTopics = allTopics.filter(t => (t.confidence || 3) <= 2)
+      const papers = papersSnap.docs.map(d => d.data())
+      const avgScore = papers.length
+        ? papers.reduce((s, p) => s + (p.percentage || 0), 0) / papers.length
+        : null
+      const mistakes = mistakesSnap.docs.map(d => d.data())
+
+      const subj = profile?.subjects?.find(s => s.name === selectedExam.subject)
+
+      const result = await generateEmergencyPlan({
+        subject:    selectedExam.subject,
+        board:      subj?.board || selectedExam.board || 'AQA',
+        level:      profile?.qualification || 'GCSE',
+        weakTopics,
+        avgScore,
+        hoursUntil: getHoursUntil(selectedExam.examDate),
+        mistakes,
+      })
+
+      const text = result.text || result.error || 'Could not generate plan. Please try again.'
+      setPlanText(text)
+      setParsed(parsePlan(text))
+    } catch (err) {
+      setError('Something went wrong. Check your internet connection and try again.')
+    } finally {
+      setLoading(false)
+    }
+  }
+
+  // No urgent exams — show message
+  if (urgentExams.length === 0) {
+    return (
+      <div className="fade-in" style={{ maxWidth: 600, margin: '0 auto', padding: 24 }}>
+        <button className="btn btn-ghost btn-sm" onClick={() => navigate('/dashboard')} style={{ marginBottom: 16 }}>
+          <ChevronLeft size={14} /> Back
+        </button>
+        <div className="card" style={{ textAlign: 'center', padding: 40 }}>
+          <div style={{ fontSize: '3rem', marginBottom: 12 }}>✅</div>
+          <h2 style={{ marginBottom: 8 }}>No exams in the next 7 days</h2>
+          <p style={{ color: 'var(--text-muted)', marginBottom: 20 }}>
+            Emergency Mode activates automatically when you have an exam within 7 days.
+            Make sure your exam dates are added.
+          </p>
+          <button className="btn btn-primary" onClick={() => navigate('/exam-dates')}>
+            Add exam dates
+          </button>
+        </div>
+      </div>
+    )
+  }
+
+  const days = selectedExam ? getDaysUntil(selectedExam.examDate) : null
+  const hours = selectedExam ? getHoursUntil(selectedExam.examDate) : null
+  const isToday = days === 0
+
+  return (
+    <div className="fade-in" style={{ maxWidth: 700, margin: '0 auto' }}>
+      {/* Back button */}
+      <button className="btn btn-ghost btn-sm" onClick={() => navigate('/dashboard')} style={{ marginBottom: 16 }}>
+        <ChevronLeft size={14} /> Back to dashboard
+      </button>
+
+      {/* Header — red urgency banner */}
+      <div style={{
+        background: 'rgba(239,68,68,0.1)',
+        border: '2px solid rgba(239,68,68,0.4)',
+        borderRadius: 16,
+        padding: '20px 24px',
+        marginBottom: 20,
+        display: 'flex',
+        alignItems: 'center',
+        gap: 16,
+        flexWrap: 'wrap',
+      }}>
+        <AlertTriangle size={28} color="#ef4444" style={{ flexShrink: 0 }} />
+        <div style={{ flex: 1 }}>
+          <h2 style={{ margin: 0, color: '#ef4444', fontSize: '1.2rem' }}>
+            Emergency Mode — {selectedExam?.subject}
+          </h2>
+          <p style={{ margin: '4px 0 0', fontSize: '0.9rem', color: 'var(--text-muted)' }}>
+            {isToday
+              ? `Exam is TODAY — ${hours} hours left`
+              : `Exam in ${days} day${days !== 1 ? 's' : ''} (${hours} hours)`}
+          </p>
+        </div>
+        {/* Exam selector if multiple urgent exams */}
+        {urgentExams.length > 1 && (
+          <select
+            className="select"
+            value={selectedExam?.subject}
+            onChange={e => setSelectedExam(urgentExams.find(ex => ex.subject === e.target.value))}
+            style={{ width: 'auto' }}
+          >
+            {urgentExams.map(ex => (
+              <option key={ex.subject + ex.examDate} value={ex.subject}>
+                {ex.subject} — {getDaysUntil(ex.examDate)}d
+              </option>
+            ))}
+          </select>
+        )}
+      </div>
+
+      {/* Loading */}
+      {loading && (
+        <div className="card" style={{ textAlign: 'center', padding: 40 }}>
+          <div className="spinner" style={{ margin: '0 auto 16px' }} />
+          <p style={{ color: 'var(--text-muted)' }}>Building your emergency plan...</p>
+          <p style={{ fontSize: '0.8rem', color: 'var(--text-muted)' }}>Analysing your topics, papers and mistakes</p>
+        </div>
+      )}
+
+      {/* Error */}
+      {error && (
+        <div className="card" style={{ border: '1px solid rgba(239,68,68,0.3)', padding: 20 }}>
+          <p style={{ color: '#ef4444', margin: 0 }}>{error}</p>
+          <button className="btn btn-primary btn-sm" onClick={generatePlan} style={{ marginTop: 12 }}>
+            Try again
+          </button>
+        </div>
+      )}
+
+      {/* Plan panels */}
+      {parsed && !loading && (
+        <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
+
+          {/* Panel 1 — Predicted grade */}
+          <div className="card" style={{ background: 'rgba(124,58,237,0.08)', border: '1px solid rgba(124,58,237,0.3)' }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 8 }}>
+              <Target size={18} color="var(--accent-light)" />
+              <h3 style={{ margin: 0, fontSize: '1rem' }}>Predicted grade</h3>
+            </div>
+            <div style={{ fontSize: '2rem', fontWeight: 800, color: 'var(--accent-light)', marginBottom: 4 }}>
+              {parsed.predictedGrade || '—'}
+            </div>
+            <p style={{ margin: 0, fontSize: '0.875rem', color: 'var(--text-secondary)' }}>
+              {parsed.gradeReasoning}
+            </p>
+          </div>
+
+          {/* Panel 2 — Top 5 topics */}
+          <div className="card">
+            <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 12 }}>
+              <Brain size={18} color="var(--accent-light)" />
+              <h3 style={{ margin: 0, fontSize: '1rem' }}>Top 5 topics to revise now</h3>
+            </div>
+            <AIOutput text={parsed.topTopics} label="Priority topics" />
+          </div>
+
+          {/* Panel 3 — Today's plan */}
+          <div className="card">
+            <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 12 }}>
+              <Clock size={18} color="var(--accent-light)" />
+              <h3 style={{ margin: 0, fontSize: '1rem' }}>Today's revision plan</h3>
+            </div>
+            <AIOutput text={parsed.todaysPlan} label="Your plan" />
+            <button
+              className="btn btn-primary btn-sm"
+              onClick={() => navigate('/timer')}
+              style={{ marginTop: 12 }}
+            >
+              <Zap size={14} /> Start 30-min timer
+            </button>
+          </div>
+
+          {/* Panel 4 — Predicted questions */}
+          <div className="card">
+            <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 12 }}>
+              <FileText size={18} color="var(--accent-light)" />
+              <h3 style={{ margin: 0, fontSize: '1rem' }}>Predicted exam questions</h3>
+            </div>
+            <p style={{ fontSize: '0.82rem', color: 'var(--text-muted)', marginBottom: 12 }}>
+              Based on the specification and your weak areas. Try answering before checking.
+            </p>
+            <AIOutput text={parsed.questions} label="Predicted questions" />
+          </div>
+
+          {/* Panel 5 — Exam day tip */}
+          {parsed.examDayTip && (
+            <div className="card" style={{ background: 'rgba(34,197,94,0.08)', border: '1px solid rgba(34,197,94,0.3)' }}>
+              <p style={{ margin: 0, fontWeight: 600, fontSize: '0.875rem', color: 'var(--success)' }}>
+                💡 Exam day tip
+              </p>
+              <p style={{ margin: '6px 0 0', fontSize: '0.875rem' }}>{parsed.examDayTip}</p>
+            </div>
+          )}
+
+          {/* Regenerate */}
+          <button className="btn btn-secondary btn-sm" onClick={generatePlan} style={{ alignSelf: 'flex-start' }}>
+            Regenerate plan
+          </button>
+
+        </div>
+      )}
+    </div>
+  )
+}
