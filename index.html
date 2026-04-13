@@ -2,7 +2,6 @@
 <html lang="en">
   <head>
     <meta charset="UTF-8" />
-    <meta name="google-site-verification" content="Oh-538mqKrEgEKWspqzFw1Qq1gyJ01VkB2E5dozmQC4" />
 
     <!-- Favicon & PWA -->
     <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
@@ -13,27 +12,27 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <meta name="theme-color" content="#7c3aed" />
 
-    <!-- Primary SEO -->
-    <title>RevisionFlow — AI-Powered GCSE & A-Level Revision Tracker</title>
-    <meta name="description" content="RevisionFlow is a free AI-powered revision tracker for GCSE and A-Level students. Track topics, log past papers, set exam countdowns and get personalised study plans. Supports AQA, Edexcel, OCR, WJEC, Eduqas and CCEA." />
-    <meta name="keywords" content="GCSE revision tracker, A-Level revision tracker, revision app, GCSE revision planner, AQA revision, Edexcel revision, OCR revision, past paper tracker, AI revision, UK exam revision, free revision tool, RevisionFlow" />
+    <!-- Primary SEO — uses both "RevisionFlow" and "Revision Flow" naturally -->
+    <title>Revision Flow — Free AI GCSE & A-Level Revision Tracker | RevisionFlow</title>
+    <meta name="description" content="Revision Flow is a free AI-powered revision tracker for GCSE and A-Level students. Track topics, log past papers, get AI study plans and predicted exam questions. Supports AQA, Edexcel, OCR, WJEC, Eduqas and CCEA. Used by UK students for smarter revision." />
+    <meta name="keywords" content="revision flow, RevisionFlow, GCSE revision tracker, A-Level revision tracker, revision app, GCSE revision planner, AI revision, AQA revision, Edexcel revision, OCR revision, past paper tracker, free revision tool, UK exam revision, GCSE study planner, A Level revision app" />
     <meta name="author" content="RevisionFlow" />
     <link rel="canonical" href="https://revisionflow.netlify.app/" />
 
-    <!-- Open Graph -->
-    <meta property="og:type" content="website" />
-    <meta property="og:url" content="https://revisionflow.netlify.app/" />
-    <meta property="og:title" content="RevisionFlow — AI-Powered GCSE & A-Level Revision Tracker" />
-    <meta property="og:description" content="Free AI revision tracker for GCSE and A-Level students. Track topics, past papers and exam dates. Supports all major UK exam boards." />
-    <meta property="og:image" content="https://revisionflow.netlify.app/icons/icon-512.png" />
-    <meta property="og:site_name" content="RevisionFlow" />
-    <meta property="og:locale" content="en_GB" />
+    <!-- Open Graph (WhatsApp, iMessage, Facebook previews) -->
+    <meta property="og:type"        content="website" />
+    <meta property="og:url"         content="https://revisionflow.netlify.app/" />
+    <meta property="og:title"       content="Revision Flow — Free AI GCSE & A-Level Revision Tracker" />
+    <meta property="og:description" content="Free AI revision tracker for GCSE and A-Level students. Track topics, log past papers, get AI study plans. Supports all UK exam boards." />
+    <meta property="og:image"       content="https://revisionflow.netlify.app/icons/icon-512.png" />
+    <meta property="og:site_name"   content="RevisionFlow" />
+    <meta property="og:locale"      content="en_GB" />
 
-    <!-- Twitter / X -->
-    <meta name="twitter:card" content="summary" />
-    <meta name="twitter:title" content="RevisionFlow — AI-Powered GCSE & A-Level Revision Tracker" />
+    <!-- Twitter / X card -->
+    <meta name="twitter:card"        content="summary" />
+    <meta name="twitter:title"       content="Revision Flow — Free AI GCSE & A-Level Revision Tracker" />
     <meta name="twitter:description" content="Free AI revision tracker for GCSE and A-Level students. Track topics, past papers and exam dates." />
-    <meta name="twitter:image" content="https://revisionflow.netlify.app/icons/icon-512.png" />
+    <meta name="twitter:image"       content="https://revisionflow.netlify.app/icons/icon-512.png" />
 
     <!-- Fonts -->
     <link rel="preconnect" href="https://fonts.googleapis.com" />
@@ -44,14 +43,16 @@
     <div id="root"></div>
     <script type="module" src="/src/main.jsx"></script>
 
-    <!-- Structured data for Google -->
+    <!-- Structured data — helps Google understand the product.
+         Uses both "Revision Flow" and "RevisionFlow" so Google connects both spellings. -->
     <script type="application/ld+json">
     {
       "@context": "https://schema.org",
       "@type": "WebApplication",
       "name": "RevisionFlow",
+      "alternateName": ["Revision Flow", "Revision Flow App", "RevisionFlow App"],
       "url": "https://revisionflow.netlify.app",
-      "description": "AI-powered GCSE and A-Level revision tracker for UK students. Track topics, log past papers, get AI study plans and set exam countdowns. Supports AQA, Edexcel, OCR, WJEC, Eduqas and CCEA.",
+      "description": "Revision Flow is a free AI-powered GCSE and A-Level revision tracker for UK students. Track topic confidence, log past papers, generate AI study plans, and get predicted exam questions. Supports AQA, Edexcel, OCR, WJEC, Eduqas and CCEA.",
       "applicationCategory": "EducationApplication",
       "operatingSystem": "Web, iOS, Android",
       "offers": {
@@ -61,10 +62,23 @@
       },
       "audience": {
         "@type": "EducationalAudience",
-        "educationalRole": "student"
+        "educationalRole": "student",
+        "typicalAgeRange": "14-18"
       },
       "inLanguage": "en-GB",
-      "keywords": "GCSE revision, A-Level revision, revision tracker, past paper tracker, AI revision, AQA, Edexcel, OCR"
+      "keywords": "revision flow, GCSE revision, A-Level revision, revision tracker, past paper tracker, AI revision, AQA, Edexcel, OCR, WJEC",
+      "featureList": [
+        "AI study plan generator",
+        "Topic confidence tracker",
+        "Past paper grade calculator with real grade boundaries",
+        "AI answer marker with examiner feedback",
+        "Emergency Mode for last-minute revision",
+        "Predicted exam questions",
+        "Revision timer with ambient sounds",
+        "XP gamification and badges",
+        "Exam date countdown tracker",
+        "Support for AQA, Edexcel, OCR, WJEC, Eduqas, CCEA"
+      ]
     }
     </script>
   </body>
