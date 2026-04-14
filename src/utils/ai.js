@@ -20,7 +20,7 @@ Always reference specific free resources where relevant:
 - All subjects: Seneca, PMT, SaveMyExams`
 
 // ── Core call function ────────────────────────────────────────────────────────
-async function callAI(prompt, systemPrompt = SYSTEM, maxTokens = 8192) {
+export async function callAI(prompt, systemPrompt = SYSTEM, maxTokens = 8192) {
   if (!MISTRAL_KEY) {
     return { error: 'No AI API key configured. Add VITE_MISTRAL_API_KEY to your Netlify environment variables.' }
   }
