@@ -8,6 +8,7 @@ import {
 import { db } from '../firebase'
 import { XP_REWARDS, LEVELS, BADGES } from '../data/subjects'
 import { BADGE_MAP } from '../data/badges'
+import { generateReferralCode } from './referrals'
 
 
 // ── USER ─────────────────────────────────────────────────────────────────────
@@ -52,18 +53,23 @@ export async function awardXP(uid, amount, reason) {
 }
 
 export async function checkAndAwardBadge(uid, badgeId) {
-if (!BADGES[badgeId]) return false
-const userRef = doc(db, 'users', uid)
-const snap = await getDoc(userRef)
-const currentBadges = snap.data()?.badges || []
-if (currentBadges.includes(badgeId)) return false // already have it
-const badge = BADGES[badgeId]
-await updateDoc(userRef, {
-badges: arrayUnion(badgeId),
-xp: increment(badge.xp),
-updatedAt: serverTimestamp(),
-})
-return true // awarded
+  // Use BADGE_MAP from badges.js (not BADGES from subjects.js)
+  if (!BADGE_MAP[badgeId]) return false
+ 
+  const userRef = doc(db, 'users', uid)
+  const snap    = await getDoc(userRef)
+  const current = snap.data()?.badges || []
+ 
+  if (current.includes(badgeId)) return false // already earned
+ 
+  const badge = BADGE_MAP[badgeId]
+  await updateDoc(userRef, {
+    badges:    arrayUnion(badgeId),
+    xp:        increment(badge.xp || 0),
+    updatedAt: serverTimestamp(),
+  })
+ 
+  return true
 }
 
 export async function updateStreak(uid) {
@@ -396,4 +402,16 @@ export async function getLeaderboard(friendUids, currentUid) {
     .filter(s => s.exists())
     .map(s => ({ id: s.id, ...s.data() }))
     .sort((a, b) => (b.xp || 0) - (a.xp || 0))
+}
+
+export async function ensureReferralCodeOnLogin(uid) {
+  try {
+    const ref  = doc(db, 'users', uid)
+    const snap = await getDoc(ref)
+    if (!snap.data()?.referralCode) {
+      await setDoc(ref, { referralCode: generateReferralCode(uid) }, { merge: true })
+    }
+  } catch (e) {
+    // Silent fail — not critical
+  }
 }
