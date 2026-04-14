@@ -263,3 +263,45 @@ Focus on:
 - Numbers and statistics students must know`
   return callAI(prompt)
 }
+
+export async function generatePredictedQuestions(subject, board, topic, level, totalMarks) {
+  const commandWords = {
+    AQA:     'State, Describe, Explain, Evaluate, Assess, Analyse',
+    Edexcel: 'State, Outline, Explain, Assess, Evaluate, To what extent',
+    OCR:     'Identify, Describe, Explain, Discuss, Evaluate',
+    WJEC:    'Identify, Describe, Explain, Discuss, Evaluate',
+    Eduqas:  'Identify, Describe, Explain, Discuss, Evaluate',
+    CCEA:    'State, Describe, Explain, Discuss, Evaluate',
+  }
+  const words = commandWords[board] || commandWords.AQA
+
+  const prompt = `You are an expert ${board} ${subject} ${level} examiner.
+
+Generate 3 exam-style predicted questions on the topic "${topic}" for ${board} ${subject} ${level}.
+
+REQUIREMENTS:
+- Match the exact style, wording and mark allocation format used by ${board}
+- Use only these ${board} command words: ${words}
+- Questions should total approximately ${totalMarks || 20} marks combined
+- Make them realistic — these could appear in a real ${board} exam paper
+
+FORMAT EACH QUESTION EXACTLY LIKE THIS (keep the --- separators):
+
+---QUESTION 1---
+[question text] [X marks]
+
+MARK SCHEME:
+• [mark point 1]
+• [mark point 2]
+• [continue for all marks available]
+
+EXAMINER TIP: [one specific sentence on what students commonly miss for this question type]
+
+---QUESTION 2---
+[same format]
+
+---QUESTION 3---
+[same format]`
+
+  return callAI(prompt)
+}
