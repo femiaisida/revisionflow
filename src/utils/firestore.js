@@ -7,7 +7,7 @@ import {
 } from 'firebase/firestore'
 import { db } from '../firebase'
 import { XP_REWARDS, LEVELS, BADGES } from '../data/subjects'
-import { BADGES } from '../data/badges'
+import { BADGE_MAP } from '../data/badges'
 
 
 // ── USER ─────────────────────────────────────────────────────────────────────
