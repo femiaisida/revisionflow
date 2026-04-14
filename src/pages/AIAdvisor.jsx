@@ -15,6 +15,7 @@ import {
   suggestNextTopic,
   markAnswer,
   generateFlashcards,
+  generatePredictedQuestions,
 } from '../utils/ai'
 import { checkAndAwardBadge } from '../utils/firestore'
 import AIOutput from '../components/AIOutput'
@@ -81,6 +82,16 @@ export default function AIAdvisor() {
   const [flashCards,  setFlashCards]  = useState([])
   const [flashLoad,   setFlashLoad]   = useState(false)
   const [flashCount,  setFlashCount]  = useState(10)
+
+  // Predicted questions
+  const [predSubj,    setPredSubj]    = useState('')
+  const [predTopic,   setPredTopic]   = useState('')
+  const [predBoard,   setPredBoard]   = useState('')
+  const [predLevel,   setPredLevel]   = useState('')
+  const [predMarks,   setPredMarks]   = useState(20)
+  const [predResult,  setPredResult]  = useState('')
+  const [predParsed,  setPredParsed]  = useState([])
+  const [predLoad,    setPredLoad]    = useState(false)
 
   const bottomRef = useRef()
   const [userContext, setUserContext] = useState('')
@@ -264,6 +275,32 @@ export default function AIAdvisor() {
     setTechLoading(false)
   }
 
+  async function handlePredictedQuestions() {
+    if (!predSubj || !predTopic) return
+    setPredLoad(true)
+    setPredResult('')
+    setPredParsed([])
+    const subj = profile?.subjects?.find(s => s.name === predSubj)
+    const board = predBoard || subj?.board || 'AQA'
+    const level = predLevel || profile?.qualification || 'GCSE'
+    const res = await generatePredictedQuestions(predSubj, board, predTopic, level, predMarks)
+    const text = res.text || res.error || ''
+    setPredResult(text)
+    // Parse into structured cards
+    const blocks = text.split(/---QUESTION \d+---/).filter(Boolean)
+    const cards = blocks.map(block => {
+      const [qPart, rest]   = block.split('MARK SCHEME:')
+      const [msPart, tipPart] = (rest || '').split('EXAMINER TIP:')
+      return {
+        question:   qPart?.trim() || '',
+        markScheme: msPart?.trim() || '',
+        tip:        tipPart?.trim() || '',
+      }
+    })
+    setPredParsed(cards.filter(c => c.question))
+    setPredLoad(false)
+  }
+
   const subjects = profile?.subjects?.map(s=>s.name)||[]
 
   return (
@@ -285,6 +322,7 @@ export default function AIAdvisor() {
           {k:'resources',  label:'Resources',      icon:BookOpen},
           {k:'plan',       label:'Study Plan',     icon:TrendingUp},
           {k:'techniques', label:'Techniques',     icon:Lightbulb},
+          {k:'questions',  label:'Predicted Qs',   icon:FileText},
         ].map(({k,label,icon:Icon})=>(
           <button key={k} className={`tab${tab===k?' active':''}`} onClick={()=>setTab(k)}>
             <Icon size={13}/> {label}
@@ -644,6 +682,91 @@ export default function AIAdvisor() {
               ))}
             </div>
           </div>
+        </div>
+      )}
+
+      {/* ── Predicted Questions ── */}
+      {tab==='questions'&&(
+        <div>
+          <div className="card" style={{marginBottom:16}}>
+            <h4 style={{marginBottom:4,display:'flex',alignItems:'center',gap:8}}>
+              <FileText size={18} color="var(--accent-light)"/> Predicted Exam Questions
+            </h4>
+            <p style={{marginBottom:14,fontSize:'0.875rem',color:'var(--text-secondary)'}}>
+              Board-specific, topic-specific questions in the exact style of your actual exam paper.
+            </p>
+            <div className="grid-2" style={{gap:10,marginBottom:10}}>
+              <div>
+                <label className="label">Subject</label>
+                <select className="select" value={predSubj} onChange={e=>{
+                  setPredSubj(e.target.value)
+                  const s = profile?.subjects?.find(x=>x.name===e.target.value)
+                  if(s){ setPredBoard(s.board); setPredLevel(profile?.qualification||'GCSE') }
+                }}>
+                  <option value="">Select subject…</option>
+                  {subjects.map(s=><option key={s} value={s}>{s}</option>)}
+                </select>
+              </div>
+              <div>
+                <label className="label">Topic</label>
+                <input className="input" value={predTopic} onChange={e=>setPredTopic(e.target.value)} placeholder="e.g. Cell division, Quadratics, WW1 causes…"/>
+              </div>
+              <div>
+                <label className="label">Exam board</label>
+                <select className="select" value={predBoard} onChange={e=>setPredBoard(e.target.value)}>
+                  <option value="">Auto (from subject)</option>
+                  {['AQA','Edexcel','OCR','WJEC','Eduqas','CCEA'].map(b=><option key={b} value={b}>{b}</option>)}
+                </select>
+              </div>
+              <div>
+                <label className="label">Total marks for 3 questions</label>
+                <select className="select" value={predMarks} onChange={e=>setPredMarks(parseInt(e.target.value))}>
+                  {[10,15,20,25,30,40].map(m=><option key={m} value={m}>{m} marks</option>)}
+                </select>
+              </div>
+            </div>
+            <button className="btn btn-primary" onClick={handlePredictedQuestions}
+              disabled={predLoad||!predSubj||!predTopic} style={{minWidth:200}}>
+              {predLoad?'Generating…':'Generate predicted questions'}
+            </button>
+          </div>
+
+          {predLoad&&<div className="loading-center" style={{marginBottom:16}}><div className="spinner"/></div>}
+
+          {predParsed.length>0 && (
+            <div style={{display:'flex',flexDirection:'column',gap:14}}>
+              {predParsed.map((q,i)=>(
+                <div key={i} className="card" style={{border:'1px solid var(--border)'}}>
+                  <div style={{fontWeight:700,fontSize:'0.85rem',color:'var(--accent-light)',marginBottom:8}}>
+                    Question {i+1}
+                  </div>
+                  <p style={{fontSize:'0.9rem',fontWeight:600,marginBottom:12,lineHeight:1.6}}>{q.question}</p>
+
+                  {q.markScheme && (
+                    <details style={{marginBottom:8}}>
+                      <summary style={{cursor:'pointer',fontSize:'0.8rem',fontWeight:600,color:'var(--success)',userSelect:'none',marginBottom:6}}>
+                        ▶ Show mark scheme
+                      </summary>
+                      <div style={{padding:'10px 14px',background:'rgba(34,197,94,0.06)',borderRadius:'var(--radius-md)',border:'1px solid rgba(34,197,94,0.2)',fontSize:'0.83rem',lineHeight:1.7,whiteSpace:'pre-wrap'}}>
+                        {q.markScheme}
+                      </div>
+                    </details>
+                  )}
+
+                  {q.tip && (
+                    <div style={{padding:'8px 12px',background:'rgba(245,158,11,0.08)',borderRadius:'var(--radius-md)',border:'1px solid rgba(245,158,11,0.2)',fontSize:'0.8rem'}}>
+                      <span style={{fontWeight:700,color:'var(--warning)'}}>💡 Examiner tip: </span>
+                      {q.tip}
+                    </div>
+                  )}
+                </div>
+              ))}
+            </div>
+          )}
+
+          {predResult && predParsed.length===0 && !predLoad && (
+            <AIOutput text={predResult} label="Predicted Questions" />
+          )}
         </div>
       )}
 
