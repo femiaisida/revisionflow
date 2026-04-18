@@ -5,14 +5,57 @@ import {
   createUserWithEmailAndPassword, signInWithPopup,
   signOut, updateProfile, sendPasswordResetEmail
 } from 'firebase/auth'
-import { doc, setDoc, getDoc, serverTimestamp, onSnapshot, query, collection, where, updateDoc, deleteDoc, arrayUnion, arrayRemove } from 'firebase/firestore'
+import {
+  doc, setDoc, getDoc, serverTimestamp, onSnapshot,
+  query, collection, where, updateDoc,
+  arrayUnion, arrayRemove
+} from 'firebase/firestore'
 import { auth, db, googleProvider } from '../firebase'
 import toast from 'react-hot-toast'
 
 const AuthContext = createContext(null)
 
+// ── Streak: update on every login ────────────────────────────────────────────
+async function updateStreakOnLogin(uid) {
+  try {
+    const ref   = doc(db, 'users', uid)
+    const snap  = await getDoc(ref)
+    if (!snap.exists()) return
+    const data  = snap.data()
+    const today = new Date().toISOString().substring(0, 10)
+
+    // Don't fire more than once per calendar day
+    if (data.lastLoginDate === today) return
+
+    const yesterday = new Date()
+    yesterday.setDate(yesterday.getDate() - 1)
+    const yStr = yesterday.toISOString().substring(0, 10)
+
+    // If last activity was before yesterday, streak resets
+    const lastActive = data.lastLoginDate || data.lastSessionDate || null
+    const newStreak  = (!lastActive || lastActive < yStr) ? 0 : (data.streak || 0)
+
+    await updateDoc(ref, {
+      streak:        newStreak,
+      lastLoginDate: today,
+      updatedAt:     serverTimestamp(),
+    })
+  } catch (e) { /* non-critical, silent fail */ }
+}
+
+// ── Give existing users a referral code if they don't have one ───────────────
+async function ensureReferralCode(uid) {
+  try {
+    const ref  = doc(db, 'users', uid)
+    const snap = await getDoc(ref)
+    if (!snap.data()?.referralCode) {
+      await setDoc(ref, { referralCode: uid.slice(0, 8).toUpperCase() }, { merge: true })
+    }
+  } catch (e) { /* silent */ }
+}
+
 export function AuthProvider({ children }) {
-  const [user, setUser] = useState(null)
+  const [user,    setUser]    = useState(null)
   const [profile, setProfile] = useState(null)
   const [loading, setLoading] = useState(true)
 
@@ -22,64 +65,49 @@ export function AuthProvider({ children }) {
     const unsubAuth = onAuthStateChanged(auth, async (u) => {
       setUser(u)
       if (u) {
-        // 1. Profile listener
+        // Run on every login — silently
+        updateStreakOnLogin(u.uid)
+        ensureReferralCode(u.uid)
+
+        // Real-time profile listener
         unsubSnapshot = onSnapshot(doc(db, 'users', u.uid), (snap) => {
           if (snap.exists()) {
             const data = snap.data()
             setProfile(data)
-            
-            // --- ONE-TIME STREAK RECOVERY (Migration) ---
+
+            // One-time streak migration for old accounts created before streak tracking
             if (!data.streakMigrated && data.createdAt) {
-              const created = data.createdAt?.toDate?.() || new Date(data.createdAt)
-              const diff = Date.now() - created.getTime()
-              const days = Math.floor(diff / (1000 * 60 * 60 * 24))
-              const finalStreak = Math.max(data.streak || 0, days)
-              
-              if (finalStreak > (data.streak || 0)) {
-                toast.success(`Welcome back! We've boosted your streak to ${finalStreak} days to make up for the update!`)
-              }
-              
-              updateDoc(doc(db, 'users', u.uid), { 
-                streak: finalStreak, 
-                streakMigrated: true,
-                lastSessionDate: new Date().toISOString().substring(0, 10),
-                updatedAt: serverTimestamp()
+              updateDoc(doc(db, 'users', u.uid), {
+                streakMigrated:  true,
+                lastSessionDate: data.lastSessionDate || new Date().toISOString().substring(0, 10),
+                updatedAt:       serverTimestamp(),
               })
             }
           }
         })
 
-        // 2. Handshake Pull (Permission-Safe Sync)
-        // Alice watches Bob. If Bob added Alice to HIS 'friends', 
-        // Alice adds Bob to HER 'friends'.
+        // Friends handshake — if Bob added Alice, Alice adds Bob back
         const q = query(collection(db, 'users'), where('friends', 'array-contains', u.uid))
         const unsubHandshake = onSnapshot(q, (snap) => {
           if (snap.empty) return
-          
           snap.docs.forEach(async (d) => {
-            const bob = d.data()
-            const bobUid = d.id
-            
-            // Re-fetch our latest state to avoid race conditions
+            const bobUid  = d.id
             const ourSnap = await getDoc(doc(db, 'users', u.uid))
             const ourData = ourSnap.data()
             const ourFriends = ourData?.friends || []
-            const ourSent = ourData?.sentFriendRequests || []
-            
+            const ourSent    = ourData?.sentFriendRequests || []
             if (!ourFriends.includes(bobUid) && ourSent.includes(bobUid)) {
-              // Mutual handshake!
               await updateDoc(doc(db, 'users', u.uid), {
-                friends: arrayUnion(bobUid),
+                friends:            arrayUnion(bobUid),
                 sentFriendRequests: arrayRemove(bobUid),
-                updatedAt: serverTimestamp()
+                updatedAt:          serverTimestamp(),
               })
             }
           })
         })
 
-        // Wrap unsubs
-        const oldU = unsubSnapshot
-        unsubSnapshot = () => { if (oldU) oldU(); unsubHandshake() }
+        const prevUnsub = unsubSnapshot
+        unsubSnapshot = () => { if (prevUnsub) prevUnsub(); unsubHandshake() }
 
       } else {
         if (unsubSnapshot) unsubSnapshot()
@@ -95,26 +123,31 @@ export function AuthProvider({ children }) {
   }, [])
 
   async function createUserDoc(u, extra = {}) {
-    const ref = doc(db, 'users', u.uid)
+    const ref  = doc(db, 'users', u.uid)
     const snap = await getDoc(ref)
     if (!snap.exists()) {
       const data = {
-        uid: u.uid,
-        email: u.email,
-        displayName: u.displayName || extra.displayName || 'Student',
-        photoURL: u.photoURL || null,
-        createdAt: serverTimestamp(),
-        xp: 0,
-        level: 1,
-        streak: 0,
-        lastSessionDate: null,
-        subjects: [],
-        friends: [],
-        friendRequests: [],
+        uid:                u.uid,
+        email:              u.email,
+        displayName:        u.displayName || extra.displayName || 'Student',
+        photoURL:           u.photoURL || null,
+        createdAt:          serverTimestamp(),
+        xp:                 0,
+        level:              1,
+        streak:             0,
+        lastSessionDate:    null,
+        lastLoginDate:      new Date().toISOString().substring(0, 10),
+        subjects:           [],
+        friends:            [],
+        friendRequests:     [],
         sentFriendRequests: [],
-        settings: { theme: 'dark', profilePublic: true, friendsCanSeeGrades: true },
+        badges:             [],
+        referralCode:       u.uid.slice(0, 8).toUpperCase(),
+        theme:              'default',
+        profileIcon:        'lightning',
+        settings:           { theme: 'dark', profilePublic: true, friendsCanSeeGrades: true },
         onboardingComplete: false,
-        startingGrades: {},
+        startingGrades:     {},
         ...extra,
       }
       await setDoc(ref, data)
@@ -159,7 +192,7 @@ export function AuthProvider({ children }) {
   return (
     <AuthContext.Provider value={{
       user, profile, loading,
-      signup, login, loginWithGoogle, logout, resetPassword, refreshProfile
+      signup, login, loginWithGoogle, logout, resetPassword, refreshProfile,
     }}>
       {children}
     </AuthContext.Provider>
