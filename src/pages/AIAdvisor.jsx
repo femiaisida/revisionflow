@@ -280,24 +280,27 @@ export default function AIAdvisor() {
     setPredLoad(true)
     setPredResult('')
     setPredParsed([])
-    const subj = profile?.subjects?.find(s => s.name === predSubj)
+    const subj  = profile?.subjects?.find(s => s.name === predSubj)
     const board = predBoard || subj?.board || 'AQA'
     const level = predLevel || profile?.qualification || 'GCSE'
-    const res = await generatePredictedQuestions(predSubj, board, predTopic, level, predMarks)
-    const text = res.text || res.error || ''
+    const res   = await generatePredictedQuestions(predSubj, board, predTopic, level, predMarks)
+    const text  = res.text || res.error || ''
     setPredResult(text)
-    // Parse into structured cards
-    const blocks = text.split(/---QUESTION \d+---/).filter(Boolean)
+    // Robust parser — handles ---QUESTION 1--- and **Question 1** and Q1 formats
+    const blocks = text
+      .split(/(?:---QUESTION\s*\d+---|(?:^|\n)(?:\*\*)?Question\s*\d+(?:\*\*)?[:\s])/i)
+      .filter(b => b && b.trim().length > 10)
     const cards = blocks.map(block => {
-      const [qPart, rest]   = block.split('MARK SCHEME:')
-      const [msPart, tipPart] = (rest || '').split('EXAMINER TIP:')
-      return {
-        question:   qPart?.trim() || '',
-        markScheme: msPart?.trim() || '',
-        tip:        tipPart?.trim() || '',
-      }
+      const msIdx  = block.search(/MARK SCHEME:|Mark scheme:/i)
+      const tipIdx = block.search(/EXAMINER TIP:|Examiner tip:/i)
+      const question   = msIdx > -1 ? block.slice(0, msIdx).trim() : (tipIdx > -1 ? block.slice(0, tipIdx).trim() : block.trim())
+      const afterMs    = msIdx > -1 ? block.slice(msIdx).replace(/MARK SCHEME:/i, '').trim() : ''
+      const markScheme = tipIdx > -1 && afterMs ? afterMs.slice(0, afterMs.search(/EXAMINER TIP:/i)).trim() : afterMs.trim()
+      const tip        = tipIdx > -1 ? block.slice(tipIdx).replace(/EXAMINER TIP:/i, '').trim() : ''
+      return { question, markScheme, tip }
     })
-    setPredParsed(cards.filter(c => c.question))
+    const valid = cards.filter(c => c.question.length > 5)
+    setPredParsed(valid)
     setPredLoad(false)
   }
 
@@ -740,15 +743,17 @@ export default function AIAdvisor() {
                   <div style={{fontWeight:700,fontSize:'0.85rem',color:'var(--accent-light)',marginBottom:8}}>
                     Question {i+1}
                   </div>
-                  <p style={{fontSize:'0.9rem',fontWeight:600,marginBottom:12,lineHeight:1.6}}>{q.question}</p>
+                  <div style={{marginBottom:12}}>
+                    <AIOutput text={q.question} label={`Q${i+1}`} />
+                  </div>
 
                   {q.markScheme && (
                     <details style={{marginBottom:8}}>
                       <summary style={{cursor:'pointer',fontSize:'0.8rem',fontWeight:600,color:'var(--success)',userSelect:'none',marginBottom:6}}>
                         ▶ Show mark scheme
                       </summary>
-                      <div style={{padding:'10px 14px',background:'rgba(34,197,94,0.06)',borderRadius:'var(--radius-md)',border:'1px solid rgba(34,197,94,0.2)',fontSize:'0.83rem',lineHeight:1.7,whiteSpace:'pre-wrap'}}>
-                        {q.markScheme}
+                      <div style={{padding:'10px 14px',background:'rgba(34,197,94,0.06)',borderRadius:'var(--radius-md)',border:'1px solid rgba(34,197,94,0.2)'}}>
+                        <AIOutput text={q.markScheme} label="Mark scheme" />
                       </div>
                     </details>
                   )}
