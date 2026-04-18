@@ -6,7 +6,9 @@ import { db } from '../firebase'
 import { getPaperAttempts, getMistakes } from '../utils/firestore'
 import { generateProgressReport } from '../utils/pdfReport'
 import { generateTimetablePDF } from '../utils/pdfTimetable'
-import { LEVELS, BADGES, SUBJECT_COLOURS } from '../data/subjects'
+import { LEVELS, SUBJECT_COLOURS } from '../data/subjects'
+import { BADGE_LIST, BADGE_CATEGORIES } from '../data/badges'
+import { PROFILE_ICONS } from '../data/themes'
 import { gradeColour } from '../utils/calendar'
 import ReferralCard from '../components/ReferralCard'
 import { Zap, Flame, Trophy, Copy, Check, Download, Loader } from 'lucide-react'
@@ -22,7 +24,10 @@ export default function Profile() {
   const nextLvl = LEVELS[Math.min((profile?.level || 1),     LEVELS.length - 1)]
   const xpPct   = profile ? Math.min(100, ((profile.xp || 0) / (nextLvl?.xpRequired || 100)) * 100) : 0
 
-  const unlockedBadges = (profile?.badges || []).map(id => BADGES.find(b => b.id === id)).filter(Boolean)
+  const earnedIds      = profile?.badges || []
+  const unlockedBadges = BADGE_LIST.filter(b => earnedIds.includes(b.id))
+  const iconId         = profile?.profileIcon || 'lightning'
+  const iconEmoji      = PROFILE_ICONS?.[iconId]?.emoji || null
   const profileUrl     = `${window.location.origin}/u/${profile?.username || user?.uid}`
 
   function copyLink() {
@@ -73,7 +78,7 @@ export default function Profile() {
       <div className="card accent-card" style={{ marginBottom: 20, padding: 28, textAlign: 'center' }}>
         {/* Avatar */}
         <div style={{ width: 72, height: 72, borderRadius: '50%', background: 'linear-gradient(135deg,#7c3aed,#a855f7)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontWeight: 800, fontSize: '1.8rem', margin: '0 auto 14px' }}>
-          {(profile?.displayName || 'U')[0].toUpperCase()}
+          {iconEmoji || (profile?.displayName || 'U')[0].toUpperCase()}
         </div>
 
         <h2 style={{ marginBottom: 4 }}>{profile?.displayName}</h2>
@@ -161,15 +166,15 @@ export default function Profile() {
       {/* ── Badges ── */}
       <div className="card">
         <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 12 }}>
-          <h4>Badges ({unlockedBadges.length}/{BADGES.length})</h4>
-          <span style={{ fontSize: '0.78rem', color: 'var(--text-muted)' }}>{BADGES.length - unlockedBadges.length} remaining</span>
+          <h4>Badges ({unlockedBadges.length}/{BADGE_LIST.length})</h4>
+          <span style={{ fontSize: '0.78rem', color: 'var(--text-muted)' }}>{BADGE_LIST.length - unlockedBadges.length} remaining</span>
         </div>
         <p style={{ fontSize: '0.8rem', marginBottom: 14 }}>
           Complete sessions, maintain streaks, and hit milestones to earn badges and XP.
         </p>
         <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill,minmax(130px,1fr))', gap: 8 }}>
-          {BADGES.map(b => {
-            const unlocked = (profile?.badges || []).includes(b.id)
+          {BADGE_LIST.map(b => {
+            const unlocked = earnedIds.includes(b.id)
             return (
               <div key={b.id} title={b.desc}
                 style={{ padding: 10, borderRadius: 'var(--radius-md)', textAlign: 'center', border: `1px solid ${unlocked ? 'var(--accent)' : 'var(--border)'}`, background: unlocked ? 'rgba(124,58,237,0.1)' : 'var(--bg-surface)', opacity: unlocked ? 1 : 0.4, transition: 'all 0.2s' }}
