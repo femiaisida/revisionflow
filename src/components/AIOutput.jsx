@@ -149,6 +149,15 @@ export default function AIOutput({ text, onSummarise, loading = false, label = '
 
   if (!text && !loading) return null
 
+  // Compact mode: just markdown, no chrome
+  if (compact) {
+    return (
+      <div style={{ fontSize: '0.875rem', lineHeight: 1.6 }}>
+        {loading ? <div className="spinner" style={{width:16,height:16}}/> : renderMarkdown(text)}
+      </div>
+    )
+  }
+
   return (
     <div style={{
       background:'var(--bg-surface)',
