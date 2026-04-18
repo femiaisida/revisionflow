@@ -17,7 +17,7 @@ export function generateReferralCode(uid) {
 // Get the referral URL to share
 export function getReferralUrl(uid) {
   const code = generateReferralCode(uid)
-  return `https://revisionflow.netlify.app?ref=${code}`
+  return `https://revision-flow.netlify.app?ref=${code}`
 }
 
 // Call this immediately after a new user signs up
