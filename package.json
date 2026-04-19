@@ -9,6 +9,8 @@
     "preview": "vite preview"
   },
   "dependencies": {
+    "jspdf": "^2.5.1",
+    "jspdf-autotable": "^3.8.2",
     "date-fns": "^3.6.0",
     "firebase": "^10.12.0",
     "framer-motion": "^11.2.10",
