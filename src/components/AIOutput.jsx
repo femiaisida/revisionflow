@@ -112,7 +112,7 @@ function inlineFormat(text) {
   return parts.length ? parts : text
 }
 
-export default function AIOutput({ text, onSummarise, loading = false, label = 'AI Response' }) {
+export default function AIOutput({ text, onSummarise, loading = false, label = 'AI Response', compact = false }) {
   const [collapsed,      setCollapsed]      = useState(false)
   const [summary,        setSummary]        = useState('')
   const [summaryLoading, setSummaryLoading] = useState(false)
