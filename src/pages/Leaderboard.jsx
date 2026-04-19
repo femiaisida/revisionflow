@@ -3,6 +3,7 @@ import React, { useState, useEffect } from 'react'
 import { useAuth } from '../context/AuthContext'
 import { getLeaderboard, getGlobalLeaderboard, updateUserProfile } from '../utils/firestore'
 import { LEVELS } from '../data/subjects'
+import { PROFILE_ICONS } from '../data/themes'
 import { Trophy, Flame, Zap, Globe, Users, EyeOff } from 'lucide-react'
 import toast from 'react-hot-toast'
 
@@ -30,8 +31,8 @@ export default function Leaderboard() {
     const newVal = !(profile?.hideNameFromLeaderboard)
     await updateUserProfile(user.uid, { hideNameFromLeaderboard: newVal })
     await refreshProfile()
-    setGlobalBoard([]) // force reload
-    toast.success(newVal ? 'You now appear as "Anonymous" on the global board' : 'Your name is visible on the global board')
+    setGlobalBoard([])
+    toast.success(newVal ? 'You now appear as "Anonymous" on the global board' : 'Your name is visible again')
   }
 
   async function toggleVisibility() {
@@ -42,8 +43,24 @@ export default function Leaderboard() {
     toast.success(isHidden ? 'You are now visible on the global leaderboard' : 'You are now hidden from the global leaderboard')
   }
 
-  const medals  = ['🥇','🥈','🥉']
+  const medals   = ['🥇','🥈','🥉']
   const isHidden = profile?.showOnGlobalLeaderboard === false
+
+  function UserAvatar({ u, size = 40 }) {
+    const iconId    = u.profileIcon || 'lightning'
+    const iconEmoji = PROFILE_ICONS?.[iconId]?.emoji || null
+    return (
+      <div style={{
+        width:size, height:size, borderRadius:'50%',
+        background:'linear-gradient(135deg,var(--purple-700),var(--purple-400))',
+        display:'flex', alignItems:'center', justifyContent:'center',
+        fontSize: iconEmoji ? size * 0.55 + 'px' : size * 0.4 + 'px',
+        fontWeight:700, flexShrink:0, userSelect:'none',
+      }}>
+        {iconEmoji || (u.displayName||'A')[0].toUpperCase()}
+      </div>
+    )
+  }
 
   function LeaderRow({ u, i, isMe, showBadges }) {
     const lvl = LEVELS[Math.min((u.level||1)-1, LEVELS.length-1)]
@@ -56,19 +73,20 @@ export default function Leaderboard() {
         <div style={{width:36,textAlign:'center',fontWeight:800,fontSize:i<3?'1.5rem':'1.1rem',flexShrink:0}}>
           {i < 3 ? medals[i] : <span style={{color:'var(--text-muted)'}}>{i+1}</span>}
         </div>
-        <div style={{width:40,height:40,borderRadius:'50%',background:'linear-gradient(135deg,var(--purple-700),var(--purple-400))',display:'flex',alignItems:'center',justifyContent:'center',fontWeight:700,flexShrink:0}}>
-          {(u.displayName||'A')[0].toUpperCase()}
-        </div>
+
+        <UserAvatar u={u} size={40} />
+
         <div style={{flex:1,overflow:'hidden'}}>
           <div style={{fontWeight:700,fontSize:'0.95rem'}}>
             {u.displayName}
-            {isMe&&<span style={{color:'var(--accent-light)',fontSize:'0.75rem',marginLeft:6}}>(you)</span>}
+            {isMe && <span style={{color:'var(--accent-light)',fontSize:'0.75rem',marginLeft:6}}>(you)</span>}
           </div>
           <div style={{fontSize:'0.78rem',color:'var(--text-muted)'}}>
             Level {u.level||1} · {lvl?.title}
             {showBadges && u.badges > 0 && ` · ${u.badges} badge${u.badges!==1?'s':''}`}
           </div>
         </div>
+
         <div style={{display:'flex',gap:16,alignItems:'center'}}>
           <div style={{textAlign:'center'}}>
             <div style={{fontWeight:800,color:'var(--warning)',fontSize:'1.1rem',display:'flex',alignItems:'center',gap:4}}>
@@ -100,7 +118,7 @@ export default function Leaderboard() {
               <EyeOff size={14}/> {profile?.hideNameFromLeaderboard ? 'Show my name' : 'Hide my name'}
             </button>
             <button className={`btn btn-sm ${isHidden?'btn-primary':'btn-secondary'}`} onClick={toggleVisibility}>
-              <Globe size={14}/> {isHidden ? 'Rejoin global' : 'Hide me from global'}
+              <Globe size={14}/> {isHidden ? 'Rejoin global' : 'Hide from global'}
             </button>
           </div>
         )}
@@ -131,14 +149,11 @@ export default function Leaderboard() {
           {isHidden && (
             <div style={{padding:'8px 14px',background:'rgba(245,158,11,0.08)',border:'1px solid rgba(245,158,11,0.25)',borderRadius:'var(--radius-md)',fontSize:'0.82rem',marginBottom:14,display:'flex',alignItems:'center',gap:8}}>
               <EyeOff size={14} color="var(--warning)"/>
-              You are hidden from the global leaderboard. Click "Rejoin global" to appear.
+              You are hidden from the global leaderboard.
             </div>
           )}
-          <p style={{fontSize:'0.82rem',color:'var(--text-muted)',marginBottom:14}}>
-            Top 100 users globally by XP. Visible by default — use buttons above to hide your name or opt out entirely.
-          </p>
           {loadingG ? <div className="loading-center"><div className="spinner"/></div> :
-           globalBoard.length===0 ? <div className="empty-state"><p>No users on the global board yet</p></div> : (
+           globalBoard.length===0 ? <div className="empty-state"><p>No users yet</p></div> : (
             <div style={{display:'flex',flexDirection:'column',gap:10}}>
               {globalBoard.map((u,i)=><LeaderRow key={u.id||i} u={u} i={i} isMe={u.id===user.uid} showBadges={true}/>)}
             </div>
