@@ -3,6 +3,7 @@ import React, { useState } from 'react'
 import { Outlet, NavLink, useNavigate } from 'react-router-dom'
 import { useAuth } from '../context/AuthContext'
 import { useTheme } from '../context/ThemeContext'
+import { PROFILE_ICONS } from '../data/themes'
 import PWAInstallBanner from './PWAInstallBanner'
 import TopicUpdateBanner from './TopicUpdateBanner'
 import {
@@ -27,27 +28,24 @@ const NAV = [
   { to:'/friends',     label:'Friends',     icon:Users },
   { to:'/leaderboard', label:'Leaderboard', icon:Trophy },
   { to:'/profile',     label:'Profile',     icon:User },
-  { to:'/help',       label:'Help',        icon:HelpCircle },
+  { to:'/help',        label:'Help',        icon:HelpCircle },
   { to:'/settings',    label:'Settings',    icon:Settings },
 ]
 
 const MOBILE_NAV = [
-  { to:'/dashboard', label:'Home',     icon:LayoutDashboard },
-  { to:'/calendar',  label:'Calendar', icon:Calendar },
-  { to:'/timer',     label:'Timer',    icon:Timer },
-  { to:'/analytics', label:'Analytics', icon:BarChart2 },
-  { to:'/mastery',   label:'Mastery',   icon:Layers },
-  { to:'/ai',        label:'AI',       icon:MessageSquare },
-  { to:'/profile',   label:'Profile',  icon:User },
+  { to:'/dashboard', label:'Home',      icon:LayoutDashboard },
+  { to:'/calendar',  label:'Calendar',  icon:Calendar },
+  { to:'/timer',     label:'Timer',     icon:Timer },
+  { to:'/ai',        label:'AI',        icon:MessageSquare },
+  { to:'/profile',   label:'Profile',   icon:User },
 ]
 
 export default function Layout() {
   const { profile, logout } = useAuth()
   const { theme, toggle }   = useTheme()
   const navigate             = useNavigate()
-  const [open,       setOpen]       = useState(false)
-  const [showWidget, setShowWidget] = useState(false)
-  const [collapsed,  setCollapsed]  = useState(false)
+  const [open,      setOpen]      = useState(false)
+  const [collapsed, setCollapsed] = useState(false)
 
   async function handleLogout() {
     await logout()
@@ -55,15 +53,24 @@ export default function Layout() {
   }
 
   const xpForNext  = profile ? Math.floor(100 * Math.pow(1.15, (profile.level||1)-1)) : 100
-  const xpProgress = profile ? Math.min(100,((profile.xp||0)/xpForNext)*100) : 0
+  const xpProgress = profile ? Math.min(100, ((profile.xp||0) / xpForNext) * 100) : 0
+
+  // Profile icon — show emoji if set, otherwise first letter of name
+  const iconId    = profile?.profileIcon || 'lightning'
+  const iconEmoji = PROFILE_ICONS?.[iconId]?.emoji || null
 
   return (
     <div className="app-layout">
       {open && <div style={{position:'fixed',inset:0,zIndex:99,background:'rgba(0,0,0,0.5)'}} onClick={()=>setOpen(false)}/>}
 
-      <aside className={`sidebar ${open?'open':''}`} style={{width:collapsed?52:undefined,minWidth:collapsed?52:undefined,transition:'width 0.2s,min-width 0.2s',overflow:collapsed?'hidden':undefined,overflowY:collapsed?'hidden':'auto'}}>
+      <aside className={`sidebar ${open?'open':''}`} style={{
+        width:collapsed?52:undefined, minWidth:collapsed?52:undefined,
+        transition:'width 0.2s,min-width 0.2s',
+        overflow:collapsed?'hidden':undefined,
+        overflowY:collapsed?'hidden':'auto',
+      }}>
         {/* Logo + collapse toggle */}
-        <div style={{display:'flex',alignItems:'center',gap:8,marginBottom:20,padding:'0 4px', justifyContent: collapsed ? 'center' : 'flex-start'}}>
+        <div style={{display:'flex',alignItems:'center',gap:8,marginBottom:20,padding:'0 4px',justifyContent:collapsed?'center':'flex-start'}}>
           {!collapsed && (
             <>
               <div style={{width:32,height:32,borderRadius:8,background:'linear-gradient(135deg,#7c3aed,#a855f7)',display:'flex',alignItems:'center',justifyContent:'center',flexShrink:0}}>
@@ -74,46 +81,45 @@ export default function Layout() {
               </span>
             </>
           )}
-          <button
-            onClick={()=>setCollapsed(x=>!x)}
-            title={collapsed?'Expand sidebar':'Collapse sidebar'}
-            style={{
-              marginLeft: collapsed ? 0 : 'auto',
-              flexShrink:0,
-              background:'var(--bg-surface)',
-              border:'1px solid var(--border)',
-              borderRadius:6,cursor:'pointer',
-              color:'var(--text-secondary)',
-              padding:'4px 7px',fontSize:'0.8rem',fontWeight:700,
-              display:'flex',alignItems:'center',justifyContent:'center',
-            }}>
+          <button onClick={()=>setCollapsed(x=>!x)} title={collapsed?'Expand':'Collapse'}
+            style={{marginLeft:collapsed?0:'auto',flexShrink:0,background:'var(--bg-surface)',border:'1px solid var(--border)',borderRadius:6,cursor:'pointer',color:'var(--text-secondary)',padding:'4px 7px',fontSize:'0.8rem',fontWeight:700,display:'flex',alignItems:'center',justifyContent:'center'}}>
             {collapsed ? '»' : '«'}
           </button>
         </div>
 
-        {/* User card */}
+        {/* User card with profile icon */}
         {profile && !collapsed && (
           <div className="card accent-card" style={{marginBottom:14,padding:10}}>
             <div style={{display:'flex',alignItems:'center',gap:8,marginBottom:6}}>
-              <div style={{width:30,height:30,borderRadius:'50%',background:'linear-gradient(135deg,var(--purple-700),var(--purple-400))',display:'flex',alignItems:'center',justifyContent:'center',fontSize:'0.8rem',fontWeight:700,flexShrink:0}}>
-                {(profile.displayName||'U')[0].toUpperCase()}
+              {/* Avatar — shows profile icon emoji or first letter */}
+              <div style={{width:30,height:30,borderRadius:'50%',background:'linear-gradient(135deg,var(--purple-700),var(--purple-400))',display:'flex',alignItems:'center',justifyContent:'center',fontSize:iconEmoji?'1.1rem':'0.8rem',fontWeight:700,flexShrink:0,userSelect:'none'}}>
+                {iconEmoji || (profile.displayName||'U')[0].toUpperCase()}
               </div>
               <div style={{overflow:'hidden'}}>
                 <div style={{fontWeight:600,fontSize:'0.82rem',whiteSpace:'nowrap',overflow:'hidden',textOverflow:'ellipsis'}}>{profile.displayName}</div>
-                <div style={{fontSize:'0.68rem',color:'var(--text-muted)'}}>Level {profile.level||1}</div>
+                <div style={{fontSize:'0.68rem',color:'var(--text-muted)'}}>Level {profile.level||1} · 🔥 {profile.streak||0}</div>
               </div>
             </div>
             <div className="progress-bar">
               <div className="progress-fill xp-bar-fill" style={{width:`${xpProgress}%`}}/>
             </div>
             <div style={{display:'flex',justifyContent:'space-between',marginTop:3,fontSize:'0.68rem',color:'var(--text-muted)'}}>
-              <span>{profile.xp||0} XP</span>
-              <span className="streak-fire">🔥 {profile.streak||0}</span>
+              <span>{(profile.xp||0).toLocaleString()} XP</span>
+              <span>Next: {xpForNext} XP</span>
             </div>
           </div>
         )}
 
-        {/* Nav */}
+        {/* Collapsed avatar */}
+        {profile && collapsed && (
+          <div style={{display:'flex',justifyContent:'center',marginBottom:12}}>
+            <div style={{width:30,height:30,borderRadius:'50%',background:'linear-gradient(135deg,var(--purple-700),var(--purple-400))',display:'flex',alignItems:'center',justifyContent:'center',fontSize:iconEmoji?'1.1rem':'0.8rem',fontWeight:700,userSelect:'none'}}>
+              {iconEmoji || (profile.displayName||'U')[0].toUpperCase()}
+            </div>
+          </div>
+        )}
+
+        {/* Nav links */}
         <nav style={{flex:1,display:'flex',flexDirection:'column',gap:1,overflowY:'auto'}}>
           {NAV.map(({to,label,icon:Icon})=>(
             <NavLink key={to} to={to} onClick={()=>setOpen(false)}
@@ -124,12 +130,13 @@ export default function Layout() {
                 background:isActive?'var(--accent)':'transparent',
                 textDecoration:'none',transition:'all var(--transition)',
               })}>
-              <Icon size={16}/>{!collapsed && <span style={{marginLeft:9}}>{label}</span>}
+              <Icon size={16}/>
+              {!collapsed && <span style={{marginLeft:9}}>{label}</span>}
             </NavLink>
           ))}
         </nav>
 
-        {/* Bottom */}
+        {/* Bottom buttons */}
         <div style={{display:'flex',flexDirection:'column',gap:3,marginTop:10,paddingTop:10,borderTop:'1px solid var(--border)'}}>
           <button className="btn btn-ghost" onClick={toggle} style={{justifyContent:'flex-start',gap:9,fontSize:'0.85rem'}}>
             {theme==='dark'?<Sun size={16}/>:<Moon size={16}/>}
@@ -143,24 +150,17 @@ export default function Layout() {
 
       <main className="main-content">
         {/* Mobile header */}
-        <div style={{display:'flex',alignItems:'center',justifyContent:'space-between',marginBottom:16,paddingBottom:12,borderBottom:'1px solid var(--border)'}}
-          className="mobile-header">
+        <div className="mobile-header" style={{display:'flex',alignItems:'center',justifyContent:'space-between',marginBottom:16,paddingBottom:12,borderBottom:'1px solid var(--border)'}}>
           <button className="btn btn-icon btn-ghost" onClick={()=>setOpen(true)}><Menu size={22}/></button>
           <span style={{fontWeight:800}}>Revision<span style={{color:'var(--accent-light)'}}>Flow</span></span>
-          <div style={{display:'flex',gap:6}}>
-            <button className="btn btn-icon btn-ghost btn-sm" onClick={()=>setShowWidget(!showWidget)} title="Timer widget">
-              <Timer size={18}/>
-            </button>
-            <button className="btn btn-icon btn-ghost" onClick={toggle}>
-              {theme==='dark'?<Sun size={18}/>:<Moon size={18}/>}
-            </button>
-          </div>
+          <button className="btn btn-icon btn-ghost" onClick={toggle}>
+            {theme==='dark'?<Sun size={18}/>:<Moon size={18}/>}
+          </button>
         </div>
+        <TopicUpdateBanner />
         <Outlet />
       </main>
 
-      {/* Floating timer widget */}
-      
       <PWAInstallBanner/>
 
       {/* Mobile bottom nav */}
@@ -174,7 +174,7 @@ export default function Layout() {
         </div>
       </nav>
 
-      <style>{`.mobile-header{display:none;}@media(max-width:768px){.mobile-header{display:flex !important;}}`}</style>
+      <style>{`.mobile-header{display:none !important;}@media(max-width:768px){.mobile-header{display:flex !important;}}`}</style>
     </div>
   )
 }
