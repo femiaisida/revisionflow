@@ -129,15 +129,50 @@ export function isUnlocked(unlockKey, profile) {
 // Apply a theme by setting CSS variables on the root element
 export function applyTheme(themeId) {
   const theme = THEMES[themeId] || THEMES.default
-  const root = document.documentElement
-  root.style.setProperty('--accent', theme.accent)
-  root.style.setProperty('--accent-light', theme.accentLight)
-  // Derive a transparent version for hover backgrounds
-  root.style.setProperty('--accent-bg', theme.accent + '18')
-  root.dataset.theme = themeId
-  // Persist to localStorage
+
+  // Remove any previously injected theme style
+  const old = document.getElementById('rf-theme-override')
+  if (old) old.remove()
+
+  // Inject a <style> tag that overrides CSS vars with highest specificity
+  // This beats any :root{} definition in globals.css
+  const hex = theme.accent
+  const light = theme.accentLight
+
+  // Derive rgba transparent versions
+  function hexToRgb(h) {
+    const r = parseInt(h.slice(1,3),16), g = parseInt(h.slice(3,5),16), b = parseInt(h.slice(5,7),16)
+    return `${r},${g},${b}`
+  }
+
+  const rgb = hexToRgb(hex)
+  const rgbLight = hexToRgb(light)
+
+  const style = document.createElement('style')
+  style.id = 'rf-theme-override'
+  style.textContent = `
+    :root, [data-theme], [data-theme="dark"], [data-theme="light"] {
+      --accent: ${hex} !important;
+      --accent-light: ${light} !important;
+      --accent-bg: rgba(${rgb}, 0.12) !important;
+      --accent-hover: rgba(${rgb}, 0.08) !important;
+      --purple-400: ${light} !important;
+      --purple-300: ${light} !important;
+      --purple-700: ${hex} !important;
+    }
+    .progress-fill, .xp-bar-fill { background: ${hex} !important; }
+    .gradient-text { background: linear-gradient(135deg, ${hex}, ${light}) !important; -webkit-background-clip: text !important; }
+    .btn-primary { background: ${hex} !important; }
+    .btn-primary:hover { background: ${light} !important; }
+  `
+  document.head.appendChild(style)
+
+  root.dataset.rfColorTheme = themeId
   localStorage.setItem('revisionflow_theme', themeId)
 }
+
+// Keep a reference so we don't need document query each time
+const root = document.documentElement
 
 // Load saved theme on app start — call this in main.jsx or App.jsx
 export function loadSavedTheme() {
