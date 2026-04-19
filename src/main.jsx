@@ -9,8 +9,17 @@ import { captureReferralFromUrl } from './utils/referrals'
 import { loadSavedTheme } from './data/themes'
 import './styles/globals.css'
 
-// Capture ?ref= from URL before React mounts (survives the auth redirect)
+// Capture ?ref= from URL before React mounts
 captureReferralFromUrl()
+
+// If user arrived via a referral link, redirect to signup so they actually sign up
+// (otherwise they land on the landing page and may not know what to do)
+;(function redirectReferralToSignup() {
+  const params = new URLSearchParams(window.location.search)
+  if (params.get('ref') && window.location.pathname === '/') {
+    window.history.replaceState({}, '', '/signup?ref=' + params.get('ref'))
+  }
+})()
 
 // Apply saved theme before first render (prevents flash of wrong colour)
 loadSavedTheme()
