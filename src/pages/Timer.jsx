@@ -94,18 +94,30 @@ export default function Timer() {
 
   function playAlertSound() {
     try {
-      const ctx  = new (window.AudioContext || window.webkitAudioContext)()
-      const osc  = ctx.createOscillator()
-      const gain = ctx.createGain()
-      osc.connect(gain)
-      gain.connect(ctx.destination)
-      const freqs = { bell:880, chime:1046, beep:440, gentle:528 }
-      osc.frequency.value = freqs[alertSound] || 880
-      osc.type = alertSound === 'beep' ? 'square' : 'sine'
-      gain.gain.setValueAtTime(0.3, ctx.currentTime)
-      gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + 1.5)
-      osc.start(ctx.currentTime)
-      osc.stop(ctx.currentTime + 1.5)
+      const ctx   = new (window.AudioContext || window.webkitAudioContext)()
+      const freqs = { bell: 880, chime: 1046, beep: 440, gentle: 528 }
+      const freq  = freqs[alertSound] || 880
+      const isBeep = alertSound === 'beep'
+
+      // Play 3 pulses spaced 0.8s apart for a proper alert
+      const PULSES = 3
+      const PULSE_DUR = 0.6
+      const PULSE_GAP = 0.8
+
+      for (let i = 0; i < PULSES; i++) {
+        const startAt = ctx.currentTime + i * PULSE_GAP
+        const osc  = ctx.createOscillator()
+        const gain = ctx.createGain()
+        osc.connect(gain)
+        gain.connect(ctx.destination)
+        osc.frequency.value = isBeep ? freq : freq * (1 + i * 0.05) // slight pitch rise
+        osc.type = isBeep ? 'square' : 'sine'
+        gain.gain.setValueAtTime(0, startAt)
+        gain.gain.linearRampToValueAtTime(0.35, startAt + 0.05)
+        gain.gain.exponentialRampToValueAtTime(0.001, startAt + PULSE_DUR)
+        osc.start(startAt)
+        osc.stop(startAt + PULSE_DUR)
+      }
     } catch (e) {}
   }
 
