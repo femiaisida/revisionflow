@@ -33,18 +33,75 @@ export async function generateTimetablePDF(profile, sessions, examDates) {
 
   let y = 28
 
-  const upcoming = (examDates||[]).filter(e=>new Date(e.examDate)>new Date()).sort((a,b)=>new Date(a.examDate)-new Date(b.examDate)).slice(0,6)
+  // ── Exam Dates section — full table ────────────────────────────────────────
+  const upcoming = (examDates||[])
+    .filter(e=>new Date(e.examDate)>=new Date())
+    .sort((a,b)=>new Date(a.examDate)-new Date(b.examDate))
+
   if (upcoming.length) {
-    doc.setFillColor(...LIGHT)
-    doc.rect(M,y,W-M*2,12,'F')
-    doc.setTextColor(...DARK)
-    doc.setFontSize(7)
+    doc.setFillColor(...PURPLE)
+    doc.rect(M,y,W-M*2,6,'F')
+    doc.setTextColor(...WHITE)
+    doc.setFontSize(7.5)
     doc.setFont('helvetica','bold')
-    doc.text('UPCOMING EXAMS:', M+3, y+4.5)
-    doc.setFont('helvetica','normal')
-    let ex = M+38
-    upcoming.forEach(e=>{const label=`${e.subject} P${e.paper} — ${format(new Date(e.examDate),'d MMM')}`;doc.text(label,ex,y+4.5);ex+=doc.getTextWidth(label)+8})
-    y += 16
+    doc.text('EXAM DATES', M+3, y+4)
+    y += 6
+
+    // Headers
+    const cols = [70, 40, 35, 35, 50, 40]
+    const headers = ['Subject','Board','Paper','Date','Days remaining','Grade target']
+    let hx = M
+    doc.setFillColor(230,225,255)
+    doc.rect(M, y, W-M*2, 5.5, 'F')
+    doc.setTextColor(...DARK)
+    doc.setFontSize(6.5)
+    doc.setFont('helvetica','bold')
+    headers.forEach((h,i)=>{ doc.text(h, hx+2, y+3.8); hx+=cols[i] })
+    y += 5.5
+
+    upcoming.forEach((e,idx)=>{
+      const days = Math.ceil((new Date(e.examDate)-new Date())/86400000)
+      const daysLabel = days <= 0 ? 'TODAY!' : days === 1 ? 'Tomorrow' : `${days} days`
+      const isToday = days <= 0
+      const isUrgent = days <= 7
+
+      doc.setFillColor(...(idx%2===0 ? [248,245,255] : [255,255,255]))
+      doc.rect(M, y, W-M*2, 7, 'F')
+      doc.setDrawColor(220,215,240)
+      doc.rect(M, y, W-M*2, 7, 'S')
+
+      // Urgency colour bar on left
+      if (isToday) doc.setFillColor(239,68,68)
+      else if (isUrgent) doc.setFillColor(245,158,11)
+      else doc.setFillColor(34,197,94)
+      doc.rect(M, y, 2, 7, 'F')
+
+      const rowData = [
+        e.subject || '–',
+        e.board || '–',
+        `Paper ${e.paper}${e.paperName ? ` (${e.paperName})` : ''}`,
+        format(new Date(e.examDate), 'd MMM yyyy'),
+        daysLabel,
+        e.targetGrade ? `Target: ${e.targetGrade}` : '–',
+      ]
+      let rx = M
+      doc.setFont('helvetica', idx===0?'bold':'normal')
+      doc.setFontSize(6.5)
+      rowData.forEach((val,i)=>{
+        if (i === 4) {
+          doc.setTextColor(...(isToday ? [239,68,68] : isUrgent ? [180,90,0] : [5,100,50]))
+          doc.setFont('helvetica','bold')
+        } else {
+          doc.setTextColor(...DARK)
+          doc.setFont('helvetica','normal')
+        }
+        const truncated = val.length > 22 ? val.slice(0,20)+'…' : val
+        doc.text(truncated, rx+3, y+4.5)
+        rx += cols[i]
+      })
+      y += 7
+    })
+    y += 6
   }
 
   const weekStart = startOfWeek(new Date(),{weekStartsOn:1})
