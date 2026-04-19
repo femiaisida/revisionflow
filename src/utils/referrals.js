@@ -71,14 +71,28 @@ export async function ensureReferralCode(uid) {
 export function captureReferralFromUrl() {
   const params = new URLSearchParams(window.location.search)
   const ref = params.get('ref')
-  if (ref) sessionStorage.setItem('pendingReferral', ref)
+  if (ref) {
+    sessionStorage.setItem('pendingReferral', ref)
+    // Store in localStorage too as a fallback in case session is lost during auth flow
+    localStorage.setItem('pendingReferralFallback', ref)
+  }
+}
+
+export function getPendingReferralWithFallback() {
+  return sessionStorage.getItem('pendingReferral') || localStorage.getItem('pendingReferralFallback')
+}
+
+export function clearAllPendingReferrals() {
+  sessionStorage.removeItem('pendingReferral')
+  localStorage.removeItem('pendingReferralFallback')
 }
 
 // After signup completes, apply the stored referral
 export function getPendingReferral() {
-  return sessionStorage.getItem('pendingReferral')
+  return sessionStorage.getItem('pendingReferral') || localStorage.getItem('pendingReferralFallback')
 }
 
 export function clearPendingReferral() {
   sessionStorage.removeItem('pendingReferral')
+  localStorage.removeItem('pendingReferralFallback')
 }
