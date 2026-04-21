@@ -3,7 +3,7 @@
 // Progress is tracked in Firestore at users/{uid}/quests/{today's date}
 
 import { useState, useEffect } from 'react'
-import { doc, getDoc, setDoc, serverTimestamp } from 'firebase/firestore'
+import { doc, getDoc, setDoc, onSnapshot, serverTimestamp } from 'firebase/firestore'
 import { db } from '../firebase'
 import { useAuth } from '../context/AuthContext'
 import { getDailyQuests } from '../data/badges'
@@ -19,19 +19,17 @@ export default function DailyQuests() {
 
   useEffect(() => {
     if (!user) return
-    loadQuests()
-  }, [user])
-
-  async function loadQuests() {
+    // Set up quests for today
     const dailyQuests = getDailyQuests(user.uid)
     setQuests(dailyQuests)
-
-    // Load progress from Firestore
+    // Real-time listener so quests auto-tick when completed from other pages
     const ref = doc(db, 'users', user.uid, 'quests', today)
-    const snap = await getDoc(ref)
-    setProgress(snap.data() || {})
-    setLoading(false)
-  }
+    const unsub = onSnapshot(ref, (snap) => {
+      setProgress(snap.exists() ? snap.data() : {})
+      setLoading(false)
+    })
+    return () => unsub()
+  }, [user])
 
   async function completeQuest(questId, xp) {
     if (progress[questId]) return // already done
