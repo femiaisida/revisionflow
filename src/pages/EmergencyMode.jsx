@@ -5,7 +5,7 @@
 import { useState, useEffect, useMemo } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { useAuth } from '../context/AuthContext'
-import { collection, getDocs, query, where, orderBy, limit } from 'firebase/firestore'
+import { collection, getDocs, query, where, limit } from 'firebase/firestore'
 import { db } from '../firebase'
 import { callAI } from '../utils/ai'
 import AIOutput from '../components/AIOutput'
@@ -131,14 +131,12 @@ export default function EmergencyMode() {
         getDocs(query(
           collection(db, 'users', user.uid, 'topics'),
           where('subjectId', '==', selectedExam.subject),
-          orderBy('confidence', 'asc'),
-          limit(10)
+          limit(50)
         )),
         getDocs(query(
           collection(db, 'users', user.uid, 'paperAttempts'),
           where('subject', '==', selectedExam.subject),
-          orderBy('createdAt', 'desc'),
-          limit(5)
+          limit(10)
         )),
         getDocs(query(
           collection(db, 'users', user.uid, 'mistakes'),
@@ -148,9 +146,9 @@ export default function EmergencyMode() {
         )),
       ])
 
-      const allTopics = topicsSnap.docs.map(d => d.data())
+      const allTopics = topicsSnap.docs.map(d => d.data()).sort((a, b) => (a.confidence || 3) - (b.confidence || 3))
       const weakTopics = allTopics.filter(t => (t.confidence || 3) <= 2)
-      const papers = papersSnap.docs.map(d => d.data())
+      const papers = papersSnap.docs.map(d => d.data()).sort((a, b) => (b.createdAt?.seconds || 0) - (a.createdAt?.seconds || 0)).slice(0, 5)
       const avgScore = papers.length
         ? papers.reduce((s, p) => s + (p.percentage || 0), 0) / papers.length
         : null
@@ -168,11 +166,15 @@ export default function EmergencyMode() {
         mistakes,
       })
 
-      const text = result.text || result.error || 'Could not generate plan. Please try again.'
+      if (result.error) {
+        setError(result.error)
+        return
+      }
+      const text = result.text || 'Could not generate plan. Please try again.'
       setPlanText(text)
       setParsed(parsePlan(text))
     } catch (err) {
-      setError('Something went wrong. Check your internet connection and try again.')
+      setError(`Error: ${err.message || 'Something went wrong. Check your Mistral API key is set in Netlify environment variables.'}`)
     } finally {
       setLoading(false)
     }
