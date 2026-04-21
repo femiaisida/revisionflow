@@ -375,7 +375,7 @@ export const GRADE_BOUNDARIES = {
     // ── AQA GCSE ─────────────────────────────────────────────────────────────
     'AQA-Mathematics-Higher':           { maxMarks:80,  boundaries:[66,53,43,34,27,21,15,10,5] },
     'AQA-Mathematics-Foundation':       { maxMarks:80,  boundaries:[57,51,45,39,33,27,20,13,6] },
-    'AQA-Further Mathematics':          { maxMarks:60,  boundaries:[54,48,43,37,31,25,19,13,6], note:'~estimated 2025' },
+    'AQA-Further Mathematics':          { maxMarks:80,  boundaries:[72,64,57,49,41,33,25,17,8], note:'~estimated 2025' },
     'AQA-English Language':             { maxMarks:80,  boundaries:[61,55,48,41,34,27,20,13,6] },
     'AQA-English Literature':           { maxMarks:80,  boundaries:[58,52,45,38,31,25,18,12,5] },
     'AQA-Biology-Higher':               { maxMarks:100, boundaries:[69,61,55,44,35,24,18,12,6] },
@@ -431,7 +431,7 @@ export const GRADE_BOUNDARIES = {
     // ── AQA GCSE ─────────────────────────────────────────────────────────────
     'AQA-Mathematics-Higher':            { maxMarks:80,  boundaries:[73,64,54,43,32,20,15,10,5] },
     'AQA-Mathematics-Foundation':        { maxMarks:80,  boundaries:[62,55,48,41,35,27,20,13,6] },
-    'AQA-Further Mathematics':           { maxMarks:60,  boundaries:[54,48,42,36,30,24,18,12,6], note:'~estimated' },
+    'AQA-Further Mathematics':           { maxMarks:80,  boundaries:[72,64,56,48,40,32,24,16,8], note:'~estimated' },
     'AQA-English Language':              { maxMarks:80,  boundaries:[61,56,51,46,41,32,23,16,8] },
     'AQA-English Literature':            { maxMarks:80,  boundaries:[69,61,53,45,37,29,21,14,7] },
     'AQA-English Literature-P1':         { maxMarks:64,  boundaries:[55,48,42,36,30,23,17,11,5] },
