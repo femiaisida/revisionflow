@@ -8,6 +8,7 @@ export const THEMES = {
     accent: '#7c3aed',
     accentLight: '#a855f7',
     description: 'The classic RevisionFlow purple',
+    bgOverrides: null,
     preview: ['#7c3aed', '#a855f7', '#4f46e5'],
   },
   midnight: {
@@ -16,6 +17,7 @@ export const THEMES = {
     accent: '#1d4ed8',
     accentLight: '#3b82f6',
     description: 'Deep ocean blue',
+    bgOverrides: { bgBase: '#0a0e1a', bgCard: '#111827', bgSurface: '#1a2235' },
     preview: ['#1d4ed8', '#3b82f6', '#1e40af'],
   },
   forest: {
@@ -25,6 +27,7 @@ export const THEMES = {
     accent: '#166534',
     accentLight: '#22c55e',
     description: 'Calm, focused green — unlocks at 1,000 XP',
+    bgOverrides: { bgBase: '#0a120a', bgCard: '#0f1f0f', bgSurface: '#162516' },
     preview: ['#166534', '#22c55e', '#15803d'],
   },
   sunset: {
@@ -34,6 +37,7 @@ export const THEMES = {
     accent: '#b45309',
     accentLight: '#f59e0b',
     description: 'Warm amber tones — unlocks at 2,500 XP',
+    bgOverrides: { bgBase: '#1a0e06', bgCard: '#1f1208', bgSurface: '#28180a' },
     preview: ['#b45309', '#f59e0b', '#92400e'],
   },
   ocean: {
@@ -43,6 +47,7 @@ export const THEMES = {
     accent: '#0e7490',
     accentLight: '#06b6d4',
     description: 'Deep sea teal — unlocks at 5,000 XP',
+    bgOverrides: { bgBase: '#050e1a', bgCard: '#08141f', bgSurface: '#0e1f2e' },
     preview: ['#0e7490', '#06b6d4', '#155e75'],
   },
   rose: {
@@ -52,6 +57,7 @@ export const THEMES = {
     accent: '#be185d',
     accentLight: '#ec4899',
     description: 'Vibrant rose — unlock with a 14-day streak',
+    bgOverrides: { bgBase: '#180a12', bgCard: '#1f0e18', bgSurface: '#2a1020' },
     preview: ['#be185d', '#ec4899', '#9d174d'],
   },
   galaxy: {
@@ -61,6 +67,7 @@ export const THEMES = {
     accent: '#4c1d95',
     accentLight: '#8b5cf6',
     description: 'Deep space purple — unlock with a 30-day streak',
+    bgOverrides: { bgBase: '#0a0614', bgCard: '#110a1f', bgSurface: '#1a0f2e' },
     preview: ['#4c1d95', '#8b5cf6', '#3730a3'],
   },
   fire: {
@@ -70,6 +77,7 @@ export const THEMES = {
     accent: '#b91c1c',
     accentLight: '#ef4444',
     description: 'Intense red — unlock by logging 50 past papers',
+    bgOverrides: { bgBase: '#150506', bgCard: '#1f0808', bgSurface: '#280a0a' },
     preview: ['#b91c1c', '#ef4444', '#991b1b'],
   },
   // Premium themes
@@ -80,6 +88,7 @@ export const THEMES = {
     accent: '#059669',
     accentLight: '#10b981',
     description: 'Cyberpunk green — RevisionFlow Pro only',
+    bgOverrides: { bgBase: '#050f0a', bgCard: '#08180f', bgSurface: '#0e2018' },
     preview: ['#059669', '#10b981', '#047857'],
   },
   minimal: {
@@ -89,6 +98,7 @@ export const THEMES = {
     accent: '#374151',
     accentLight: '#6b7280',
     description: 'Ultra-clean grey — RevisionFlow Pro only',
+    bgOverrides: { bgBase: '#0f1014', bgCard: '#161820', bgSurface: '#1e2028' },
     preview: ['#374151', '#6b7280', '#1f2937'],
   },
 }
@@ -166,6 +176,19 @@ export function applyTheme(themeId) {
     .btn-primary:hover { background: ${light} !important; }
   `
   document.head.appendChild(style)
+
+  // Apply background overrides for dark mode themed backgrounds
+  if (theme.bgOverrides) {
+    const { bgBase, bgCard, bgSurface } = theme.bgOverrides
+    style.textContent += `
+      [data-theme="dark"] {
+        --bg-base: ${bgBase} !important;
+        --bg-card: ${bgCard} !important;
+        --bg-surface: ${bgSurface} !important;
+        --bg-input: ${bgCard} !important;
+      }
+    `
+  }
 
   root.dataset.rfColorTheme = themeId
   localStorage.setItem('revisionflow_theme', themeId)
