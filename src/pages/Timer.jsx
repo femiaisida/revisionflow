@@ -2,6 +2,8 @@
 import { useState, useEffect, useRef } from 'react'
 import { useTimer } from '../context/TimerContext'
 import { TIMER_SOUNDS, startSound, stopSound, playSessionEndBell } from '../utils/timerSounds'
+import { awardTimerXP } from '../utils/firestore'
+import { useAuth } from '../context/AuthContext'
 
 function fmt(s) {
   const h   = Math.floor(s / 3600)
@@ -56,6 +58,7 @@ const ALERT_SOUNDS = [
 
 export default function Timer() {
   const timer = useTimer()
+  const { user } = useAuth()
   const [tab,              setTab]              = useState('countdown')
   const [ambient,          setAmbient]          = useState('none')
   const [uploadedBg,       setUploadedBg]       = useState(null)
@@ -83,14 +86,30 @@ export default function Timer() {
 
   // ── Alert sound when timer finishes ──
   const prevSignal = useRef(timer.timerFinishedSignal)
+  const alertInterval = useRef(null)
+
+  function startLoopingAlert() {
+    playAlertSound()
+    alertInterval.current = setInterval(playAlertSound, 2500)
+  }
+  function stopLoopingAlert() {
+    if (alertInterval.current) { clearInterval(alertInterval.current); alertInterval.current = null }
+  }
+
   useEffect(() => {
     if (timer.timerFinishedSignal !== prevSignal.current) {
       prevSignal.current = timer.timerFinishedSignal
-      playAlertSound()
-      stopSound() // stop ambient when done
+      startLoopingAlert()
+      stopSound()
       if (timer.musicAutoStop && selectedPlaylist) setSelectedPlaylist(null)
+      if (user && timer.cdTotal > 0) {
+        const minutes = Math.floor(timer.cdTotal / 60)
+        awardTimerXP(user.uid, minutes).catch(() => {})
+      }
     }
   }, [timer.timerFinishedSignal])
+
+  useEffect(() => () => stopLoopingAlert(), [])
 
   function playAlertSound() {
     try {
@@ -313,7 +332,15 @@ export default function Timer() {
                 <span style={{ fontSize:'2.5rem', fontWeight:700, color: timer.cdFinished ? '#e74c3c' : 'var(--text-primary)', fontVariantNumeric:'tabular-nums' }}>
                   {fmt(timer.cdRemaining)}
                 </span>
-                {timer.cdFinished && <span style={{ color:'#e74c3c', fontSize:'0.85rem', fontWeight:600 }}>Finished!</span>}
+                {timer.cdFinished && (
+                  <div style={{display:'flex',flexDirection:'column',alignItems:'center',gap:6}}>
+                    <span style={{ color:'#e74c3c', fontSize:'0.85rem', fontWeight:600 }}>Finished!</span>
+                    <button onClick={()=>{stopLoopingAlert();timer.cdReset();stopSound()}}
+                      style={{...btnStyle('#e74c3c'),fontSize:'0.75rem',padding:'4px 12px'}}>
+                      ✓ Dismiss
+                    </button>
+                  </div>
+                )}
                 {ambientSound !== 'none' && timer.cdRunning && (
                   <span style={{ color:'rgba(255,255,255,0.5)', fontSize:'0.7rem', marginTop:4 }}>
                     {TIMER_SOUNDS.find(s => s.id === ambientSound)?.emoji} playing
