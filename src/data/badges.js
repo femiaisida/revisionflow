@@ -45,6 +45,7 @@ export const BADGE_LIST = [
   { id: 'emergency_mode', name: 'Clutch Player', icon: '🚨', xp: 100, desc: 'Use Emergency Mode when an exam is within 24 hours', category: 'special', hint: 'Open Emergency Mode the day before an exam' },
   { id: 'ai_plan',        name: 'Strategist',    icon: '🧠', xp: 100, desc: 'Generate your first AI study plan',                  category: 'special', hint: 'Go to AI Advisor → Study Plan and generate a plan' },
   { id: 'flashcard_gen',  name: 'Flash Master',  icon: '⚡', xp: 75,  desc: 'Generate a set of AI flashcards',                    category: 'special', hint: 'Go to AI Advisor → Flashcards' },
+  { id: 'ten_sessions',   name: 'Committed',     icon: '📖', xp: 150, desc: 'Complete 10 revision sessions',                      category: 'milestone', hint: 'Complete 10 sessions from your calendar' },
 ]
 
 // Map for O(1) lookup by id
