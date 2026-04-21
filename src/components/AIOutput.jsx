@@ -12,6 +12,14 @@ function renderMarkdown(text) {
   while (i < lines.length) {
     const line = lines[i]
 
+    if (line.startsWith('#### ')) {
+      elements.push(
+        <div key={i} style={{ color:'var(--accent-light)', fontWeight:700, fontSize:'0.85rem', marginTop:'0.6rem', marginBottom:'0.1rem', textTransform:'uppercase', letterSpacing:'0.04em' }}>
+          {inlineFormat(line.slice(5))}
+        </div>
+      )
+      i++; continue
+    }
     if (line.startsWith('### ')) {
       elements.push(
         <h4 key={i} style={{ color:'var(--text-primary)', margin:'0.75rem 0 0.3rem', fontSize:'0.95rem', fontWeight:700 }}>
