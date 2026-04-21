@@ -11,8 +11,15 @@ function getCtx() {
 }
 
 function stopAll() {
-  activeNodes.forEach(n => { try { n.stop(); n.disconnect() } catch (e) {} })
+  activeNodes.forEach(n => {
+    try { n.stop() } catch (e) {}
+    try { n.disconnect() } catch (e) {}
+  })
   activeNodes.length = 0
+  // Also close and recreate context to fully stop all audio
+  if (audioCtx && audioCtx.state !== 'closed') {
+    try { audioCtx.suspend() } catch(e) {}
+  }
 }
 
 // ── Individual sound generators ───────────────────────────────────────────────
@@ -223,7 +230,7 @@ export function startSound(id) {
   if (!id || id === 'none') return
   try {
     const ctx = getCtx()
-    if (ctx.state === 'suspended') ctx.resume()
+    if (ctx.state === 'suspended') ctx.resume().catch(() => {})
     if (id === 'rain')       playRain()
     else if (id === 'lofi')  playLofi()
     else if (id === 'whitenoise') playWhiteNoise()
