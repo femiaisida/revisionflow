@@ -107,7 +107,9 @@ export default function AIAdvisor() {
           setStudyPlan(snap.data().text)
           setPlanPrefs(p => ({...p, hoursPerWeek: snap.data().hoursPerWeek||10, preferences: snap.data().preferences||p.preferences}))
         }
-      } catch(e) {}
+      } catch (error) {
+        console.error('Failed to load saved AI study plan:', error)
+      }
     }
     loadSaved()
   }, [user])
@@ -148,7 +150,8 @@ export default function AIAdvisor() {
           (weakTopics.length ? `Your weakest topics right now: ${weakTopics.slice(0,3).join(', ')}.\n\n` : '') +
           `Ask me anything — I can predict your grades, suggest what to revise next, mark your practice answers, generate flashcards, or give specific advice on any topic.`
       }])
-    } catch(e) {
+    } catch (error) {
+      console.error('Failed to build AI context:', error)
       setMessages([{role:'assistant',content:`Hi! I'm your AI revision advisor. How can I help you today?`}])
     }
   }
@@ -197,7 +200,9 @@ export default function AIAdvisor() {
     const planText = res.text||res.error||''
     setStudyPlan(planText)
     if (res.text && user) {
-      await checkAndAwardBadge(user.uid, 'ai_plan').catch(()=>{})
+      await checkAndAwardBadge(user.uid, 'ai_plan').catch((error) => {
+        console.error('Failed to award AI plan badge:', error)
+      })
       try {
         await setDoc(doc(db, 'users', user.uid, 'aiData', 'studyPlan'), {
           text:         planText,
@@ -205,7 +210,9 @@ export default function AIAdvisor() {
           preferences:  planPrefs.preferences,
           generatedAt:  serverTimestamp(),
         })
-      } catch(e) {}
+      } catch (error) {
+        console.error('Failed to save generated study plan:', error)
+      }
     }
     setPlanLoading(false)
   }
@@ -222,7 +229,9 @@ export default function AIAdvisor() {
       ])
       papers = ps.docs.map(d=>d.data())
       topics = ts.docs.map(d=>d.data())
-    } catch(e) {}
+    } catch (error) {
+      console.error('Failed to load data for grade prediction:', error)
+    }
     const res = await predictGrade(gradeSubj, papers, topics)
     setGradePred(res.text||res.error||'')
     setGradeLoad(false)
@@ -235,7 +244,9 @@ export default function AIAdvisor() {
     try {
       const ts = await getDocs(collection(db,'users',user.uid,'topics'))
       topics = ts.docs.map(d=>d.data())
-    } catch(e) {}
+    } catch (error) {
+      console.error('Failed to load topic data for next-topic suggestion:', error)
+    }
     const res = await suggestNextTopic(nextSubj, topics, examDates)
     setNextTopic(res.text||res.error||'')
     setNextLoad(false)

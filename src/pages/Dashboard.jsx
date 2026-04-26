@@ -100,14 +100,18 @@ export default function Dashboard() {
         setAiAdvice(snap.data().text)
         return
       }
-    } catch (e) {}
+    } catch (error) {
+      console.error('Failed to load cached daily briefing:', error)
+    }
     setAiLoading(true)
     const res = await getDailyAdvice(user.uid, todaySessions, profile?.streak || 0, [])
     if (res.text) {
       setAiAdvice(res.text)
       try {
         await setDoc(ref, { date: todayStr, text: res.text, createdAt: serverTimestamp() })
-      } catch (e) {}
+      } catch (error) {
+        console.error('Failed to cache daily briefing:', error)
+      }
     }
     setAiLoading(false)
   }

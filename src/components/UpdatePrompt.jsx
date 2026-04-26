@@ -33,7 +33,10 @@ export default function UpdatePrompt() {
       } else {
         setDismissed(false)
       }
-    }).catch(() => setDismissed(false))
+    }).catch((error) => {
+      console.error('Failed to load update dismissal state:', error)
+      setDismissed(false)
+    })
   }, [user])
 
   async function handleDismiss() {
@@ -44,7 +47,9 @@ export default function UpdatePrompt() {
       try {
         await setDoc(doc(db, 'users', user.uid, 'meta', 'updateDismissals'),
           { [UPDATE_ID]: true, dismissedAt: serverTimestamp() }, { merge: true })
-      } catch (_) {}
+      } catch (error) {
+        console.error('Failed to persist update dismissal:', error)
+      }
     }
   }
 

@@ -8,7 +8,6 @@ import {
 import { db } from '../firebase'
 import { XP_REWARDS, BADGES } from '../data/subjects'
 import { BADGE_MAP } from '../data/badges'
-import { generateReferralCode } from './referrals'
 
 // ── Infinite level system ─────────────────────────────────────────────────────
 // Level n requires: floor(100 * 1.15^(n-1)) XP total (exponential curve)

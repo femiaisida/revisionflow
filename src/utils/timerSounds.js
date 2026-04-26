@@ -12,13 +12,13 @@ function getCtx() {
 
 function stopAll() {
   activeNodes.forEach(n => {
-    try { n.stop() } catch (e) {}
-    try { n.disconnect() } catch (e) {}
+    try { n.stop() } catch (error) { console.error('Failed to stop audio node:', error) }
+    try { n.disconnect() } catch (error) { console.error('Failed to disconnect audio node:', error) }
   })
   activeNodes.length = 0
   // Also close and recreate context to fully stop all audio
   if (audioCtx && audioCtx.state !== 'closed') {
-    try { audioCtx.suspend() } catch(e) {}
+    try { audioCtx.suspend() } catch (error) { console.error('Failed to suspend audio context:', error) }
   }
 }
 
@@ -211,7 +211,9 @@ export function playSessionEndBell() {
       osc.start(ctx.currentTime + delay)
       osc.stop(ctx.currentTime + delay + 1.5)
     })
-  } catch (e) { /* silent fail if audio not supported */ }
+  } catch (error) {
+    console.error('Failed to play session end bell:', error)
+  }
 }
 
 // ── Public API ────────────────────────────────────────────────────────────────
@@ -230,7 +232,9 @@ export function startSound(id) {
   if (!id || id === 'none') return
   try {
     const ctx = getCtx()
-    if (ctx.state === 'suspended') ctx.resume().catch(() => {})
+    if (ctx.state === 'suspended') ctx.resume().catch((error) => {
+      console.error('Failed to resume audio context:', error)
+    })
     if (id === 'rain')       playRain()
     else if (id === 'lofi')  playLofi()
     else if (id === 'whitenoise') playWhiteNoise()

@@ -104,7 +104,9 @@ export default function Timer() {
       if (timer.musicAutoStop && selectedPlaylist) setSelectedPlaylist(null)
       if (user && timer.cdTotal > 0) {
         const minutes = Math.floor(timer.cdTotal / 60)
-        awardTimerXP(user.uid, minutes).catch(() => {})
+        awardTimerXP(user.uid, minutes).catch((error) => {
+          console.error('Failed to award timer XP:', error)
+        })
       }
     }
   }, [timer.timerFinishedSignal])
@@ -137,7 +139,9 @@ export default function Timer() {
         osc.start(startAt)
         osc.stop(startAt + PULSE_DUR)
       }
-    } catch (e) {}
+    } catch (error) {
+      console.error('Failed to play alert sound:', error)
+    }
   }
 
   function toggleFullscreen() {
