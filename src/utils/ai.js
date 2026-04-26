@@ -262,15 +262,20 @@ Focus on:
 }
 
 export async function generatePredictedQuestions(subject, topic, examBoard, level = 'GCSE', marks = 20) {
-  const prompt = `Create highly likely exam-style predicted questions for ${level} ${subject}${topic ? ` on topic: ${topic}` : ''}.
-Exam board: ${examBoard || 'General UK board'}
-Total marks target: ${marks}
+  const topicSuffix = topic ? ` on topic: ${topic}` : ''
+  const board = examBoard || 'General UK board'
+  const prompt = [
+    `Create highly likely exam-style predicted questions for ${level} ${subject}${topicSuffix}.`,
+    `Exam board: ${board}`,
+    `Total marks target: ${marks}`,
+    '',
+    'Output requirements:',
+    '- 4-8 questions',
+    '- Mixed command words (state, describe, explain, compare, evaluate, calculate)',
+    '- Include mark allocation per question',
+    '- Include a brief mark-scheme bullet list after each question',
+    '- Keep wording realistic and exam-style',
+  ].join('\n')
 
-Output requirements:
-- 4-8 questions
-- Mixed command words (state, describe, explain, compare, evaluate, calculate)
-- Include mark allocation per question
-- Include a brief mark-scheme bullet list after each question
-- Keep wording realistic and exam-style`
   return callAI(prompt)
 }
