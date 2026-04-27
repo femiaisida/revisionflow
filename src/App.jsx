@@ -1,116 +1,103 @@
 // src/App.jsx
-import React, { Suspense, lazy } from 'react'
-import { Routes, Route, Navigate } from 'react-router-dom'
-import { Toaster } from 'react-hot-toast'
-import { AuthProvider, useAuth } from './context/AuthContext'
+import { Suspense, lazy } from 'react'
+import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom'
 import { ThemeProvider } from './context/ThemeContext'
-import { BadgeProvider } from './context/BadgeContext'
-import { PriorityProvider } from './context/PriorityContext'
-import Layout from './components/Layout'
-import LoadingScreen from './components/LoadingScreen'
-import ErrorBoundary from './components/ErrorBoundary'
-import { usePushNotifications } from './hooks/usePushNotifications'
+import { AuthProvider, useAuth } from './context/AuthContext'
+import { AppProvider } from './context/AppContext'
 
+// ── Lazy pages ────────────────────────────────────────────────────────────────
 const Landing       = lazy(() => import('./pages/Landing'))
 const Login         = lazy(() => import('./pages/Login'))
 const Signup        = lazy(() => import('./pages/Signup'))
 const Onboarding    = lazy(() => import('./pages/Onboarding'))
 const Dashboard     = lazy(() => import('./pages/Dashboard'))
-const Calendar      = lazy(() => import('./pages/Calendar'))
-const PastPapers    = lazy(() => import('./pages/PastPapers'))
 const Topics        = lazy(() => import('./pages/Topics'))
-const Mistakes      = lazy(() => import('./pages/Mistakes'))
+const TopicMastery  = lazy(() => import('./pages/TopicMastery'))
+const Calendar      = lazy(() => import('./pages/Calendar'))
+const Timer         = lazy(() => import('./pages/Timer'))
 const Tasks         = lazy(() => import('./pages/Tasks'))
+const Notes         = lazy(() => import('./pages/Notes'))
+const Mistakes      = lazy(() => import('./pages/Mistakes'))
+const PastPapers    = lazy(() => import('./pages/PastPapers'))
+const Analytics     = lazy(() => import('./pages/Analytics'))
+const ExamDates     = lazy(() => import('./pages/ExamDates'))
+const AIAdvisor     = lazy(() => import('./pages/AIAdvisor'))
+const AI            = lazy(() => import('./pages/AI'))
 const Friends       = lazy(() => import('./pages/Friends'))
 const Leaderboard   = lazy(() => import('./pages/Leaderboard'))
 const Profile       = lazy(() => import('./pages/Profile'))
 const PublicProfile = lazy(() => import('./pages/PublicProfile'))
-const AIAdvisor     = lazy(() => import('./pages/AIAdvisor'))
-const Notes         = lazy(() => import('./pages/Notes'))
-const ExamDates     = lazy(() => import('./pages/ExamDates'))
 const Settings      = lazy(() => import('./pages/Settings'))
-const TimerPage     = lazy(() => import('./pages/Timer'))
-const Analytics     = lazy(() => import('./pages/Analytics'))
-const TopicMastery  = lazy(() => import('./pages/TopicMastery'))
 const EmergencyMode = lazy(() => import('./pages/EmergencyMode'))
 const Help          = lazy(() => import('./pages/Help'))
 const PrivacyPolicy = lazy(() => import('./pages/PrivacyPolicy'))
 
+// ── Guards ────────────────────────────────────────────────────────────────────
 function PrivateRoute({ children }) {
-  const { user, loading, profile } = useAuth()
-  if (loading) return <LoadingScreen />
-  if (!user) return <Navigate to="/login" replace />
-  if (user && profile && !profile.onboardingComplete) return <Navigate to="/onboarding" replace />
-  return children
+  const { user } = useAuth()
+  return user ? children : <Navigate to="/login" replace />
 }
 
-function PublicOnlyRoute({ children }) {
-  const { user, loading } = useAuth()
-  if (loading) return <LoadingScreen />
-  if (user) return <Navigate to="/dashboard" replace />
-  return children
+function PublicOnly({ children }) {
+  const { user } = useAuth()
+  return user ? <Navigate to="/dashboard" replace /> : children
 }
 
-function OnboardingRoute({ children }) {
-  const { user, loading } = useAuth()
-  if (loading) return <LoadingScreen />
-  if (!user) return <Navigate to="/login" replace />
-  return children
+// ── Loading fallback ──────────────────────────────────────────────────────────
+function PageLoader() {
+  return (
+    <div style={{ display:'flex', alignItems:'center', justifyContent:'center', minHeight:'100vh', background:'var(--bg-base)' }}>
+      <div className="spinner" />
+    </div>
+  )
 }
 
+// ── App ───────────────────────────────────────────────────────────────────────
 export default function App() {
-  usePushNotifications()
-
   return (
     <ThemeProvider>
       <AuthProvider>
-        <PriorityProvider>
-          <BadgeProvider>
-            <Toaster
-              position="top-right"
-              toastOptions={{ className: 'toast-custom', duration: 3500 }}
-            />
-            <ErrorBoundary>
-              <Suspense fallback={<LoadingScreen />}>
-                <Routes>
-                  {/* Public routes */}
-                  <Route path="/"    element={<Landing />} />
-                  <Route path="/login"  element={<PublicOnlyRoute><Login /></PublicOnlyRoute>} />
-                  <Route path="/signup" element={<PublicOnlyRoute><Signup /></PublicOnlyRoute>} />
-                  <Route path="/u/:username" element={<PublicProfile />} />
-                  <Route path="/onboarding"  element={<OnboardingRoute><Onboarding /></OnboardingRoute>} />
-                  <Route path="/privacy"     element={<PrivacyPolicy />} />
+        <AppProvider>
+          <BrowserRouter>
+            <Suspense fallback={<PageLoader />}>
+              <Routes>
+                {/* Public */}
+                <Route path="/"            element={<Landing />} />
+                <Route path="/privacy"     element={<PrivacyPolicy />} />
+                <Route path="/u/:username" element={<PublicProfile />} />
 
-                  {/* Private routes — wrapped in Layout */}
-                  <Route element={<PrivateRoute><Layout /></PrivateRoute>}>
-                    <Route path="/dashboard"   element={<Dashboard />} />
-                    <Route path="/calendar"    element={<Calendar />} />
-                    <Route path="/exams"       element={<ExamDates />} />
-                    <Route path="/papers"      element={<PastPapers />} />
-                    <Route path="/topics"      element={<Topics />} />
-                    <Route path="/mistakes"    element={<Mistakes />} />
-                    <Route path="/notes"       element={<Notes />} />
-                    <Route path="/tasks"       element={<Tasks />} />
-                    <Route path="/timer"       element={<TimerPage />} />
-                    <Route path="/analytics"   element={<Analytics />} />
-                    <Route path="/mastery"     element={<TopicMastery />} />
-                    <Route path="/ai"          element={<AIAdvisor />} />
-                    <Route path="/friends"     element={<Friends />} />
-                    <Route path="/leaderboard" element={<Leaderboard />} />
-                    <Route path="/profile"     element={<Profile />} />
-                    <Route path="/settings"    element={<Settings />} />
-                    <Route path="/help"        element={<Help />} />
-                    {/* Emergency Mode — accessible from dashboard banner */}
-                    <Route path="/emergency"   element={<EmergencyMode />} />
-                  </Route>
+                {/* Auth */}
+                <Route path="/login"  element={<PublicOnly><Login /></PublicOnly>} />
+                <Route path="/signup" element={<PublicOnly><Signup /></PublicOnly>} />
 
-                  {/* Catch-all */}
-                  <Route path="*" element={<Navigate to="/" replace />} />
-                </Routes>
-              </Suspense>
-            </ErrorBoundary>
-          </BadgeProvider>
-        </PriorityProvider>
+                {/* Protected */}
+                <Route path="/dashboard"     element={<PrivateRoute><Dashboard /></PrivateRoute>} />
+                <Route path="/onboarding"    element={<PrivateRoute><Onboarding /></PrivateRoute>} />
+                <Route path="/topics"        element={<PrivateRoute><Topics /></PrivateRoute>} />
+                <Route path="/topic-mastery" element={<PrivateRoute><TopicMastery /></PrivateRoute>} />
+                <Route path="/calendar"      element={<PrivateRoute><Calendar /></PrivateRoute>} />
+                <Route path="/timer"         element={<PrivateRoute><Timer /></PrivateRoute>} />
+                <Route path="/tasks"         element={<PrivateRoute><Tasks /></PrivateRoute>} />
+                <Route path="/notes"         element={<PrivateRoute><Notes /></PrivateRoute>} />
+                <Route path="/mistakes"      element={<PrivateRoute><Mistakes /></PrivateRoute>} />
+                <Route path="/past-papers"   element={<PrivateRoute><PastPapers /></PrivateRoute>} />
+                <Route path="/analytics"     element={<PrivateRoute><Analytics /></PrivateRoute>} />
+                <Route path="/exam-dates"    element={<PrivateRoute><ExamDates /></PrivateRoute>} />
+                <Route path="/ai-advisor"    element={<PrivateRoute><AIAdvisor /></PrivateRoute>} />
+                <Route path="/ai"            element={<PrivateRoute><AI /></PrivateRoute>} />
+                <Route path="/friends"       element={<PrivateRoute><Friends /></PrivateRoute>} />
+                <Route path="/leaderboard"   element={<PrivateRoute><Leaderboard /></PrivateRoute>} />
+                <Route path="/profile"       element={<PrivateRoute><Profile /></PrivateRoute>} />
+                <Route path="/settings"      element={<PrivateRoute><Settings /></PrivateRoute>} />
+                <Route path="/emergency"     element={<PrivateRoute><EmergencyMode /></PrivateRoute>} />
+                <Route path="/help"          element={<PrivateRoute><Help /></PrivateRoute>} />
+
+                {/* Catch-all */}
+                <Route path="*" element={<Navigate to="/dashboard" replace />} />
+              </Routes>
+            </Suspense>
+          </BrowserRouter>
+        </AppProvider>
       </AuthProvider>
     </ThemeProvider>
   )
