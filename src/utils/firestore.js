@@ -113,10 +113,9 @@ export async function updateStreakOnLogin(uid) {
 }
 
 /* =========================
-   XP + BADGES (FIXED)
+   XP + BADGES
 ========================= */
 
-// ✅ FIX: awardXP (missing before)
 export async function awardXP(uid, amount) {
   const ref = doc(db, 'users', uid)
 
@@ -127,7 +126,6 @@ export async function awardXP(uid, amount) {
   await checkAndAwardBadge(uid)
 }
 
-// ✅ FIX: checkAndAwardBadge (missing before)
 export async function checkAndAwardBadge(uid) {
   const ref = doc(db, 'users', uid)
   const snap = await getDoc(ref)
@@ -138,23 +136,14 @@ export async function checkAndAwardBadge(uid) {
   const xp = data.xp || 0
   const badges = data.badges || []
 
-  const newBadges = [...badges]
+  const updated = [...badges]
 
-  // simple badge system (safe defaults)
-  if (xp >= 100 && !badges.includes('100_XP')) {
-    newBadges.push('100_XP')
-  }
-  if (xp >= 500 && !badges.includes('500_XP')) {
-    newBadges.push('500_XP')
-  }
-  if (xp >= 1000 && !badges.includes('1000_XP')) {
-    newBadges.push('1000_XP')
-  }
+  if (xp >= 100 && !updated.includes('100_XP')) updated.push('100_XP')
+  if (xp >= 500 && !updated.includes('500_XP')) updated.push('500_XP')
+  if (xp >= 1000 && !updated.includes('1000_XP')) updated.push('1000_XP')
 
-  if (newBadges.length !== badges.length) {
-    await updateDoc(ref, {
-      badges: newBadges
-    })
+  if (updated.length !== badges.length) {
+    await updateDoc(ref, { badges: updated })
   }
 }
 
@@ -165,7 +154,8 @@ export async function checkAndAwardBadge(uid) {
 export async function addSession(uid, session) {
   const ref = await addDoc(collection(db, 'users', uid, 'sessions'), {
     ...session,
-    createdAt: serverTimestamp()
+    createdAt: serverTimestamp(),
+    completed: false
   })
   return ref.id
 }
@@ -180,6 +170,25 @@ export async function getSessions(uid) {
   return snap.docs.map(d => ({ id: d.id, ...d.data() }))
 }
 
+// ✅ FIX: completeSession
+export async function completeSession(uid, sessionId) {
+  const ref = doc(db, 'users', uid, 'sessions', sessionId)
+  await updateDoc(ref, {
+    completed: true,
+    completedAt: serverTimestamp()
+  })
+}
+
+export async function updateSession(uid, sessionId, updates) {
+  const ref = doc(db, 'users', uid, 'sessions', sessionId)
+  await updateDoc(ref, updates)
+}
+
+export async function deleteSession(uid, sessionId) {
+  const ref = doc(db, 'users', uid, 'sessions', sessionId)
+  await deleteDoc(ref)
+}
+
 /* =========================
    TASKS
 ========================= */
@@ -192,6 +201,15 @@ export async function getTasks(uid) {
     )
   )
   return snap.docs.map(d => ({ id: d.id, ...d.data() }))
+}
+
+// ✅ FIX: completeTask
+export async function completeTask(uid, taskId) {
+  const ref = doc(db, 'users', uid, 'tasks', taskId)
+  await updateDoc(ref, {
+    completed: true,
+    completedAt: serverTimestamp()
+  })
 }
 
 /* =========================
