@@ -1,6 +1,9 @@
 // src/utils/firestore.js
 
+import { initializeApp } from 'firebase/app'
+import { getAuth, GoogleAuthProvider, signInWithPopup, signInWithEmailAndPassword, createUserWithEmailAndPassword, sendPasswordResetEmail, signOut } from 'firebase/auth'
 import {
+  getFirestore,
   collection,
   getDocs,
   addDoc,
@@ -11,13 +14,54 @@ import {
   orderBy,
   serverTimestamp
 } from 'firebase/firestore'
-import { db } from '../firebase'
+
+// 🔑 Firebase config (uses Netlify env vars)
+const firebaseConfig = {
+  apiKey: import.meta.env.VITE_FIREBASE_API_KEY,
+  authDomain: import.meta.env.VITE_FIREBASE_AUTH_DOMAIN,
+  projectId: import.meta.env.VITE_FIREBASE_PROJECT_ID,
+  storageBucket: import.meta.env.VITE_FIREBASE_STORAGE_BUCKET,
+  messagingSenderId: import.meta.env.VITE_FIREBASE_MESSAGING_SENDER_ID,
+  appId: import.meta.env.VITE_FIREBASE_APP_ID
+}
+
+// 🔥 Initialize Firebase
+const app = initializeApp(firebaseConfig)
+
+// ✅ EXPORT THESE (this fixes your current error)
+export const auth = getAuth(app)
+export const db = getFirestore(app)
+
+/* =========================
+   AUTH FUNCTIONS
+========================= */
+
+const googleProvider = new GoogleAuthProvider()
+
+export async function loginWithGoogle() {
+  return await signInWithPopup(auth, googleProvider)
+}
+
+export async function loginWithEmail(email, password) {
+  return await signInWithEmailAndPassword(auth, email, password)
+}
+
+export async function signupWithEmail(email, password) {
+  return await createUserWithEmailAndPassword(auth, email, password)
+}
+
+export async function resetPassword(email) {
+  return await sendPasswordResetEmail(auth, email)
+}
+
+export async function logout() {
+  return await signOut(auth)
+}
 
 /* =========================
    SESSIONS
 ========================= */
 
-// CREATE
 export async function addSession(uid, session) {
   const ref = await addDoc(collection(db, 'users', uid, 'sessions'), {
     ...session,
@@ -26,7 +70,6 @@ export async function addSession(uid, session) {
   return ref.id
 }
 
-// READ (FIXED - this was missing)
 export async function getSessions(uid) {
   const snap = await getDocs(
     query(
@@ -37,13 +80,11 @@ export async function getSessions(uid) {
   return snap.docs.map(d => ({ id: d.id, ...d.data() }))
 }
 
-// UPDATE
 export async function updateSession(uid, sessionId, updates) {
   const ref = doc(db, 'users', uid, 'sessions', sessionId)
   await updateDoc(ref, updates)
 }
 
-// DELETE
 export async function deleteSession(uid, sessionId) {
   const ref = doc(db, 'users', uid, 'sessions', sessionId)
   await deleteDoc(ref)
