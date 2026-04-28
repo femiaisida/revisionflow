@@ -22,10 +22,11 @@ import {
   setDoc,
   query,
   orderBy,
-  serverTimestamp
+  serverTimestamp,
+  increment
 } from 'firebase/firestore'
 
-// 🔑 Firebase config
+// Firebase config
 const firebaseConfig = {
   apiKey: import.meta.env.VITE_FIREBASE_API_KEY,
   authDomain: import.meta.env.VITE_FIREBASE_AUTH_DOMAIN,
@@ -35,7 +36,6 @@ const firebaseConfig = {
   appId: import.meta.env.VITE_FIREBASE_APP_ID
 }
 
-// 🔥 Init
 const app = initializeApp(firebaseConfig)
 
 export const auth = getAuth(app)
@@ -68,10 +68,9 @@ export async function logout() {
 }
 
 /* =========================
-   USER SETUP + STREAK
+   USER SETUP
 ========================= */
 
-// ✅ FIX: ensureUser (missing before)
 export async function ensureUser(uid) {
   const ref = doc(db, 'users', uid)
   const snap = await getDoc(ref)
@@ -79,13 +78,14 @@ export async function ensureUser(uid) {
   if (!snap.exists()) {
     await setDoc(ref, {
       createdAt: serverTimestamp(),
+      xp: 0,
       streak: 0,
-      lastLogin: null
+      lastLogin: null,
+      badges: []
     })
   }
 }
 
-// ✅ FIX: updateStreakOnLogin (missing before)
 export async function updateStreakOnLogin(uid) {
   const ref = doc(db, 'users', uid)
   const snap = await getDoc(ref)
@@ -96,23 +96,66 @@ export async function updateStreakOnLogin(uid) {
   const now = new Date()
   const lastLogin = data.lastLogin?.toDate?.()
 
-  let newStreak = data.streak || 0
+  let streak = data.streak || 0
 
   if (lastLogin) {
-    const diffDays = Math.floor(
-      (now - lastLogin) / (1000 * 60 * 60 * 24)
-    )
-
-    if (diffDays === 1) newStreak += 1
-    else if (diffDays > 1) newStreak = 1
+    const diff = Math.floor((now - lastLogin) / (1000 * 60 * 60 * 24))
+    if (diff === 1) streak++
+    else if (diff > 1) streak = 1
   } else {
-    newStreak = 1
+    streak = 1
   }
 
   await updateDoc(ref, {
-    streak: newStreak,
+    streak,
     lastLogin: serverTimestamp()
   })
+}
+
+/* =========================
+   XP + BADGES (FIXED)
+========================= */
+
+// ✅ FIX: awardXP (missing before)
+export async function awardXP(uid, amount) {
+  const ref = doc(db, 'users', uid)
+
+  await updateDoc(ref, {
+    xp: increment(amount)
+  })
+
+  await checkAndAwardBadge(uid)
+}
+
+// ✅ FIX: checkAndAwardBadge (missing before)
+export async function checkAndAwardBadge(uid) {
+  const ref = doc(db, 'users', uid)
+  const snap = await getDoc(ref)
+
+  if (!snap.exists()) return
+
+  const data = snap.data()
+  const xp = data.xp || 0
+  const badges = data.badges || []
+
+  const newBadges = [...badges]
+
+  // simple badge system (safe defaults)
+  if (xp >= 100 && !badges.includes('100_XP')) {
+    newBadges.push('100_XP')
+  }
+  if (xp >= 500 && !badges.includes('500_XP')) {
+    newBadges.push('500_XP')
+  }
+  if (xp >= 1000 && !badges.includes('1000_XP')) {
+    newBadges.push('1000_XP')
+  }
+
+  if (newBadges.length !== badges.length) {
+    await updateDoc(ref, {
+      badges: newBadges
+    })
+  }
 }
 
 /* =========================
@@ -137,27 +180,9 @@ export async function getSessions(uid) {
   return snap.docs.map(d => ({ id: d.id, ...d.data() }))
 }
 
-export async function updateSession(uid, sessionId, updates) {
-  const ref = doc(db, 'users', uid, 'sessions', sessionId)
-  await updateDoc(ref, updates)
-}
-
-export async function deleteSession(uid, sessionId) {
-  const ref = doc(db, 'users', uid, 'sessions', sessionId)
-  await deleteDoc(ref)
-}
-
 /* =========================
    TASKS
 ========================= */
-
-export async function addTask(uid, task) {
-  const ref = await addDoc(collection(db, 'users', uid, 'tasks'), {
-    ...task,
-    createdAt: serverTimestamp()
-  })
-  return ref.id
-}
 
 export async function getTasks(uid) {
   const snap = await getDocs(
@@ -169,27 +194,9 @@ export async function getTasks(uid) {
   return snap.docs.map(d => ({ id: d.id, ...d.data() }))
 }
 
-export async function updateTask(uid, taskId, updates) {
-  const ref = doc(db, 'users', uid, 'tasks', taskId)
-  await updateDoc(ref, updates)
-}
-
-export async function deleteTask(uid, taskId) {
-  const ref = doc(db, 'users', uid, 'tasks', taskId)
-  await deleteDoc(ref)
-}
-
 /* =========================
    PAPER ATTEMPTS
 ========================= */
-
-export async function addPaperAttempt(uid, attempt) {
-  const ref = await addDoc(collection(db, 'users', uid, 'paperAttempts'), {
-    ...attempt,
-    createdAt: serverTimestamp()
-  })
-  return ref.id
-}
 
 export async function getPaperAttempts(uid) {
   const snap = await getDocs(
@@ -199,14 +206,4 @@ export async function getPaperAttempts(uid) {
     )
   )
   return snap.docs.map(d => ({ id: d.id, ...d.data() }))
-}
-
-export async function updatePaperAttempt(uid, attemptId, updates) {
-  const ref = doc(db, 'users', uid, 'paperAttempts', attemptId)
-  await updateDoc(ref, updates)
-}
-
-export async function deletePaperAttempt(uid, attemptId) {
-  const ref = doc(db, 'users', uid, 'paperAttempts', attemptId)
-  await deleteDoc(ref)
 }
