@@ -26,7 +26,10 @@ import {
   increment
 } from 'firebase/firestore'
 
-// Firebase config
+/* =========================
+   FIREBASE INIT
+========================= */
+
 const firebaseConfig = {
   apiKey: import.meta.env.VITE_FIREBASE_API_KEY,
   authDomain: import.meta.env.VITE_FIREBASE_AUTH_DOMAIN,
@@ -48,27 +51,27 @@ export const db = getFirestore(app)
 const googleProvider = new GoogleAuthProvider()
 
 export async function loginWithGoogle() {
-  return await signInWithPopup(auth, googleProvider)
+  return signInWithPopup(auth, googleProvider)
 }
 
 export async function loginWithEmail(email, password) {
-  return await signInWithEmailAndPassword(auth, email, password)
+  return signInWithEmailAndPassword(auth, email, password)
 }
 
 export async function signupWithEmail(email, password) {
-  return await createUserWithEmailAndPassword(auth, email, password)
+  return createUserWithEmailAndPassword(auth, email, password)
 }
 
 export async function resetPassword(email) {
-  return await sendPasswordResetEmail(auth, email)
+  return sendPasswordResetEmail(auth, email)
 }
 
 export async function logout() {
-  return await signOut(auth)
+  return signOut(auth)
 }
 
 /* =========================
-   USER SETUP
+   USER SETUP + STREAK
 ========================= */
 
 export async function ensureUser(uid) {
@@ -170,7 +173,6 @@ export async function getSessions(uid) {
   return snap.docs.map(d => ({ id: d.id, ...d.data() }))
 }
 
-// ✅ FIX: completeSession
 export async function completeSession(uid, sessionId) {
   const ref = doc(db, 'users', uid, 'sessions', sessionId)
   await updateDoc(ref, {
@@ -193,6 +195,15 @@ export async function deleteSession(uid, sessionId) {
    TASKS
 ========================= */
 
+export async function addTask(uid, task) {
+  const ref = await addDoc(collection(db, 'users', uid, 'tasks'), {
+    ...task,
+    createdAt: serverTimestamp(),
+    completed: false
+  })
+  return ref.id
+}
+
 export async function getTasks(uid) {
   const snap = await getDocs(
     query(
@@ -203,7 +214,6 @@ export async function getTasks(uid) {
   return snap.docs.map(d => ({ id: d.id, ...d.data() }))
 }
 
-// ✅ FIX: completeTask
 export async function completeTask(uid, taskId) {
   const ref = doc(db, 'users', uid, 'tasks', taskId)
   await updateDoc(ref, {
@@ -212,9 +222,27 @@ export async function completeTask(uid, taskId) {
   })
 }
 
+export async function updateTask(uid, taskId, updates) {
+  const ref = doc(db, 'users', uid, 'tasks', taskId)
+  await updateDoc(ref, updates)
+}
+
+export async function deleteTask(uid, taskId) {
+  const ref = doc(db, 'users', uid, 'tasks', taskId)
+  await deleteDoc(ref)
+}
+
 /* =========================
    PAPER ATTEMPTS
 ========================= */
+
+export async function addPaperAttempt(uid, attempt) {
+  const ref = await addDoc(collection(db, 'users', uid, 'paperAttempts'), {
+    ...attempt,
+    createdAt: serverTimestamp()
+  })
+  return ref.id
+}
 
 export async function getPaperAttempts(uid) {
   const snap = await getDocs(
@@ -224,4 +252,14 @@ export async function getPaperAttempts(uid) {
     )
   )
   return snap.docs.map(d => ({ id: d.id, ...d.data() }))
+}
+
+export async function updatePaperAttempt(uid, attemptId, updates) {
+  const ref = doc(db, 'users', uid, 'paperAttempts', attemptId)
+  await updateDoc(ref, updates)
+}
+
+export async function deletePaperAttempt(uid, attemptId) {
+  const ref = doc(db, 'users', uid, 'paperAttempts', attemptId)
+  await deleteDoc(ref)
 }
