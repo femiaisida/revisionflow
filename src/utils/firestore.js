@@ -126,6 +126,18 @@ export async function awardXP(uid, amount) {
     xp: increment(amount)
   })
 
+  // Award XP specifically from timer sessions
+export async function awardTimerXP(uid, seconds) {
+  if (!uid || !seconds) return
+
+  // simple conversion: 1 XP per minute
+  const xp = Math.floor(seconds / 60)
+
+  if (xp <= 0) return
+
+  await awardXP(uid, xp)
+}
+
   await checkAndAwardBadge(uid)
 }
 
