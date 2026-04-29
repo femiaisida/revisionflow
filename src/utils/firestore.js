@@ -120,25 +120,27 @@ export async function updateStreakOnLogin(uid) {
 ========================= */
 
 export async function awardXP(uid, amount) {
+  if (!uid || !amount) return
+
   const ref = doc(db, 'users', uid)
+  const snap = await getDoc(ref)
+
+  if (!snap.exists()) return
 
   await updateDoc(ref, {
     xp: increment(amount)
   })
 
-  // Award XP specifically from timer sessions
+  await checkAndAwardBadge(uid)
+}
+
 export async function awardTimerXP(uid, seconds) {
   if (!uid || !seconds) return
 
-  // simple conversion: 1 XP per minute
   const xp = Math.floor(seconds / 60)
-
   if (xp <= 0) return
 
   await awardXP(uid, xp)
-}
-
-  await checkAndAwardBadge(uid)
 }
 
 export async function checkAndAwardBadge(uid) {
@@ -149,7 +151,7 @@ export async function checkAndAwardBadge(uid) {
 
   const data = snap.data()
   const xp = data.xp || 0
-  const badges = data.badges || []
+  const badges = Array.isArray(data.badges) ? data.badges : []
 
   const updated = [...badges]
 
