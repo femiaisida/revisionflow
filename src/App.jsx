@@ -4,6 +4,7 @@ import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom'
 import { ThemeProvider } from './context/ThemeContext'
 import { AuthProvider, useAuth } from './context/AuthContext'
 import { AppProvider } from './context/AppContext'
+import Layout from './components/Layout'
 
 // ── Lazy pages ────────────────────────────────────────────────────────────────
 const Landing       = lazy(() => import('./pages/Landing'))
@@ -22,7 +23,6 @@ const PastPapers    = lazy(() => import('./pages/PastPapers'))
 const Analytics     = lazy(() => import('./pages/Analytics'))
 const ExamDates     = lazy(() => import('./pages/ExamDates'))
 const AIAdvisor     = lazy(() => import('./pages/AIAdvisor'))
-const AI            = lazy(() => import('./pages/AI'))
 const Friends       = lazy(() => import('./pages/Friends'))
 const Leaderboard   = lazy(() => import('./pages/Leaderboard'))
 const Profile       = lazy(() => import('./pages/Profile'))
@@ -61,36 +61,45 @@ export default function App() {
           <BrowserRouter>
             <Suspense fallback={<PageLoader />}>
               <Routes>
-                {/* Public */}
+                {/* Public — no sidebar */}
                 <Route path="/"            element={<Landing />} />
                 <Route path="/privacy"     element={<PrivacyPolicy />} />
                 <Route path="/u/:username" element={<PublicProfile />} />
 
-                {/* Auth */}
+                {/* Auth — no sidebar */}
                 <Route path="/login"  element={<PublicOnly><Login /></PublicOnly>} />
                 <Route path="/signup" element={<PublicOnly><Signup /></PublicOnly>} />
 
-                {/* Protected */}
-                <Route path="/dashboard"     element={<PrivateRoute><Dashboard /></PrivateRoute>} />
-                <Route path="/onboarding"    element={<PrivateRoute><Onboarding /></PrivateRoute>} />
-                <Route path="/topics"        element={<PrivateRoute><Topics /></PrivateRoute>} />
-                <Route path="/topic-mastery" element={<PrivateRoute><TopicMastery /></PrivateRoute>} />
-                <Route path="/calendar"      element={<PrivateRoute><Calendar /></PrivateRoute>} />
-                <Route path="/timer"         element={<PrivateRoute><Timer /></PrivateRoute>} />
-                <Route path="/tasks"         element={<PrivateRoute><Tasks /></PrivateRoute>} />
-                <Route path="/notes"         element={<PrivateRoute><Notes /></PrivateRoute>} />
-                <Route path="/mistakes"      element={<PrivateRoute><Mistakes /></PrivateRoute>} />
-                <Route path="/past-papers"   element={<PrivateRoute><PastPapers /></PrivateRoute>} />
-                <Route path="/analytics"     element={<PrivateRoute><Analytics /></PrivateRoute>} />
-                <Route path="/exam-dates"    element={<PrivateRoute><ExamDates /></PrivateRoute>} />
-                <Route path="/ai-advisor"    element={<PrivateRoute><AIAdvisor /></PrivateRoute>} />
-                <Route path="/ai"            element={<PrivateRoute><AI /></PrivateRoute>} />
-                <Route path="/friends"       element={<PrivateRoute><Friends /></PrivateRoute>} />
-                <Route path="/leaderboard"   element={<PrivateRoute><Leaderboard /></PrivateRoute>} />
-                <Route path="/profile"       element={<PrivateRoute><Profile /></PrivateRoute>} />
-                <Route path="/settings"      element={<PrivateRoute><Settings /></PrivateRoute>} />
-                <Route path="/emergency"     element={<PrivateRoute><EmergencyMode /></PrivateRoute>} />
-                <Route path="/help"          element={<PrivateRoute><Help /></PrivateRoute>} />
+                {/* Onboarding — no sidebar */}
+                <Route path="/onboarding" element={<PrivateRoute><Onboarding /></PrivateRoute>} />
+
+                {/* Protected — all wrapped in Layout (sidebar) */}
+                <Route element={<PrivateRoute><Layout /></PrivateRoute>}>
+                  <Route path="/dashboard"   element={<Dashboard />} />
+                  <Route path="/calendar"    element={<Calendar />} />
+                  <Route path="/exams"       element={<ExamDates />} />
+                  <Route path="/papers"      element={<PastPapers />} />
+                  <Route path="/topics"      element={<Topics />} />
+                  <Route path="/mistakes"    element={<Mistakes />} />
+                  <Route path="/notes"       element={<Notes />} />
+                  <Route path="/tasks"       element={<Tasks />} />
+                  <Route path="/timer"       element={<Timer />} />
+                  <Route path="/analytics"   element={<Analytics />} />
+                  <Route path="/mastery"     element={<TopicMastery />} />
+                  <Route path="/ai"          element={<AIAdvisor />} />
+                  <Route path="/friends"     element={<Friends />} />
+                  <Route path="/leaderboard" element={<Leaderboard />} />
+                  <Route path="/profile"     element={<Profile />} />
+                  <Route path="/settings"    element={<Settings />} />
+                  <Route path="/emergency"   element={<EmergencyMode />} />
+                  <Route path="/help"        element={<Help />} />
+                </Route>
+
+                {/* Legacy redirects for old URLs */}
+                <Route path="/past-papers"   element={<Navigate to="/papers" replace />} />
+                <Route path="/exam-dates"    element={<Navigate to="/exams" replace />} />
+                <Route path="/topic-mastery" element={<Navigate to="/mastery" replace />} />
+                <Route path="/ai-advisor"    element={<Navigate to="/ai" replace />} />
 
                 {/* Catch-all */}
                 <Route path="*" element={<Navigate to="/dashboard" replace />} />
