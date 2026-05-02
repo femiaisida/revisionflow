@@ -4,6 +4,8 @@ import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom'
 import { ThemeProvider } from './context/ThemeContext'
 import { AuthProvider, useAuth } from './context/AuthContext'
 import { AppProvider } from './context/AppContext'
+import { TimerProvider } from './context/TimerContext'
+import { PriorityProvider } from './context/PriorityContext'
 import Layout from './components/Layout'
 
 // ── Lazy pages ────────────────────────────────────────────────────────────────
@@ -43,7 +45,6 @@ function PublicOnly({ children }) {
   return user ? <Navigate to="/dashboard" replace /> : children
 }
 
-// ── Loading fallback ──────────────────────────────────────────────────────────
 function PageLoader() {
   return (
     <div style={{ display:'flex', alignItems:'center', justifyContent:'center', minHeight:'100vh', background:'var(--bg-base)' }}>
@@ -58,54 +59,58 @@ export default function App() {
     <ThemeProvider>
       <AuthProvider>
         <AppProvider>
-          <BrowserRouter>
-            <Suspense fallback={<PageLoader />}>
-              <Routes>
-                {/* Public — no sidebar */}
-                <Route path="/"            element={<Landing />} />
-                <Route path="/privacy"     element={<PrivacyPolicy />} />
-                <Route path="/u/:username" element={<PublicProfile />} />
+          <TimerProvider>
+            <PriorityProvider>
+              <BrowserRouter>
+                <Suspense fallback={<PageLoader />}>
+                  <Routes>
+                    {/* Public — no sidebar */}
+                    <Route path="/"            element={<Landing />} />
+                    <Route path="/privacy"     element={<PrivacyPolicy />} />
+                    <Route path="/u/:username" element={<PublicProfile />} />
 
-                {/* Auth — no sidebar */}
-                <Route path="/login"  element={<PublicOnly><Login /></PublicOnly>} />
-                <Route path="/signup" element={<PublicOnly><Signup /></PublicOnly>} />
+                    {/* Auth — no sidebar */}
+                    <Route path="/login"  element={<PublicOnly><Login /></PublicOnly>} />
+                    <Route path="/signup" element={<PublicOnly><Signup /></PublicOnly>} />
 
-                {/* Onboarding — no sidebar */}
-                <Route path="/onboarding" element={<PrivateRoute><Onboarding /></PrivateRoute>} />
+                    {/* Onboarding — no sidebar */}
+                    <Route path="/onboarding" element={<PrivateRoute><Onboarding /></PrivateRoute>} />
 
-                {/* Protected — all wrapped in Layout (sidebar) */}
-                <Route element={<PrivateRoute><Layout /></PrivateRoute>}>
-                  <Route path="/dashboard"   element={<Dashboard />} />
-                  <Route path="/calendar"    element={<Calendar />} />
-                  <Route path="/exams"       element={<ExamDates />} />
-                  <Route path="/papers"      element={<PastPapers />} />
-                  <Route path="/topics"      element={<Topics />} />
-                  <Route path="/mistakes"    element={<Mistakes />} />
-                  <Route path="/notes"       element={<Notes />} />
-                  <Route path="/tasks"       element={<Tasks />} />
-                  <Route path="/timer"       element={<Timer />} />
-                  <Route path="/analytics"   element={<Analytics />} />
-                  <Route path="/mastery"     element={<TopicMastery />} />
-                  <Route path="/ai"          element={<AIAdvisor />} />
-                  <Route path="/friends"     element={<Friends />} />
-                  <Route path="/leaderboard" element={<Leaderboard />} />
-                  <Route path="/profile"     element={<Profile />} />
-                  <Route path="/settings"    element={<Settings />} />
-                  <Route path="/emergency"   element={<EmergencyMode />} />
-                  <Route path="/help"        element={<Help />} />
-                </Route>
+                    {/* Protected — all wrapped in Layout */}
+                    <Route element={<PrivateRoute><Layout /></PrivateRoute>}>
+                      <Route path="/dashboard"   element={<Dashboard />} />
+                      <Route path="/calendar"    element={<Calendar />} />
+                      <Route path="/exams"       element={<ExamDates />} />
+                      <Route path="/papers"      element={<PastPapers />} />
+                      <Route path="/topics"      element={<Topics />} />
+                      <Route path="/mastery"     element={<TopicMastery />} />
+                      <Route path="/mistakes"    element={<Mistakes />} />
+                      <Route path="/notes"       element={<Notes />} />
+                      <Route path="/tasks"       element={<Tasks />} />
+                      <Route path="/timer"       element={<Timer />} />
+                      <Route path="/analytics"   element={<Analytics />} />
+                      <Route path="/ai"          element={<AIAdvisor />} />
+                      <Route path="/friends"     element={<Friends />} />
+                      <Route path="/leaderboard" element={<Leaderboard />} />
+                      <Route path="/profile"     element={<Profile />} />
+                      <Route path="/settings"    element={<Settings />} />
+                      <Route path="/emergency"   element={<EmergencyMode />} />
+                      <Route path="/help"        element={<Help />} />
+                    </Route>
 
-                {/* Legacy redirects for old URLs */}
-                <Route path="/past-papers"   element={<Navigate to="/papers" replace />} />
-                <Route path="/exam-dates"    element={<Navigate to="/exams" replace />} />
-                <Route path="/topic-mastery" element={<Navigate to="/mastery" replace />} />
-                <Route path="/ai-advisor"    element={<Navigate to="/ai" replace />} />
+                    {/* Legacy URL redirects */}
+                    <Route path="/past-papers"   element={<Navigate to="/papers" replace />} />
+                    <Route path="/exam-dates"    element={<Navigate to="/exams" replace />} />
+                    <Route path="/topic-mastery" element={<Navigate to="/mastery" replace />} />
+                    <Route path="/ai-advisor"    element={<Navigate to="/ai" replace />} />
 
-                {/* Catch-all */}
-                <Route path="*" element={<Navigate to="/dashboard" replace />} />
-              </Routes>
-            </Suspense>
-          </BrowserRouter>
+                    {/* Catch-all */}
+                    <Route path="*" element={<Navigate to="/dashboard" replace />} />
+                  </Routes>
+                </Suspense>
+              </BrowserRouter>
+            </PriorityProvider>
+          </TimerProvider>
         </AppProvider>
       </AuthProvider>
     </ThemeProvider>
