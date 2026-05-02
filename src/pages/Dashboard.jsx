@@ -1,5 +1,5 @@
 // src/pages/Dashboard.jsx
-import React, { useEffect, useState } from 'react'
+import React, { useEffect, useState, useRef } from 'react'
 import Skeleton from '../components/Skeleton'
 import AIOutput from '../components/AIOutput'
 import TooltipTour from '../components/TooltipTour'
@@ -13,26 +13,50 @@ import { doc, getDoc, setDoc, serverTimestamp } from 'firebase/firestore'
 import { db } from '../firebase'
 import { getDailyAdvice } from '../utils/ai'
 import { countdownLabel, countdownUrgency, gradeColour } from '../utils/calendar'
-import { LEVELS, BADGES, SUBJECT_COLOURS } from '../data/subjects'
+import { BADGE_LIST } from '../data/badges'
+import { SUBJECT_COLOURS } from '../data/subjects'
+import { applyReferralCodeForExistingUser } from '../utils/referrals'
 import { format } from 'date-fns'
 import { LineChart, Line, ResponsiveContainer, Tooltip } from 'recharts'
 import {
   Flame, Zap, Calendar, FileText, Brain,
   CheckSquare, MessageSquare, ArrowRight, Clock, TrendingUp, Trophy,
-  CheckCircle2, AlertCircle, ChevronRight
+  CheckCircle2, AlertCircle, ChevronRight, ChevronLeft, Gift
 } from 'lucide-react'
+import toast from 'react-hot-toast'
+
+// Level formula — matches firestore.js
+function xpForLevel(n) { return Math.floor(100 * Math.pow(1.15, n - 1)) }
+function computeLevel(totalXP) {
+  let lv = 1, cum = 0
+  while (true) {
+    const needed = xpForLevel(lv)
+    if (cum + needed > totalXP) break
+    cum += needed; lv++
+  }
+  return lv
+}
 
 export default function Dashboard() {
   const { profile, user } = useAuth()
-  const [gdprConsent,  setGdprConsent]  = useState(localStorage.getItem('gdpr_consent') === 'true')
-  const [todaySessions, setTodaySessions] = useState([])
-  const [tasks,          setTasks]         = useState([])
-  const [recentPapers,   setRecentPapers]  = useState([])
-  const [aiAdvice,       setAiAdvice]      = useState('')
-  const [aiLoading,      setAiLoading]     = useState(false)
-  const [dataLoading,    setDataLoading]   = useState(true)
-  const [showTour,       setShowTour]      = useState(!localStorage.getItem('tour_complete'))
-  const [setupSkipped,   setSetupSkipped]  = useState(() => localStorage.getItem('setup-skipped') === '1')
+  const [gdprConsent,    setGdprConsent]    = useState(localStorage.getItem('gdpr_consent') === 'true')
+  const [todaySessions,  setTodaySessions]  = useState([])
+  const [tasks,          setTasks]          = useState([])
+  const [recentPapers,   setRecentPapers]   = useState([])
+  const [aiAdvice,       setAiAdvice]       = useState('')
+  const [aiLoading,      setAiLoading]      = useState(false)
+  const [dataLoading,    setDataLoading]    = useState(true)
+  const [showTour,       setShowTour]       = useState(!localStorage.getItem('tour_complete'))
+  const [setupSkipped,   setSetupSkipped]   = useState(() => localStorage.getItem('setup-skipped') === '1')
+
+  // Papers carousel
+  const [carouselIdx,    setCarouselIdx]    = useState(0)
+  const carouselRef = useRef(null)
+
+  // Referral entry for existing users
+  const [refCode,        setRefCode]        = useState('')
+  const [refLoading,     setRefLoading]     = useState(false)
+  const [showRefInput,   setShowRefInput]   = useState(false)
 
   useEffect(() => {
     if (!user) return
@@ -55,12 +79,7 @@ export default function Dashboard() {
       const sessionEvents = sessions.filter(s => getSessionDate(s) === todayStr)
       const taskEvents = taskList
         .filter(t => (t.dueDate || '').substring(0, 10) === todayStr)
-        .map(t => ({
-          ...t, isTask: true,
-          title: `Task: ${t.title}`,
-          startTime: t.dueDate,
-          subject: t.subject || 'General',
-        }))
+        .map(t => ({ ...t, isTask: true, title: `Task: ${t.title}`, startTime: t.dueDate, subject: t.subject || 'General' }))
 
       const combined = [...sessionEvents, ...taskEvents].sort((a, b) => {
         const getVal = (x) => {
@@ -75,9 +94,9 @@ export default function Dashboard() {
       setTodaySessions(combined)
       setTasks(taskList.filter(t => !t.completed).slice(0, 5))
 
-      const sorted = papers.sort((a, b) => {
-        const da = a.attemptDate ? new Date(a.attemptDate) : new Date(a.createdAt?.seconds * 1000 || 0)
-        const db2 = b.attemptDate ? new Date(b.attemptDate) : new Date(b.createdAt?.seconds * 1000 || 0)
+      const sorted = [...papers].sort((a, b) => {
+        const da  = a.attemptDate ? new Date(a.attemptDate) : new Date((a.createdAt?.seconds || 0) * 1000)
+        const db2 = b.attemptDate ? new Date(b.attemptDate) : new Date((b.createdAt?.seconds || 0) * 1000)
         return db2 - da
       })
       setRecentPapers(sorted.slice(0, 20))
@@ -103,19 +122,46 @@ export default function Dashboard() {
     } catch (e) {}
     setAiLoading(true)
     const res = await getDailyAdvice(user.uid, todaySessions, profile?.streak || 0, [])
-    if (res.text) {
+    if (res?.text) {
       setAiAdvice(res.text)
-      try {
-        await setDoc(ref, { date: todayStr, text: res.text, createdAt: serverTimestamp() })
-      } catch (e) {}
+      try { await setDoc(ref, { date: todayStr, text: res.text, createdAt: serverTimestamp() }) } catch (e) {}
     }
     setAiLoading(false)
   }
 
-  const currentLevel = LEVELS[Math.min((profile?.level || 1) - 1, LEVELS.length - 1)]
-  const nextLevel    = LEVELS[Math.min((profile?.level || 1),     LEVELS.length - 1)]
-  const xpProgress   = profile ? Math.min(100, ((profile.xp || 0) / (nextLevel?.xpRequired || 100)) * 100) : 0
-  const badges       = (profile?.badges || []).map(id => BADGES.find(b => b.id === id)).filter(Boolean)
+  async function handleApplyRefCode() {
+    if (!refCode.trim() || !user) return
+    setRefLoading(true)
+    try {
+      const ok = await applyReferralCodeForExistingUser(user.uid, refCode.trim())
+      if (ok) {
+        toast.success('🚀 Code applied! +100 XP and Rocket icon unlocked.')
+        setShowRefInput(false)
+        setRefCode('')
+      } else {
+        toast.error('Code not found, already used, or that\'s your own code.')
+      }
+    } catch (e) {
+      toast.error('Something went wrong. Try again.')
+    }
+    setRefLoading(false)
+  }
+
+  // Computed level values
+  const totalXP     = profile?.xp || 0
+  const level       = computeLevel(totalXP)
+  let xpSoFar = 0
+  for (let i = 1; i < level; i++) xpSoFar += xpForLevel(i)
+  const xpThisLevel = totalXP - xpSoFar
+  const xpNeeded    = xpForLevel(level)
+  const xpProgress  = Math.min(100, (xpThisLevel / xpNeeded) * 100)
+
+  const LEVEL_TITLES = ['Newcomer','Studier','Consistent','Rising','Focused','Dedicated','Diligent','Scholar','High Achiever','Master','Legend']
+  const levelTitle   = LEVEL_TITLES[Math.min(Math.floor((level - 1) / 5), LEVEL_TITLES.length - 1)]
+
+  const badges = (profile?.badges || [])
+    .map(id => BADGE_LIST.find(b => b.id === id))
+    .filter(Boolean)
 
   const examCountdowns = (profile?.examDates || [])
     .filter(e => e.examDate)
@@ -124,15 +170,10 @@ export default function Dashboard() {
     .sort((a, b) => new Date(a.examDate) - new Date(b.examDate))
     .slice(0, 4)
 
-  function skipSetup() {
-    localStorage.setItem('setup-skipped', '1')
-    setSetupSkipped(true)
-  }
-
   const setupSteps = [
-    { id: 'subjects', label: 'Add your subjects',          done: (profile?.subjects || []).length > 0,  link: '/settings' },
-    { id: 'exams',    label: 'Add exam dates',              done: (profile?.examDates || []).length > 0, link: '/exams' },
-    { id: 'calendar', label: 'Generate a revision schedule', done: todaySessions.length > 0,              link: '/calendar' },
+    { id: 'subjects', label: 'Add your subjects',           done: (profile?.subjects || []).length > 0,  link: '/settings' },
+    { id: 'exams',    label: 'Add exam dates',               done: (profile?.examDates || []).length > 0, link: '/exams' },
+    { id: 'calendar', label: 'Generate a revision schedule', done: todaySessions.length > 0,               link: '/calendar' },
   ]
   const setupDone     = setupSteps.every(s => s.done)
   const setupProgress = setupSteps.filter(s => s.done).length
@@ -140,27 +181,26 @@ export default function Dashboard() {
   const hour     = new Date().getHours()
   const greeting = hour < 12 ? 'morning' : hour < 17 ? 'afternoon' : 'evening'
 
+  // Carousel helpers
+  const totalCards = recentPapers.length
+  function prevCard() { setCarouselIdx(i => Math.max(0, i - 1)) }
+  function nextCard() { setCarouselIdx(i => Math.min(totalCards - 1, i + 1)) }
+
+  const hasReferral = !!profile?.referredBy
+
   return (
     <>
       {showTour && <TooltipTour onComplete={() => setShowTour(false)} />}
 
       {/* GDPR banner */}
       {!gdprConsent && (
-        <div style={{
-          position: 'fixed', bottom: 0, left: 0, right: 0, zIndex: 9999,
-          background: 'var(--surface)', borderTop: '2px solid var(--accent)',
-          padding: '1rem 1.5rem', display: 'flex', alignItems: 'center',
-          justifyContent: 'space-between', flexWrap: 'wrap', gap: '0.75rem',
-          boxShadow: '0 -4px 20px rgba(0,0,0,0.3)',
-        }}>
+        <div style={{ position: 'fixed', bottom: 0, left: 0, right: 0, zIndex: 9999, background: 'var(--bg-surface)', borderTop: '2px solid var(--accent)', padding: '1rem 1.5rem', display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: '0.75rem', boxShadow: '0 -4px 20px rgba(0,0,0,0.3)' }}>
           <p style={{ margin: 0, color: 'var(--text-secondary)', fontSize: '0.9rem', maxWidth: 600 }}>
             🍪 RevisionFlow stores your revision data to power your study features. By continuing, you agree to our{' '}
             <a href="/privacy" style={{ color: 'var(--accent)' }}>Privacy Policy</a>.
           </p>
-          <button
-            onClick={() => { localStorage.setItem('gdpr_consent', 'true'); setGdprConsent(true) }}
-            style={{ background: 'var(--accent)', color: 'white', border: 'none', borderRadius: 8, padding: '0.5rem 1.25rem', cursor: 'pointer', fontWeight: 700, whiteSpace: 'nowrap' }}
-          >
+          <button onClick={() => { localStorage.setItem('gdpr_consent', 'true'); setGdprConsent(true) }}
+            style={{ background: 'var(--accent)', color: 'white', border: 'none', borderRadius: 8, padding: '0.5rem 1.25rem', cursor: 'pointer', fontWeight: 700, whiteSpace: 'nowrap' }}>
             I Agree
           </button>
         </div>
@@ -168,11 +208,9 @@ export default function Dashboard() {
 
       <div className="fade-in">
         <UpdatePrompt />
-
-        {/* ── Emergency Mode banner — shows when exam within 7 days ── */}
         <EmergencyBanner />
 
-        {/* ── Setup checklist for new users ── */}
+        {/* Setup checklist */}
         {!setupDone && !setupSkipped && (
           <div style={{ marginBottom: 20, padding: 16, background: 'linear-gradient(135deg,rgba(124,58,237,0.1),rgba(59,130,246,0.1))', border: '1px solid var(--accent)', borderRadius: 'var(--radius-lg)' }}>
             <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 12, flexWrap: 'wrap', gap: 8 }}>
@@ -184,18 +222,14 @@ export default function Dashboard() {
                 <div style={{ height: 6, width: 100, background: 'var(--bg-hover)', borderRadius: 3, overflow: 'hidden' }}>
                   <div style={{ height: '100%', width: `${(setupProgress / setupSteps.length) * 100}%`, background: 'var(--accent)', borderRadius: 3, transition: 'width 0.4s' }} />
                 </div>
-                <button onClick={skipSetup} style={{ background: 'none', border: 'none', fontSize: '0.75rem', color: 'var(--text-muted)', cursor: 'pointer', padding: '2px 6px', borderRadius: 4 }}>
-                  Skip
-                </button>
+                <button onClick={() => { localStorage.setItem('setup-skipped', '1'); setSetupSkipped(true) }} style={{ background: 'none', border: 'none', fontSize: '0.75rem', color: 'var(--text-muted)', cursor: 'pointer', padding: '2px 6px', borderRadius: 4 }}>Skip</button>
               </div>
             </div>
             <div style={{ display: 'flex', flexDirection: 'column', gap: 7 }}>
               {setupSteps.map(step => (
                 <Link key={step.id} to={step.link} style={{ display: 'flex', alignItems: 'center', gap: 10, padding: '8px 12px', borderRadius: 'var(--radius-md)', background: step.done ? 'rgba(16,185,129,0.08)' : 'var(--bg-surface)', border: `1px solid ${step.done ? 'rgba(16,185,129,0.3)' : 'var(--border)'}`, textDecoration: 'none', color: 'inherit' }}>
                   <CheckCircle2 size={16} color={step.done ? 'var(--success)' : 'var(--text-muted)'} style={{ flexShrink: 0 }} />
-                  <span style={{ flex: 1, fontSize: '0.875rem', fontWeight: step.done ? 400 : 600, color: step.done ? 'var(--text-muted)' : 'var(--text-primary)', textDecoration: step.done ? 'line-through' : 'none' }}>
-                    {step.label}
-                  </span>
+                  <span style={{ flex: 1, fontSize: '0.875rem', fontWeight: step.done ? 400 : 600, color: step.done ? 'var(--text-muted)' : 'var(--text-primary)', textDecoration: step.done ? 'line-through' : 'none' }}>{step.label}</span>
                   {!step.done && <ChevronRight size={14} color="var(--text-muted)" />}
                 </Link>
               ))}
@@ -203,22 +237,22 @@ export default function Dashboard() {
           </div>
         )}
 
-        {/* ── Greeting ── */}
+        {/* Greeting */}
         <div style={{ marginBottom: 24 }}>
           <h1 style={{ marginBottom: 4 }}>
             Good {greeting},{' '}
-            <span className="gradient-text">{profile?.displayName?.split(' ')[0]}!</span>
+            <span className="gradient-text">{profile?.displayName?.split(' ')[0] || profile?.profile?.displayName?.split(' ')[0]}!</span>
           </h1>
           <p>{format(new Date(), 'EEEE, d MMMM yyyy')}</p>
         </div>
 
-        {/* ── Stats row ── */}
+        {/* Stats row */}
         <div className="grid-4" style={{ marginBottom: 20 }}>
           {[
-            { label: 'Streak',    val: <><span className="streak-fire">🔥</span>{profile?.streak || 0} days</>,        sub: 'Keep it going!',               col: 'var(--warning)' },
-            { label: 'XP',        val: <><Zap size={15} style={{ color: 'var(--accent-light)' }} />{(profile?.xp || 0).toLocaleString()}</>, sub: `Level ${profile?.level || 1}`, col: 'var(--accent-light)' },
-            { label: 'Today',     val: todaySessions.length,  sub: `${todaySessions.filter(s => s.completed).length} done`,         col: 'var(--success)' },
-            { label: 'Tasks due', val: tasks.length,           sub: 'Pending',                                           col: tasks.length > 3 ? 'var(--danger)' : 'var(--info)' },
+            { label: 'Streak',    val: <><span className="streak-fire">🔥</span>{profile?.streak || 0} days</>,               sub: 'Keep it going!',  col: 'var(--warning)' },
+            { label: 'XP',        val: <><Zap size={15} style={{ color: 'var(--accent-light)' }} />{totalXP.toLocaleString()}</>, sub: `Level ${level}`, col: 'var(--accent-light)' },
+            { label: 'Today',     val: todaySessions.length,  sub: `${todaySessions.filter(s => s.completed).length} done`, col: 'var(--success)' },
+            { label: 'Tasks due', val: tasks.length,           sub: 'Pending', col: tasks.length > 3 ? 'var(--danger)' : 'var(--info)' },
           ].map(s => (
             <div key={s.label} className="card stat-card">
               <div style={{ fontSize: '0.72rem', color: 'var(--text-muted)', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.05em' }}>{s.label}</div>
@@ -232,34 +266,31 @@ export default function Dashboard() {
           ))}
         </div>
 
-        {/* ── XP progress bar ── */}
+        {/* XP progress bar — shows progress within current level only */}
         <div className="card" style={{ marginBottom: 20, padding: 14 }}>
           <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 6, fontSize: '0.82rem' }}>
-            <span style={{ fontWeight: 600 }}>Level {profile?.level || 1} — {currentLevel?.title}</span>
-            <span style={{ color: 'var(--text-muted)' }}>{profile?.xp || 0} / {nextLevel?.xpRequired} XP</span>
+            <span style={{ fontWeight: 600 }}>Level {level} — {levelTitle}</span>
+            <span style={{ color: 'var(--text-muted)' }}>{xpThisLevel.toLocaleString()} / {xpNeeded.toLocaleString()} XP this level</span>
           </div>
           <div className="progress-bar">
             <div className="progress-fill xp-bar-fill" style={{ width: `${xpProgress}%` }} />
           </div>
         </div>
 
-        {/* ── Daily quests ── */}
+        {/* Daily quests */}
         <div style={{ marginBottom: 20 }}>
           <DailyQuests />
         </div>
 
-        {/* ── Today + AI briefing ── */}
+        {/* Today + AI briefing */}
         <div className="grid-2" style={{ marginBottom: 20, gap: 16 }}>
-          {/* Today's sessions */}
           <div className="card">
             <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 14 }}>
               <h4 style={{ display: 'flex', alignItems: 'center', gap: 7 }}><Calendar size={17} color="var(--accent-light)" /> Today</h4>
               <Link to="/calendar" className="btn btn-ghost btn-sm">View all</Link>
             </div>
             {dataLoading ? (
-              <div style={{ display: 'flex', flexDirection: 'column', gap: 7 }}>
-                {[1, 2, 3].map(i => <Skeleton key={i} height={48} />)}
-              </div>
+              <div style={{ display: 'flex', flexDirection: 'column', gap: 7 }}>{[1,2,3].map(i => <Skeleton key={i} height={48} />)}</div>
             ) : todaySessions.length === 0 ? (
               <div className="empty-state" style={{ padding: '20px 0' }}>
                 <Calendar size={28} style={{ opacity: 0.3 }} />
@@ -282,7 +313,6 @@ export default function Dashboard() {
             )}
           </div>
 
-          {/* AI briefing */}
           <div className="card accent-card">
             <div style={{ display: 'flex', alignItems: 'center', gap: 7, marginBottom: 10 }}>
               <MessageSquare size={17} color="var(--accent-light)" />
@@ -291,9 +321,7 @@ export default function Dashboard() {
             </div>
             {aiLoading ? (
               <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
-                <Skeleton height={14} width="90%" />
-                <Skeleton height={14} width="100%" />
-                <Skeleton height={14} width="80%" />
+                <Skeleton height={14} width="90%" /><Skeleton height={14} width="100%" /><Skeleton height={14} width="80%" />
               </div>
             ) : aiAdvice ? (
               <AIOutput text={aiAdvice} label="AI Briefing" />
@@ -306,9 +334,8 @@ export default function Dashboard() {
           </div>
         </div>
 
-        {/* ── Exam countdowns + Tasks ── */}
+        {/* Exam countdowns + Tasks */}
         <div className="grid-2" style={{ marginBottom: 20, gap: 16 }}>
-          {/* Exam countdowns */}
           <div className="card">
             <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 14 }}>
               <h4 style={{ display: 'flex', alignItems: 'center', gap: 7 }}><Clock size={17} color="var(--accent-light)" /> Upcoming Exams</h4>
@@ -334,16 +361,13 @@ export default function Dashboard() {
             )}
           </div>
 
-          {/* Tasks */}
           <div className="card">
             <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 14 }}>
               <h4 style={{ display: 'flex', alignItems: 'center', gap: 7 }}><CheckSquare size={17} color="var(--accent-light)" /> Tasks</h4>
               <Link to="/tasks" className="btn btn-ghost btn-sm">All</Link>
             </div>
             {dataLoading ? (
-              <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
-                {[1, 2, 3].map(i => <Skeleton key={i} height={42} />)}
-              </div>
+              <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>{[1,2,3].map(i => <Skeleton key={i} height={42} />)}</div>
             ) : tasks.length === 0 ? (
               <div className="empty-state" style={{ padding: '20px 0' }}>
                 <p style={{ fontSize: '0.875rem' }}>No pending tasks</p>
@@ -365,18 +389,24 @@ export default function Dashboard() {
           </div>
         </div>
 
-        {/* ── Recent papers + Badges ── */}
-        <div className="grid-2" style={{ gap: 16 }}>
-          {/* Recent papers */}
+        {/* Recent papers (carousel) + Badges */}
+        <div className="grid-2" style={{ gap: 16, marginBottom: 20 }}>
+
+          {/* Papers carousel */}
           <div className="card">
             <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 14 }}>
               <h4 style={{ display: 'flex', alignItems: 'center', gap: 7 }}><TrendingUp size={17} color="var(--accent-light)" /> Recent Papers</h4>
-              <Link to="/papers" className="btn btn-ghost btn-sm">All</Link>
+              <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                {recentPapers.length > 1 && (
+                  <span style={{ fontSize: '0.72rem', color: 'var(--text-muted)' }}>{carouselIdx + 1}/{recentPapers.length}</span>
+                )}
+                <Link to="/papers" className="btn btn-ghost btn-sm">All</Link>
+              </div>
             </div>
+
             {dataLoading ? (
               <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
-                <Skeleton height={80} style={{ marginBottom: 6 }} />
-                {[1, 2, 3].map(i => <Skeleton key={i} height={46} />)}
+                <Skeleton height={120} style={{ marginBottom: 6 }} />
               </div>
             ) : recentPapers.length === 0 ? (
               <div className="empty-state" style={{ padding: '20px 0' }}>
@@ -384,54 +414,110 @@ export default function Dashboard() {
                 <Link to="/papers" className="btn btn-primary btn-sm">Log a paper</Link>
               </div>
             ) : (() => {
-              const subjectCounts = {}
-              recentPapers.forEach(p => { subjectCounts[p.subject] = (subjectCounts[p.subject] || 0) + 1 })
-              const topSubj = Object.entries(subjectCounts).sort((a, b) => b[1] - a[1])[0]?.[0]
-              const sparkData = recentPapers
-                .filter(p => p.subject === topSubj && p.percentage)
+              const p = recentPapers[carouselIdx]
+              // Spark data for this subject across all papers
+              const subjectPapers = recentPapers
+                .filter(x => x.subject === p.subject && x.percentage)
                 .sort((a, b) => new Date(a.attemptDate || 0) - new Date(b.attemptDate || 0))
-                .slice(-8)
-                .map((p, i) => ({ i, pct: p.percentage, label: `P${p.paper} ${p.year}` }))
-              const trend = sparkData.length >= 2
-                ? sparkData[sparkData.length - 1].pct - sparkData[0].pct
-                : null
+              const sparkData = subjectPapers.slice(-8).map((x, i) => ({ i, pct: x.percentage, label: `P${x.paper} ${x.year}` }))
+              const trend = sparkData.length >= 2 ? sparkData[sparkData.length - 1].pct - sparkData[0].pct : null
+
               return (
-                <>
-                  {sparkData.length >= 2 && (
-                    <div style={{ marginBottom: 12, padding: '10px 12px', background: 'var(--bg-surface)', borderRadius: 'var(--radius-md)', border: '1px solid var(--border)' }}>
-                      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: 6 }}>
-                        <div>
-                          <div style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>Grade trend — {topSubj}</div>
-                          <div style={{ fontWeight: 800, fontSize: '1.3rem', color: gradeColour(recentPapers.find(p => p.subject === topSubj)?.grade || '') }}>
-                            {sparkData[sparkData.length - 1]?.pct}%
-                          </div>
+                <div>
+                  {/* Main paper card */}
+                  <div style={{ background: 'var(--bg-surface)', borderRadius: 'var(--radius-md)', border: '1px solid var(--border)', padding: '14px 16px', marginBottom: 10 }}>
+                    <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', marginBottom: 8 }}>
+                      <div>
+                        <div style={{ fontWeight: 700, fontSize: '1rem' }}>{p.subject}</div>
+                        <div style={{ fontSize: '0.75rem', color: 'var(--text-muted)', marginTop: 2 }}>
+                          {p.board} · Paper {p.paper} · {p.year}{p.tier ? ` · ${p.tier}` : ''}
                         </div>
-                        {trend !== null && (
-                          <div style={{ padding: '3px 8px', borderRadius: 999, background: trend >= 0 ? 'rgba(16,185,129,0.12)' : 'rgba(239,68,68,0.12)', color: trend >= 0 ? 'var(--success)' : 'var(--danger)', fontWeight: 700, fontSize: '0.78rem' }}>
-                            {trend >= 0 ? '+' : ''}{trend}% trend
+                        {p.attemptDate && (
+                          <div style={{ fontSize: '0.7rem', color: 'var(--text-muted)', marginTop: 1 }}>
+                            {new Date(p.attemptDate).toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' })}
                           </div>
                         )}
                       </div>
-                      <ResponsiveContainer width="100%" height={50}>
-                        <LineChart data={sparkData}>
-                          <Line type="monotone" dataKey="pct" stroke="var(--accent)" strokeWidth={2} dot={false} />
-                          <Tooltip formatter={(v) => [`${v}%`]} contentStyle={{ background: 'var(--bg-card)', border: '1px solid var(--border)', borderRadius: 6, fontSize: '0.72rem' }} labelFormatter={(l) => sparkData[l]?.label || ''} />
-                        </LineChart>
-                      </ResponsiveContainer>
+                      <div style={{ textAlign: 'right', flexShrink: 0 }}>
+                        {p.grade && (
+                          <div style={{ fontWeight: 900, fontSize: '2rem', lineHeight: 1, color: gradeColour(p.grade) }}>{p.grade}</div>
+                        )}
+                        <div style={{ fontSize: '0.78rem', color: 'var(--text-muted)', marginTop: 2 }}>
+                          {p.score}/{p.maxMarks}
+                          {p.percentage ? ` · ${p.percentage}%` : ''}
+                        </div>
+                      </div>
+                    </div>
+
+                    {/* Sparkline for this subject */}
+                    {sparkData.length >= 2 && (
+                      <div style={{ marginTop: 8 }}>
+                        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 4 }}>
+                          <span style={{ fontSize: '0.68rem', color: 'var(--text-muted)' }}>{p.subject} trend</span>
+                          {trend !== null && (
+                            <span style={{ fontSize: '0.7rem', fontWeight: 700, color: trend >= 0 ? 'var(--success)' : 'var(--danger)' }}>
+                              {trend >= 0 ? '+' : ''}{trend}%
+                            </span>
+                          )}
+                        </div>
+                        <ResponsiveContainer width="100%" height={40}>
+                          <LineChart data={sparkData}>
+                            <Line type="monotone" dataKey="pct" stroke="var(--accent)" strokeWidth={2} dot={false} />
+                            <Tooltip
+                              formatter={v => [`${v}%`]}
+                              contentStyle={{ background: 'var(--bg-card)', border: '1px solid var(--border)', borderRadius: 6, fontSize: '0.7rem' }}
+                              labelFormatter={l => sparkData[l]?.label || ''}
+                            />
+                          </LineChart>
+                        </ResponsiveContainer>
+                      </div>
+                    )}
+                  </div>
+
+                  {/* Carousel navigation */}
+                  {recentPapers.length > 1 && (
+                    <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 12 }}>
+                      <button
+                        onClick={prevCard}
+                        disabled={carouselIdx === 0}
+                        style={{ background: 'var(--bg-surface)', border: '1px solid var(--border)', borderRadius: 8, padding: '6px 10px', cursor: carouselIdx === 0 ? 'not-allowed' : 'pointer', opacity: carouselIdx === 0 ? 0.4 : 1, display: 'flex', alignItems: 'center', color: 'var(--text-secondary)' }}
+                      >
+                        <ChevronLeft size={16} />
+                      </button>
+
+                      {/* Dots */}
+                      <div style={{ display: 'flex', gap: 5 }}>
+                        {recentPapers.slice(0, Math.min(recentPapers.length, 8)).map((_, i) => (
+                          <button
+                            key={i}
+                            onClick={() => setCarouselIdx(i)}
+                            style={{
+                              width: i === carouselIdx ? 16 : 7,
+                              height: 7,
+                              borderRadius: 999,
+                              border: 'none',
+                              cursor: 'pointer',
+                              background: i === carouselIdx ? 'var(--accent)' : 'var(--bg-hover)',
+                              transition: 'all 0.2s ease',
+                              padding: 0,
+                            }}
+                          />
+                        ))}
+                        {recentPapers.length > 8 && (
+                          <span style={{ fontSize: '0.65rem', color: 'var(--text-muted)', alignSelf: 'center' }}>+{recentPapers.length - 8}</span>
+                        )}
+                      </div>
+
+                      <button
+                        onClick={nextCard}
+                        disabled={carouselIdx === totalCards - 1}
+                        style={{ background: 'var(--bg-surface)', border: '1px solid var(--border)', borderRadius: 8, padding: '6px 10px', cursor: carouselIdx === totalCards - 1 ? 'not-allowed' : 'pointer', opacity: carouselIdx === totalCards - 1 ? 0.4 : 1, display: 'flex', alignItems: 'center', color: 'var(--text-secondary)' }}
+                      >
+                        <ChevronRight size={16} />
+                      </button>
                     </div>
                   )}
-                  <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
-                    {recentPapers.slice(0, 4).map(p => (
-                      <div key={p.id} style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '7px 10px', background: 'var(--bg-surface)', borderRadius: 'var(--radius-md)', border: '1px solid var(--border)' }}>
-                        <div>
-                          <div style={{ fontWeight: 600, fontSize: '0.82rem' }}>{p.subject} P{p.paper}</div>
-                          <div style={{ fontSize: '0.7rem', color: 'var(--text-muted)' }}>{p.board} {p.year} · {p.score}/{p.maxMarks}</div>
-                        </div>
-                        {p.grade && <span style={{ fontWeight: 800, color: gradeColour(p.grade), fontSize: '1.05rem' }}>{p.grade}</span>}
-                      </div>
-                    ))}
-                  </div>
-                </>
+                </div>
               )
             })()}
           </div>
@@ -440,7 +526,7 @@ export default function Dashboard() {
           <div className="card">
             <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 14 }}>
               <h4 style={{ display: 'flex', alignItems: 'center', gap: 7 }}><Trophy size={17} color="var(--warning)" /> Badges</h4>
-              <span style={{ fontSize: '0.78rem', color: 'var(--text-muted)' }}>{badges.length}/{BADGES.length}</span>
+              <span style={{ fontSize: '0.78rem', color: 'var(--text-muted)' }}>{badges.length}/{BADGE_LIST.length}</span>
             </div>
             {badges.length === 0 ? (
               <div className="empty-state" style={{ padding: '20px 0' }}>
@@ -448,19 +534,73 @@ export default function Dashboard() {
                 <p style={{ fontSize: '0.875rem' }}>Complete your first session to earn badges!</p>
               </div>
             ) : (
-              <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6 }}>
+              <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8 }}>
                 {badges.map(b => (
-                  <div key={b.id} title={`${b.name}: ${b.desc}`}
-                    style={{ width: 40, height: 40, borderRadius: 9, background: 'rgba(124,58,237,0.15)', border: '1px solid var(--border)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '1.3rem', cursor: 'default', transition: 'transform 0.15s' }}
-                    onMouseEnter={e => e.currentTarget.style.transform = 'scale(1.1)'}
-                    onMouseLeave={e => e.currentTarget.style.transform = 'scale(1)'}>
+                  <div
+                    key={b.id}
+                    title={`${b.name}: ${b.desc}`}
+                    style={{
+                      width: 56, height: 56,
+                      borderRadius: 12,
+                      background: 'rgba(124,58,237,0.15)',
+                      border: '1px solid rgba(124,58,237,0.3)',
+                      display: 'flex', alignItems: 'center', justifyContent: 'center',
+                      fontSize: '1.7rem',
+                      cursor: 'default',
+                      transition: 'transform 0.15s, box-shadow 0.15s',
+                    }}
+                    onMouseEnter={e => { e.currentTarget.style.transform = 'scale(1.12)'; e.currentTarget.style.boxShadow = '0 0 12px rgba(124,58,237,0.4)' }}
+                    onMouseLeave={e => { e.currentTarget.style.transform = 'scale(1)'; e.currentTarget.style.boxShadow = 'none' }}
+                  >
                     {b.icon}
                   </div>
                 ))}
               </div>
             )}
+            <Link to="/profile" className="btn btn-ghost btn-sm" style={{ marginTop: 12, width: '100%', justifyContent: 'center' }}>
+              View all {BADGE_LIST.length} badges →
+            </Link>
           </div>
         </div>
+
+        {/* Referral code entry for existing users */}
+        {!hasReferral && (
+          <div className="card" style={{ marginBottom: 20, padding: '14px 16px' }}>
+            {!showRefInput ? (
+              <button
+                onClick={() => setShowRefInput(true)}
+                className="btn btn-ghost btn-sm"
+                style={{ display: 'flex', alignItems: 'center', gap: 7, color: 'var(--text-muted)' }}
+              >
+                <Gift size={14} /> Have a referral code? Enter it here
+              </button>
+            ) : (
+              <div>
+                <div style={{ fontWeight: 600, fontSize: '0.85rem', marginBottom: 8, display: 'flex', alignItems: 'center', gap: 6 }}>
+                  <Gift size={15} color="var(--accent-light)" /> Enter a referral code
+                </div>
+                <div style={{ display: 'flex', gap: 8 }}>
+                  <input
+                    className="input"
+                    style={{ textTransform: 'uppercase', letterSpacing: '0.08em', flex: 1 }}
+                    placeholder="e.g. AB12CD34"
+                    maxLength={8}
+                    value={refCode}
+                    onChange={e => setRefCode(e.target.value.toUpperCase())}
+                  />
+                  <button className="btn btn-primary btn-sm" onClick={handleApplyRefCode} disabled={refLoading || !refCode.trim()}>
+                    {refLoading ? '…' : 'Apply'}
+                  </button>
+                  <button className="btn btn-ghost btn-sm" onClick={() => setShowRefInput(false)}>Cancel</button>
+                </div>
+                <p style={{ fontSize: '0.73rem', color: 'var(--text-muted)', marginTop: 6 }}>
+                  You'll earn +100 XP and unlock the 🚀 Rocket profile icon.
+                </p>
+              </div>
+            )}
+          </div>
+        )}
+
       </div>
     </>
   )
