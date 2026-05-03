@@ -7,6 +7,7 @@ import { AppProvider } from './context/AppContext'
 import { TimerProvider } from './context/TimerContext'
 import { PriorityProvider } from './context/PriorityContext'
 import Layout from './components/Layout'
+import XPToast from './components/XPToast'
 
 // ── Lazy pages ────────────────────────────────────────────────────────────────
 const Landing       = lazy(() => import('./pages/Landing'))
@@ -109,6 +110,7 @@ export default function App() {
                   </Routes>
                 </Suspense>
               </BrowserRouter>
+            <XPToast />
             </PriorityProvider>
           </TimerProvider>
         </AppProvider>
