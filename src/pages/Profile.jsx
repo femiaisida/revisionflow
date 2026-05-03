@@ -13,6 +13,7 @@ import { gradeColour } from '../utils/calendar'
 import ReferralCard from '../components/ReferralCard'
 import { Zap, Flame, Trophy, Copy, Check, Download, Loader } from 'lucide-react'
 import toast from 'react-hot-toast'
+import BadgeAuditButton from '../components/BadgeAuditButton'
 
 export default function Profile() {
   const { user, profile } = useAuth()
@@ -164,6 +165,8 @@ export default function Profile() {
       </div>
 
       {/* ── Badges ── */}
+      <BadgeAuditButton />
+      
       <div className="card">
         <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 12 }}>
           <h4>Badges ({unlockedBadges.length}/{BADGE_LIST.length})</h4>
