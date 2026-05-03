@@ -6,7 +6,7 @@ import {
   auth, db, loginWithEmail, signupWithEmail,
   loginWithGoogle as _loginWithGoogle,
   resetPassword as _resetPassword,
-  ensureUser, updateStreakOnLogin,
+  ensureUser, updateStreakOnLogin, runBadgeAudit,
 } from '../utils/firestore'
 
 const AuthContext = createContext(null)
@@ -31,6 +31,17 @@ export function AuthProvider({ children }) {
             avatarUrl:   u.photoURL    || '',
           })
           await updateStreakOnLogin(u.uid)
+          // Run badge audit if it hasn't run in the last 7 days
+          try {
+            const userSnap = await import('firebase/firestore').then(m =>
+              m.getDoc(m.doc(db, 'users', u.uid))
+            )
+            const lastAudit = userSnap.data()?.lastBadgeAudit?.toDate?.()
+            const sevenDaysAgo = new Date(Date.now() - 7 * 24 * 60 * 60 * 1000)
+            if (!lastAudit || lastAudit < sevenDaysAgo) {
+              runBadgeAudit(u.uid).catch(e => console.warn('[badge audit]', e))
+            }
+          } catch (e) { /* non-fatal */ }
         } catch (e) {
           console.error('[AuthContext] ensureUser/streak error:', e)
         }
