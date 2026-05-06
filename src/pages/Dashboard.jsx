@@ -252,7 +252,15 @@ export default function Dashboard() {
             { label: 'Streak',    val: <><span className="streak-fire">🔥</span>{profile?.streak || 0} days</>,               sub: 'Keep it going!',  col: 'var(--warning)' },
             { label: 'XP',        val: <><Zap size={15} style={{ color: 'var(--accent-light)' }} />{totalXP.toLocaleString()}</>, sub: `Level ${level}`, col: 'var(--accent-light)' },
             { label: 'Today',     val: todaySessions.length,  sub: `${todaySessions.filter(s => s.completed).length} done`, col: 'var(--success)' },
-            { label: 'Tasks due', val: tasks.length,           sub: 'Pending', col: tasks.length > 3 ? 'var(--danger)' : 'var(--info)' },
+            (() => {
+              const nextExam = (profile?.examDates || [])
+                .filter(e => e.examDate && new Date(e.examDate) >= new Date(new Date().toDateString()))
+                .sort((a, b) => new Date(a.examDate) - new Date(b.examDate))[0]
+              const daysTo = nextExam
+                ? Math.ceil((new Date(nextExam.examDate) - new Date(new Date().toDateString())) / 86400000)
+                : null
+              return { label: 'Next exam', val: daysTo === 0 ? 'Today!' : daysTo === 1 ? '1 day' : daysTo !== null ? `${daysTo} days` : '—', sub: nextExam ? `${nextExam.subject}` : 'No exams added', col: daysTo !== null && daysTo <= 7 ? 'var(--danger)' : daysTo !== null && daysTo <= 14 ? 'var(--warning)' : 'var(--accent-light)' }
+            })(),
           ].map(s => (
             <div key={s.label} className="card stat-card">
               <div style={{ fontSize: '0.72rem', color: 'var(--text-muted)', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.05em' }}>{s.label}</div>
