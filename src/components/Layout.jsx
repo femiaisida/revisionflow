@@ -7,8 +7,8 @@ import { PROFILE_ICONS } from '../data/themes'
 import PWAInstallBanner from './PWAInstallBanner'
 import TopicUpdateBanner from './TopicUpdateBanner'
 import {
-  LayoutDashboard, Calendar, FileText, Brain, AlertCircle,
-  CheckSquare, Users, Trophy, User, MessageSquare, BookOpen,
+  LayoutDashboard, Calendar, FileText, Brain,
+  CheckSquare, Users, Trophy, User, MessageSquare,
   Clock, Settings, LogOut, Menu, Sun, Moon, Zap, Timer,
   BarChart2, Layers, HelpCircle
 } from 'lucide-react'
@@ -19,9 +19,7 @@ const NAV = [
   { to: '/exams',       label: 'Exam Dates',  icon: Clock },
   { to: '/papers',      label: 'Past Papers', icon: FileText },
   { to: '/topics',      label: 'Topics',      icon: Brain },
-  { to: '/mastery',     label: 'Mastery',     icon: Layers },
-  { to: '/mistakes',    label: 'Mistakes',    icon: AlertCircle },
-  { to: '/notes',       label: 'Notes',       icon: BookOpen },
+  { to: '/study',       label: 'Study Tools', icon: Zap },
   { to: '/tasks',       label: 'Tasks',       icon: CheckSquare },
   { to: '/timer',       label: 'Timer',       icon: Timer },
   { to: '/analytics',   label: 'Analytics',   icon: BarChart2 },
