@@ -10,7 +10,7 @@ export default function Tasks() {
   const { user, profile } = useAuth()
   const [tasks, setTasks] = useState([])
   const [showAdd, setShowAdd] = useState(false)
-  const [form, setForm] = useState({ title:'', subject:'', dueDate:'', priority:'medium', notes:'' })
+  const [form, setForm] = useState({ title:'', subject:'', startDate:'', dueDate:'', priority:'medium', notes:'' })
   const [filter, setFilter] = useState('pending')
   const [selected, setSelected] = useState([])
 
@@ -22,7 +22,7 @@ export default function Tasks() {
     e.preventDefault()
     await addTask(user.uid, form)
     getTasks(user.uid).then(setTasks)
-    setForm({ title:'', subject:'', dueDate:'', priority:'medium', notes:'' })
+    setForm({ title:'', subject:'', startDate:'', dueDate:'', priority:'medium', notes:'' })
     setShowAdd(false)
     toast.success('Task added')
   }
@@ -102,6 +102,7 @@ export default function Tasks() {
                   <select className="select" value={form.subject} onChange={e=>setForm(f=>({...f,subject:e.target.value}))}>
                     <option value="">None</option>{subjects.map(s=><option key={s} value={s}>{s}</option>)}
                   </select></div>
+                <div><label className="label">Start date <span style={{color:'var(--text-muted)',fontWeight:400}}>(optional)</span></label><input className="input" type="date" value={form.startDate} onChange={e=>setForm(f=>({...f,startDate:e.target.value}))}/></div>
                 <div><label className="label">Due date</label><input className="input" type="date" value={form.dueDate} onChange={e=>setForm(f=>({...f,dueDate:e.target.value}))}/></div>
                 <div><label className="label">Priority</label>
                   <select className="select" value={form.priority} onChange={e=>setForm(f=>({...f,priority:e.target.value}))}>
