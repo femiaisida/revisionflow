@@ -49,15 +49,31 @@ export default function Calendar() {
       }))
       
       const tSnap = await getDocs(collection(db, 'users', user.uid, 'tasks'))
-      const tasksData = tSnap.docs.filter(d => d.data().dueDate && !d.data().completed).map(d => ({
-        _docId: d.id,
-        ...d.data(),
-        id: d.id,
-        isTask: true,
-        date: d.data().dueDate,
-        title: `Task: ${d.data().title}`,
-        type: 'Task'
-      }))
+      // Expand multi-day tasks into an entry for each day in the range
+      const tasksData = []
+      tSnap.docs.filter(d => !d.data().completed).forEach(d => {
+        const data = d.data()
+        const start = data.startDate || data.dueDate
+        const end   = data.dueDate || data.startDate
+        if (!start) return
+        const startDate = new Date(start)
+        const endDate   = new Date(end)
+        // Create one entry per day in the task range
+        const current = new Date(startDate)
+        while (current <= endDate) {
+          tasksData.push({
+            _docId: d.id, ...data, id: d.id,
+            isTask: true,
+            isMultiDay: start !== end,
+            taskStartDate: start, taskEndDate: end,
+            date: current.toISOString().slice(0, 10),
+            title: `📋 ${data.title}`,
+            type: 'Task',
+            taskColor: data.priority === 'high' ? 'var(--danger)' : data.priority === 'medium' ? 'var(--warning)' : 'var(--success)',
+          })
+          current.setDate(current.getDate() + 1)
+        }
+      })
       
       setSessions([...sessionsData, ...tasksData])
     } catch (err) {
