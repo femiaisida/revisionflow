@@ -10,7 +10,9 @@ import AIOutput from '../components/AIOutput'
 import { getAllTopicsFlat } from '../data/topics'
 import { SUBJECT_COLOURS } from '../data/subjects'
 import toast from 'react-hot-toast'
-import { Plus, X, Brain, Zap, Trash2, Grid, BarChart2, Star, ExternalLink } from 'lucide-react'
+import { Plus, X, Brain, Zap, Trash2, Grid, BarChart2, Star, ExternalLink, BookOpen, StickyNote, Layers } from 'lucide-react'
+import { saveNote, getNotes, deleteNote } from '../utils/firestore'
+import { format } from 'date-fns'
 
 const CONF_LABELS = ['','Struggling','Needs work','Getting there','Good','Strong']
 const CONF_COLOURS = ['','var(--danger)','#f97316','var(--warning)','#84cc16','var(--success)']
@@ -147,12 +149,17 @@ export default function Topics() {
   const [selected, setSelected] = useState([])
   const [newTopic, setNewTopic] = useState({ name:'', confidence:3, notes:'' })
   const [loading, setLoading] = useState(false)
+  const [notes, setNotes] = useState([])
+  const [noteForm, setNoteForm] = useState({ title:'', content:'' })
+  const [editingNote, setEditingNote] = useState(null)
+  const [noteSaving, setNoteSaving] = useState(false)
 
   const subjects = profile?.subjects?.map(s=>s.name) || []
 
   useEffect(() => {
     if (!user) return
     loadTopics()
+    if (selSubj && selSubj !== 'All') loadNotes()
   }, [user, selSubj])
 
   async function loadTopics() {
@@ -164,6 +171,35 @@ export default function Topics() {
     } else {
       setTopics(all.filter(t=>t.subjectId===selSubj))
     }
+  }
+
+  async function loadNotes() {
+    if (!user || !selSubj || selSubj === 'All') return
+    const all = await getNotes(user.uid)
+    setNotes(all.filter(n => n.subject === selSubj))
+  }
+
+  async function handleSaveNote() {
+    if (!noteForm.title || !selSubj) return
+    setNoteSaving(true)
+    try {
+      if (editingNote) {
+        await saveNote(user.uid, { ...editingNote, ...noteForm, subject: selSubj, updatedAt: new Date().toISOString() })
+      } else {
+        await saveNote(user.uid, { ...noteForm, subject: selSubj, createdAt: new Date().toISOString() })
+      }
+      setNoteForm({ title:'', content:'' })
+      setEditingNote(null)
+      await loadNotes()
+      toast.success('Note saved')
+    } catch(e) { toast.error('Failed to save note') }
+    setNoteSaving(false)
+  }
+
+  async function handleDeleteNote(id) {
+    await deleteNote(user.uid, id)
+    setNotes(ns => ns.filter(n => n.id !== id))
+    toast.success('Note deleted')
   }
 
   async function handleSeedTopics() {
@@ -264,6 +300,8 @@ export default function Topics() {
               <button className={`tab${view==='heat'?' active':''}`} onClick={()=>setView('heat')}><Grid size={14}/> Heatmap</button>
               <button className={`tab${view==='priority'?' active':''}`} onClick={()=>setView('priority')}><Star size={14} style={{marginLeft: 4}}/> Priority</button>
               <button className={`tab${view==='resources'?' active':''}`} onClick={()=>setView('resources')}><ExternalLink size={14}/> Resources</button>
+              <button className={`tab${view==='notes'?' active':''}`} onClick={()=>setView('notes')}><StickyNote size={14}/> Notes</button>
+              <button className={`tab${view==='mastery'?' active':''}`} onClick={()=>setView('mastery')}><Layers size={14}/> Mastery</button>
             </div>
           </div>
 
@@ -282,6 +320,89 @@ export default function Topics() {
           ) : view==='resources' ? (
             // ── Resources view ──
             <ResourcesPanel subject={selSubj} allSubjects={subjects}/>
+          ) : view==='notes' ? (
+            // ── Notes view ──
+            <div>
+              <div style={{marginBottom:16}}>
+                <div style={{display:'flex',flexDirection:'column',gap:8,marginBottom:12}}>
+                  <input className="input" placeholder="Note title…" value={noteForm.title} onChange={e=>setNoteForm(f=>({...f,title:e.target.value}))}/>
+                  <textarea className="textarea" style={{minHeight:100}} placeholder="Write your revision notes here…" value={noteForm.content} onChange={e=>setNoteForm(f=>({...f,content:e.target.value}))}/>
+                  <div style={{display:'flex',gap:8,justifyContent:'flex-end'}}>
+                    {editingNote&&<button className="btn btn-ghost btn-sm" onClick={()=>{setEditingNote(null);setNoteForm({title:'',content:''})}}>Cancel</button>}
+                    <button className="btn btn-primary btn-sm" onClick={handleSaveNote} disabled={noteSaving||!noteForm.title}>
+                      <BookOpen size={13}/> {noteSaving?'Saving…':editingNote?'Update note':'Save note'}
+                    </button>
+                  </div>
+                </div>
+                {notes.length===0?(
+                  <div className="empty-state" style={{padding:'20px 0'}}>
+                    <StickyNote size={28} style={{opacity:0.3}}/>
+                    <p style={{fontSize:'0.875rem'}}>No notes yet for {selSubj}</p>
+                  </div>
+                ):(
+                  <div style={{display:'flex',flexDirection:'column',gap:8}}>
+                    {notes.map(n=>(
+                      <div key={n.id} className="card">
+                        <div style={{display:'flex',alignItems:'flex-start',justifyContent:'space-between',gap:10}}>
+                          <div style={{flex:1}}>
+                            <div style={{fontWeight:700,fontSize:'0.88rem',marginBottom:4}}>{n.title}</div>
+                            <div style={{fontSize:'0.82rem',color:'var(--text-secondary)',whiteSpace:'pre-wrap',lineHeight:1.6}}>{n.content}</div>
+                            {n.createdAt&&<div style={{fontSize:'0.68rem',color:'var(--text-muted)',marginTop:6}}>{format(new Date(n.createdAt),'d MMM yyyy')}</div>}
+                          </div>
+                          <div style={{display:'flex',gap:5,flexShrink:0}}>
+                            <button className="btn btn-ghost btn-icon btn-sm" onClick={()=>{setEditingNote(n);setNoteForm({title:n.title,content:n.content})}}><Zap size={12}/></button>
+                            <button className="btn btn-ghost btn-icon btn-sm" style={{color:'var(--danger)'}} onClick={()=>handleDeleteNote(n.id)}><Trash2 size={12}/></button>
+                          </div>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </div>
+            </div>
+          ) : view==='mastery' ? (
+            // ── Mastery view — cross-topic summary ──
+            <div>
+              {(() => {
+                const total = topics.length
+                const mastered = topics.filter(t=>(t.confidence||3)>=4).length
+                const pct = total>0?Math.round((mastered/total)*100):0
+                return (
+                  <div>
+                    <div style={{display:'flex',alignItems:'center',gap:16,marginBottom:20,padding:'14px 16px',background:'linear-gradient(135deg,rgba(124,58,237,0.1),rgba(168,85,247,0.05))',borderRadius:12,border:'1px solid rgba(124,58,237,0.2)'}}>
+                      <div style={{textAlign:'center',minWidth:70}}>
+                        <div style={{fontSize:'2rem',fontWeight:900,color:'var(--accent-light)'}}>{pct}%</div>
+                        <div style={{fontSize:'0.7rem',color:'var(--text-muted)'}}>Mastered</div>
+                      </div>
+                      <div style={{flex:1}}>
+                        <div style={{height:8,background:'var(--bg-hover)',borderRadius:4,overflow:'hidden'}}>
+                          <div style={{height:'100%',width:`${pct}%`,background:'linear-gradient(90deg,var(--purple-700),var(--purple-400))',borderRadius:4,transition:'width 0.5s ease'}}/>
+                        </div>
+                        <div style={{display:'flex',justifyContent:'space-between',marginTop:5,fontSize:'0.72rem',color:'var(--text-muted)'}}>
+                          <span>{mastered} strong (4-5)</span><span>{total-mastered} to improve</span>
+                        </div>
+                      </div>
+                    </div>
+                    <div style={{display:'grid',gridTemplateColumns:'repeat(auto-fill,minmax(120px,1fr))',gap:6}}>
+                      {[5,4,3,2,1].map(conf=>{
+                        const confTopics = topics.filter(t=>(t.confidence||3)===conf)
+                        if(!confTopics.length) return null
+                        const confCols={5:'var(--success)',4:'#84cc16',3:'var(--warning)',2:'#f97316',1:'var(--danger)'}
+                        return confTopics.map(t=>(
+                          <div key={t.id} style={{padding:'8px 10px',borderRadius:8,background:`${confCols[conf]}15`,border:`1px solid ${confCols[conf]}40`,cursor:'pointer'}}
+                            onClick={()=>updateConf(t.id, conf<5?conf+1:5)} title={`${t.name} — click to increase confidence`}>
+                            <div style={{fontSize:'0.75rem',fontWeight:600,lineHeight:1.3,marginBottom:3}}>{t.name}</div>
+                            <div style={{display:'flex',gap:2}}>{[1,2,3,4,5].map(n=>(
+                              <div key={n} style={{width:7,height:7,borderRadius:2,background:conf>=n?confCols[conf]:'var(--bg-hover)'}}/>
+                            ))}</div>
+                          </div>
+                        ))
+                      })}
+                    </div>
+                  </div>
+                )
+              })()}
+            </div>
           ) : view==='heat' ? (
             // ── Heatmap view ──
             <div>
