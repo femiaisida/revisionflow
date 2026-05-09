@@ -6,7 +6,7 @@ import {
   saveFlashcardSet, getFlashcardSets, deleteFlashcardSet,
   getPublicFlashcardSets, updateFlashcardSetVisibility
 } from '../utils/firestore'
-import { generateFlashcards, generatePredictedQuestions } from '../utils/ai'
+import { generateFlashcards, generatePredictedQuestions, markAnswer } from '../utils/ai'
 import AIOutput from '../components/AIOutput'
 import toast from 'react-hot-toast'
 import { format } from 'date-fns'
@@ -36,6 +36,141 @@ function FlipCard({ card, index, total }) {
           <div style={{ fontSize:'1rem', color:'var(--text-primary)', textAlign:'center', lineHeight:1.65 }}>{card.a}</div>
         </div>
       </div>
+
+      {/* ── ANSWER MARKER ── */}
+      {tab === 'marker' && (
+        <div>
+          <div className="grid-2" style={{ gap: 20, alignItems: 'start' }}>
+            {/* Input panel */}
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
+              <div className="card">
+                <h4 style={{ marginBottom: 14, display: 'flex', alignItems: 'center', gap: 8 }}>
+                  <Brain size={18} color="var(--accent-light)"/> Mark My Answer
+                </h4>
+                <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
+                  {/* Subject + context row */}
+                  <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 8 }}>
+                    <div>
+                      <label className="label">Subject</label>
+                      <select className="select" value={mkSubject} onChange={e => { setMkSubject(e.target.value); const s = profile?.subjects?.find(x=>x.name===e.target.value); if(s?.board) setMkBoard(s.board); setMkLevel(profile?.qualification||'GCSE') }}>
+                        <option value="">Select…</option>
+                        {subjects.map(s => <option key={s} value={s}>{s}</option>)}
+                      </select>
+                    </div>
+                    <div>
+                      <label className="label">Board</label>
+                      <select className="select" value={mkBoard} onChange={e => setMkBoard(e.target.value)}>
+                        {['AQA','Edexcel','OCR','WJEC','Eduqas','CCEA'].map(b => <option key={b} value={b}>{b}</option>)}
+                      </select>
+                    </div>
+                    <div>
+                      <label className="label">Level</label>
+                      <select className="select" value={mkLevel} onChange={e => setMkLevel(e.target.value)}>
+                        <option value="GCSE">GCSE</option>
+                        <option value="A-Level">A-Level</option>
+                      </select>
+                    </div>
+                    <div>
+                      <label className="label">Marks available <span style={{fontWeight:400,color:'var(--text-muted)'}}>(optional)</span></label>
+                      <input className="input" type="number" min={1} max={40} value={mkMarks} onChange={e => setMkMarks(e.target.value)} placeholder="e.g. 6"/>
+                    </div>
+                    <div>
+                      <label className="label">Year <span style={{fontWeight:400,color:'var(--text-muted)'}}>(optional)</span></label>
+                      <input className="input" type="number" min={2015} max={2026} value={mkYear} onChange={e => setMkYear(e.target.value)} placeholder="e.g. 2023"/>
+                    </div>
+                    <div>
+                      <label className="label">Paper <span style={{fontWeight:400,color:'var(--text-muted)'}}>(optional)</span></label>
+                      <select className="select" value={mkPaper} onChange={e => setMkPaper(e.target.value)}>
+                        <option value="">Any</option>
+                        {[1,2,3].map(n => <option key={n} value={n}>{n}</option>)}
+                      </select>
+                    </div>
+                  </div>
+
+                  <div>
+                    <label className="label">Exam question</label>
+                    <textarea className="textarea" style={{ minHeight: 90 }} value={mkQuestion} onChange={e => setMkQuestion(e.target.value)} placeholder="Paste or type the exam question exactly as it appears on the paper…"/>
+                  </div>
+
+                  <div>
+                    <label className="label">Your answer</label>
+                    <textarea className="textarea" style={{ minHeight: 140 }} value={mkAnswer} onChange={e => setMkAnswer(e.target.value)} placeholder="Write your full answer here — the more detail you give, the better the feedback…"/>
+                  </div>
+
+                  <button className="btn btn-primary" onClick={handleMark} disabled={mkLoading || !mkSubject || !mkQuestion.trim() || !mkAnswer.trim()}>
+                    {mkLoading ? 'Marking your answer…' : `Mark my answer${mkMarks ? ` (/${mkMarks} marks)` : ''}`}
+                  </button>
+                </div>
+              </div>
+
+              {/* Tips */}
+              <div className="card" style={{ padding: '12px 14px', background: 'rgba(124,58,237,0.06)', border: '1px solid rgba(124,58,237,0.15)' }}>
+                <div style={{ fontWeight: 700, fontSize: '0.8rem', color: 'var(--accent-light)', marginBottom: 8 }}>Tips for best results</div>
+                <ul style={{ margin: 0, padding: '0 0 0 16px', fontSize: '0.78rem', color: 'var(--text-secondary)', lineHeight: 1.7 }}>
+                  <li>Paste the exact question text from the paper</li>
+                  <li>Include the mark allocation if you know it</li>
+                  <li>Write your full answer — don't summarise</li>
+                  <li>Set the correct board — marking criteria vary significantly</li>
+                </ul>
+              </div>
+            </div>
+
+            {/* Result + history panel */}
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
+              {/* Result */}
+              {mkLoading && (
+                <div className="card" style={{ textAlign: 'center', padding: 40 }}>
+                  <div className="spinner" style={{ margin: '0 auto 16px' }}/>
+                  <p style={{ color: 'var(--text-muted)', fontSize: '0.875rem' }}>
+                    Marking as a {mkBoard} {mkLevel} {mkSubject} examiner…
+                  </p>
+                </div>
+              )}
+              {mkResult && !mkLoading && (
+                <div className="card" style={{ borderLeft: '3px solid var(--accent)' }}>
+                  <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 10 }}>
+                    <span style={{ fontWeight: 700, fontSize: '0.88rem', display: 'flex', alignItems: 'center', gap: 6 }}>
+                      <Check size={15} color="var(--success)"/> Marking feedback
+                    </span>
+                    <button className="btn btn-ghost btn-sm" onClick={() => { navigator.clipboard.writeText(mkResult); toast.success('Copied') }}>
+                      <Copy size={12}/> Copy
+                    </button>
+                  </div>
+                  <AIOutput text={mkResult} label="Examiner feedback" compact />
+                  <div style={{ display: 'flex', gap: 8, marginTop: 12, flexWrap: 'wrap' }}>
+                    <button className="btn btn-secondary btn-sm" onClick={() => { setMkAnswer(''); setMkResult('') }}>Try again</button>
+                    <button className="btn btn-ghost btn-sm" onClick={() => { setMkQuestion(''); setMkAnswer(''); setMkResult('') }}>New question</button>
+                  </div>
+                </div>
+              )}
+              {!mkResult && !mkLoading && (
+                <div className="card empty-state" style={{ padding: '32px 20px' }}>
+                  <Brain size={32} style={{ opacity: 0.3 }}/>
+                  <p style={{ fontSize: '0.875rem', maxWidth: 300, textAlign: 'center' }}>
+                    Paste an exam question and your answer. The AI marks it like a real {mkBoard} examiner — awarding marks, flagging gaps, and explaining what a top answer includes.
+                  </p>
+                </div>
+              )}
+
+              {/* Session history */}
+              {mkHistory.length > 0 && (
+                <div className="card">
+                  <div style={{ fontWeight: 700, fontSize: '0.85rem', marginBottom: 10 }}>This session</div>
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
+                    {mkHistory.map((h, i) => (
+                      <button key={i} onClick={() => setMkResult(h.result)} style={{ textAlign: 'left', padding: '8px 10px', background: 'var(--bg-surface)', borderRadius: 8, border: '1px solid var(--border)', cursor: 'pointer', width: '100%' }}>
+                        <div style={{ fontWeight: 600, fontSize: '0.8rem', marginBottom: 2 }}>{h.subject}{h.marks ? ` · ${h.marks} marks` : ''}</div>
+                        <div style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>{h.question} · {h.time}</div>
+                      </button>
+                    ))}
+                  </div>
+                </div>
+              )}
+            </div>
+          </div>
+        </div>
+      )}
+
     </div>
   )
 }
@@ -46,6 +181,141 @@ function ConfidenceBar({ onRate }) {
       {[{label:"Didn't know",color:'var(--danger)',val:1},{label:'Partially',color:'var(--warning)',val:2},{label:'Got it!',color:'var(--success)',val:3}].map(b => (
         <button key={b.val} onClick={() => onRate(b.val)} style={{ padding:'8px 20px', borderRadius:999, border:`1px solid ${b.color}`, background:`${b.color}22`, color:b.color, fontWeight:700, cursor:'pointer', fontSize:'0.83rem', transition:'all 0.15s' }}>{b.label}</button>
       ))}
+
+      {/* ── ANSWER MARKER ── */}
+      {tab === 'marker' && (
+        <div>
+          <div className="grid-2" style={{ gap: 20, alignItems: 'start' }}>
+            {/* Input panel */}
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
+              <div className="card">
+                <h4 style={{ marginBottom: 14, display: 'flex', alignItems: 'center', gap: 8 }}>
+                  <Brain size={18} color="var(--accent-light)"/> Mark My Answer
+                </h4>
+                <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
+                  {/* Subject + context row */}
+                  <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 8 }}>
+                    <div>
+                      <label className="label">Subject</label>
+                      <select className="select" value={mkSubject} onChange={e => { setMkSubject(e.target.value); const s = profile?.subjects?.find(x=>x.name===e.target.value); if(s?.board) setMkBoard(s.board); setMkLevel(profile?.qualification||'GCSE') }}>
+                        <option value="">Select…</option>
+                        {subjects.map(s => <option key={s} value={s}>{s}</option>)}
+                      </select>
+                    </div>
+                    <div>
+                      <label className="label">Board</label>
+                      <select className="select" value={mkBoard} onChange={e => setMkBoard(e.target.value)}>
+                        {['AQA','Edexcel','OCR','WJEC','Eduqas','CCEA'].map(b => <option key={b} value={b}>{b}</option>)}
+                      </select>
+                    </div>
+                    <div>
+                      <label className="label">Level</label>
+                      <select className="select" value={mkLevel} onChange={e => setMkLevel(e.target.value)}>
+                        <option value="GCSE">GCSE</option>
+                        <option value="A-Level">A-Level</option>
+                      </select>
+                    </div>
+                    <div>
+                      <label className="label">Marks available <span style={{fontWeight:400,color:'var(--text-muted)'}}>(optional)</span></label>
+                      <input className="input" type="number" min={1} max={40} value={mkMarks} onChange={e => setMkMarks(e.target.value)} placeholder="e.g. 6"/>
+                    </div>
+                    <div>
+                      <label className="label">Year <span style={{fontWeight:400,color:'var(--text-muted)'}}>(optional)</span></label>
+                      <input className="input" type="number" min={2015} max={2026} value={mkYear} onChange={e => setMkYear(e.target.value)} placeholder="e.g. 2023"/>
+                    </div>
+                    <div>
+                      <label className="label">Paper <span style={{fontWeight:400,color:'var(--text-muted)'}}>(optional)</span></label>
+                      <select className="select" value={mkPaper} onChange={e => setMkPaper(e.target.value)}>
+                        <option value="">Any</option>
+                        {[1,2,3].map(n => <option key={n} value={n}>{n}</option>)}
+                      </select>
+                    </div>
+                  </div>
+
+                  <div>
+                    <label className="label">Exam question</label>
+                    <textarea className="textarea" style={{ minHeight: 90 }} value={mkQuestion} onChange={e => setMkQuestion(e.target.value)} placeholder="Paste or type the exam question exactly as it appears on the paper…"/>
+                  </div>
+
+                  <div>
+                    <label className="label">Your answer</label>
+                    <textarea className="textarea" style={{ minHeight: 140 }} value={mkAnswer} onChange={e => setMkAnswer(e.target.value)} placeholder="Write your full answer here — the more detail you give, the better the feedback…"/>
+                  </div>
+
+                  <button className="btn btn-primary" onClick={handleMark} disabled={mkLoading || !mkSubject || !mkQuestion.trim() || !mkAnswer.trim()}>
+                    {mkLoading ? 'Marking your answer…' : `Mark my answer${mkMarks ? ` (/${mkMarks} marks)` : ''}`}
+                  </button>
+                </div>
+              </div>
+
+              {/* Tips */}
+              <div className="card" style={{ padding: '12px 14px', background: 'rgba(124,58,237,0.06)', border: '1px solid rgba(124,58,237,0.15)' }}>
+                <div style={{ fontWeight: 700, fontSize: '0.8rem', color: 'var(--accent-light)', marginBottom: 8 }}>Tips for best results</div>
+                <ul style={{ margin: 0, padding: '0 0 0 16px', fontSize: '0.78rem', color: 'var(--text-secondary)', lineHeight: 1.7 }}>
+                  <li>Paste the exact question text from the paper</li>
+                  <li>Include the mark allocation if you know it</li>
+                  <li>Write your full answer — don't summarise</li>
+                  <li>Set the correct board — marking criteria vary significantly</li>
+                </ul>
+              </div>
+            </div>
+
+            {/* Result + history panel */}
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
+              {/* Result */}
+              {mkLoading && (
+                <div className="card" style={{ textAlign: 'center', padding: 40 }}>
+                  <div className="spinner" style={{ margin: '0 auto 16px' }}/>
+                  <p style={{ color: 'var(--text-muted)', fontSize: '0.875rem' }}>
+                    Marking as a {mkBoard} {mkLevel} {mkSubject} examiner…
+                  </p>
+                </div>
+              )}
+              {mkResult && !mkLoading && (
+                <div className="card" style={{ borderLeft: '3px solid var(--accent)' }}>
+                  <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 10 }}>
+                    <span style={{ fontWeight: 700, fontSize: '0.88rem', display: 'flex', alignItems: 'center', gap: 6 }}>
+                      <Check size={15} color="var(--success)"/> Marking feedback
+                    </span>
+                    <button className="btn btn-ghost btn-sm" onClick={() => { navigator.clipboard.writeText(mkResult); toast.success('Copied') }}>
+                      <Copy size={12}/> Copy
+                    </button>
+                  </div>
+                  <AIOutput text={mkResult} label="Examiner feedback" compact />
+                  <div style={{ display: 'flex', gap: 8, marginTop: 12, flexWrap: 'wrap' }}>
+                    <button className="btn btn-secondary btn-sm" onClick={() => { setMkAnswer(''); setMkResult('') }}>Try again</button>
+                    <button className="btn btn-ghost btn-sm" onClick={() => { setMkQuestion(''); setMkAnswer(''); setMkResult('') }}>New question</button>
+                  </div>
+                </div>
+              )}
+              {!mkResult && !mkLoading && (
+                <div className="card empty-state" style={{ padding: '32px 20px' }}>
+                  <Brain size={32} style={{ opacity: 0.3 }}/>
+                  <p style={{ fontSize: '0.875rem', maxWidth: 300, textAlign: 'center' }}>
+                    Paste an exam question and your answer. The AI marks it like a real {mkBoard} examiner — awarding marks, flagging gaps, and explaining what a top answer includes.
+                  </p>
+                </div>
+              )}
+
+              {/* Session history */}
+              {mkHistory.length > 0 && (
+                <div className="card">
+                  <div style={{ fontWeight: 700, fontSize: '0.85rem', marginBottom: 10 }}>This session</div>
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
+                    {mkHistory.map((h, i) => (
+                      <button key={i} onClick={() => setMkResult(h.result)} style={{ textAlign: 'left', padding: '8px 10px', background: 'var(--bg-surface)', borderRadius: 8, border: '1px solid var(--border)', cursor: 'pointer', width: '100%' }}>
+                        <div style={{ fontWeight: 600, fontSize: '0.8rem', marginBottom: 2 }}>{h.subject}{h.marks ? ` · ${h.marks} marks` : ''}</div>
+                        <div style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>{h.question} · {h.time}</div>
+                      </button>
+                    ))}
+                  </div>
+                </div>
+              )}
+            </div>
+          </div>
+        </div>
+      )}
+
     </div>
   )
 }
@@ -162,6 +432,141 @@ function StudySession({ cards: initCards, title, subject, onClose, onSave }) {
         <button className="btn btn-ghost btn-sm" onClick={() => setIdx(i => Math.max(0, i-1))} disabled={idx===0}><ChevronLeft size={15}/> Prev</button>
         <button className="btn btn-ghost btn-sm" onClick={() => setIdx(i => Math.min(cards.length-1, i+1))} disabled={idx===cards.length-1}>Next <ChevronRight size={15}/></button>
       </div>
+
+      {/* ── ANSWER MARKER ── */}
+      {tab === 'marker' && (
+        <div>
+          <div className="grid-2" style={{ gap: 20, alignItems: 'start' }}>
+            {/* Input panel */}
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
+              <div className="card">
+                <h4 style={{ marginBottom: 14, display: 'flex', alignItems: 'center', gap: 8 }}>
+                  <Brain size={18} color="var(--accent-light)"/> Mark My Answer
+                </h4>
+                <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
+                  {/* Subject + context row */}
+                  <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 8 }}>
+                    <div>
+                      <label className="label">Subject</label>
+                      <select className="select" value={mkSubject} onChange={e => { setMkSubject(e.target.value); const s = profile?.subjects?.find(x=>x.name===e.target.value); if(s?.board) setMkBoard(s.board); setMkLevel(profile?.qualification||'GCSE') }}>
+                        <option value="">Select…</option>
+                        {subjects.map(s => <option key={s} value={s}>{s}</option>)}
+                      </select>
+                    </div>
+                    <div>
+                      <label className="label">Board</label>
+                      <select className="select" value={mkBoard} onChange={e => setMkBoard(e.target.value)}>
+                        {['AQA','Edexcel','OCR','WJEC','Eduqas','CCEA'].map(b => <option key={b} value={b}>{b}</option>)}
+                      </select>
+                    </div>
+                    <div>
+                      <label className="label">Level</label>
+                      <select className="select" value={mkLevel} onChange={e => setMkLevel(e.target.value)}>
+                        <option value="GCSE">GCSE</option>
+                        <option value="A-Level">A-Level</option>
+                      </select>
+                    </div>
+                    <div>
+                      <label className="label">Marks available <span style={{fontWeight:400,color:'var(--text-muted)'}}>(optional)</span></label>
+                      <input className="input" type="number" min={1} max={40} value={mkMarks} onChange={e => setMkMarks(e.target.value)} placeholder="e.g. 6"/>
+                    </div>
+                    <div>
+                      <label className="label">Year <span style={{fontWeight:400,color:'var(--text-muted)'}}>(optional)</span></label>
+                      <input className="input" type="number" min={2015} max={2026} value={mkYear} onChange={e => setMkYear(e.target.value)} placeholder="e.g. 2023"/>
+                    </div>
+                    <div>
+                      <label className="label">Paper <span style={{fontWeight:400,color:'var(--text-muted)'}}>(optional)</span></label>
+                      <select className="select" value={mkPaper} onChange={e => setMkPaper(e.target.value)}>
+                        <option value="">Any</option>
+                        {[1,2,3].map(n => <option key={n} value={n}>{n}</option>)}
+                      </select>
+                    </div>
+                  </div>
+
+                  <div>
+                    <label className="label">Exam question</label>
+                    <textarea className="textarea" style={{ minHeight: 90 }} value={mkQuestion} onChange={e => setMkQuestion(e.target.value)} placeholder="Paste or type the exam question exactly as it appears on the paper…"/>
+                  </div>
+
+                  <div>
+                    <label className="label">Your answer</label>
+                    <textarea className="textarea" style={{ minHeight: 140 }} value={mkAnswer} onChange={e => setMkAnswer(e.target.value)} placeholder="Write your full answer here — the more detail you give, the better the feedback…"/>
+                  </div>
+
+                  <button className="btn btn-primary" onClick={handleMark} disabled={mkLoading || !mkSubject || !mkQuestion.trim() || !mkAnswer.trim()}>
+                    {mkLoading ? 'Marking your answer…' : `Mark my answer${mkMarks ? ` (/${mkMarks} marks)` : ''}`}
+                  </button>
+                </div>
+              </div>
+
+              {/* Tips */}
+              <div className="card" style={{ padding: '12px 14px', background: 'rgba(124,58,237,0.06)', border: '1px solid rgba(124,58,237,0.15)' }}>
+                <div style={{ fontWeight: 700, fontSize: '0.8rem', color: 'var(--accent-light)', marginBottom: 8 }}>Tips for best results</div>
+                <ul style={{ margin: 0, padding: '0 0 0 16px', fontSize: '0.78rem', color: 'var(--text-secondary)', lineHeight: 1.7 }}>
+                  <li>Paste the exact question text from the paper</li>
+                  <li>Include the mark allocation if you know it</li>
+                  <li>Write your full answer — don't summarise</li>
+                  <li>Set the correct board — marking criteria vary significantly</li>
+                </ul>
+              </div>
+            </div>
+
+            {/* Result + history panel */}
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
+              {/* Result */}
+              {mkLoading && (
+                <div className="card" style={{ textAlign: 'center', padding: 40 }}>
+                  <div className="spinner" style={{ margin: '0 auto 16px' }}/>
+                  <p style={{ color: 'var(--text-muted)', fontSize: '0.875rem' }}>
+                    Marking as a {mkBoard} {mkLevel} {mkSubject} examiner…
+                  </p>
+                </div>
+              )}
+              {mkResult && !mkLoading && (
+                <div className="card" style={{ borderLeft: '3px solid var(--accent)' }}>
+                  <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 10 }}>
+                    <span style={{ fontWeight: 700, fontSize: '0.88rem', display: 'flex', alignItems: 'center', gap: 6 }}>
+                      <Check size={15} color="var(--success)"/> Marking feedback
+                    </span>
+                    <button className="btn btn-ghost btn-sm" onClick={() => { navigator.clipboard.writeText(mkResult); toast.success('Copied') }}>
+                      <Copy size={12}/> Copy
+                    </button>
+                  </div>
+                  <AIOutput text={mkResult} label="Examiner feedback" compact />
+                  <div style={{ display: 'flex', gap: 8, marginTop: 12, flexWrap: 'wrap' }}>
+                    <button className="btn btn-secondary btn-sm" onClick={() => { setMkAnswer(''); setMkResult('') }}>Try again</button>
+                    <button className="btn btn-ghost btn-sm" onClick={() => { setMkQuestion(''); setMkAnswer(''); setMkResult('') }}>New question</button>
+                  </div>
+                </div>
+              )}
+              {!mkResult && !mkLoading && (
+                <div className="card empty-state" style={{ padding: '32px 20px' }}>
+                  <Brain size={32} style={{ opacity: 0.3 }}/>
+                  <p style={{ fontSize: '0.875rem', maxWidth: 300, textAlign: 'center' }}>
+                    Paste an exam question and your answer. The AI marks it like a real {mkBoard} examiner — awarding marks, flagging gaps, and explaining what a top answer includes.
+                  </p>
+                </div>
+              )}
+
+              {/* Session history */}
+              {mkHistory.length > 0 && (
+                <div className="card">
+                  <div style={{ fontWeight: 700, fontSize: '0.85rem', marginBottom: 10 }}>This session</div>
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
+                    {mkHistory.map((h, i) => (
+                      <button key={i} onClick={() => setMkResult(h.result)} style={{ textAlign: 'left', padding: '8px 10px', background: 'var(--bg-surface)', borderRadius: 8, border: '1px solid var(--border)', cursor: 'pointer', width: '100%' }}>
+                        <div style={{ fontWeight: 600, fontSize: '0.8rem', marginBottom: 2 }}>{h.subject}{h.marks ? ` · ${h.marks} marks` : ''}</div>
+                        <div style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>{h.question} · {h.time}</div>
+                      </button>
+                    ))}
+                  </div>
+                </div>
+              )}
+            </div>
+          </div>
+        </div>
+      )}
+
     </div>
   )
 }
@@ -207,6 +612,141 @@ function SaveSetModal({ cards, subject, topic, onSave, onClose }) {
           </div>
         </div>
       </div>
+
+      {/* ── ANSWER MARKER ── */}
+      {tab === 'marker' && (
+        <div>
+          <div className="grid-2" style={{ gap: 20, alignItems: 'start' }}>
+            {/* Input panel */}
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
+              <div className="card">
+                <h4 style={{ marginBottom: 14, display: 'flex', alignItems: 'center', gap: 8 }}>
+                  <Brain size={18} color="var(--accent-light)"/> Mark My Answer
+                </h4>
+                <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
+                  {/* Subject + context row */}
+                  <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 8 }}>
+                    <div>
+                      <label className="label">Subject</label>
+                      <select className="select" value={mkSubject} onChange={e => { setMkSubject(e.target.value); const s = profile?.subjects?.find(x=>x.name===e.target.value); if(s?.board) setMkBoard(s.board); setMkLevel(profile?.qualification||'GCSE') }}>
+                        <option value="">Select…</option>
+                        {subjects.map(s => <option key={s} value={s}>{s}</option>)}
+                      </select>
+                    </div>
+                    <div>
+                      <label className="label">Board</label>
+                      <select className="select" value={mkBoard} onChange={e => setMkBoard(e.target.value)}>
+                        {['AQA','Edexcel','OCR','WJEC','Eduqas','CCEA'].map(b => <option key={b} value={b}>{b}</option>)}
+                      </select>
+                    </div>
+                    <div>
+                      <label className="label">Level</label>
+                      <select className="select" value={mkLevel} onChange={e => setMkLevel(e.target.value)}>
+                        <option value="GCSE">GCSE</option>
+                        <option value="A-Level">A-Level</option>
+                      </select>
+                    </div>
+                    <div>
+                      <label className="label">Marks available <span style={{fontWeight:400,color:'var(--text-muted)'}}>(optional)</span></label>
+                      <input className="input" type="number" min={1} max={40} value={mkMarks} onChange={e => setMkMarks(e.target.value)} placeholder="e.g. 6"/>
+                    </div>
+                    <div>
+                      <label className="label">Year <span style={{fontWeight:400,color:'var(--text-muted)'}}>(optional)</span></label>
+                      <input className="input" type="number" min={2015} max={2026} value={mkYear} onChange={e => setMkYear(e.target.value)} placeholder="e.g. 2023"/>
+                    </div>
+                    <div>
+                      <label className="label">Paper <span style={{fontWeight:400,color:'var(--text-muted)'}}>(optional)</span></label>
+                      <select className="select" value={mkPaper} onChange={e => setMkPaper(e.target.value)}>
+                        <option value="">Any</option>
+                        {[1,2,3].map(n => <option key={n} value={n}>{n}</option>)}
+                      </select>
+                    </div>
+                  </div>
+
+                  <div>
+                    <label className="label">Exam question</label>
+                    <textarea className="textarea" style={{ minHeight: 90 }} value={mkQuestion} onChange={e => setMkQuestion(e.target.value)} placeholder="Paste or type the exam question exactly as it appears on the paper…"/>
+                  </div>
+
+                  <div>
+                    <label className="label">Your answer</label>
+                    <textarea className="textarea" style={{ minHeight: 140 }} value={mkAnswer} onChange={e => setMkAnswer(e.target.value)} placeholder="Write your full answer here — the more detail you give, the better the feedback…"/>
+                  </div>
+
+                  <button className="btn btn-primary" onClick={handleMark} disabled={mkLoading || !mkSubject || !mkQuestion.trim() || !mkAnswer.trim()}>
+                    {mkLoading ? 'Marking your answer…' : `Mark my answer${mkMarks ? ` (/${mkMarks} marks)` : ''}`}
+                  </button>
+                </div>
+              </div>
+
+              {/* Tips */}
+              <div className="card" style={{ padding: '12px 14px', background: 'rgba(124,58,237,0.06)', border: '1px solid rgba(124,58,237,0.15)' }}>
+                <div style={{ fontWeight: 700, fontSize: '0.8rem', color: 'var(--accent-light)', marginBottom: 8 }}>Tips for best results</div>
+                <ul style={{ margin: 0, padding: '0 0 0 16px', fontSize: '0.78rem', color: 'var(--text-secondary)', lineHeight: 1.7 }}>
+                  <li>Paste the exact question text from the paper</li>
+                  <li>Include the mark allocation if you know it</li>
+                  <li>Write your full answer — don't summarise</li>
+                  <li>Set the correct board — marking criteria vary significantly</li>
+                </ul>
+              </div>
+            </div>
+
+            {/* Result + history panel */}
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
+              {/* Result */}
+              {mkLoading && (
+                <div className="card" style={{ textAlign: 'center', padding: 40 }}>
+                  <div className="spinner" style={{ margin: '0 auto 16px' }}/>
+                  <p style={{ color: 'var(--text-muted)', fontSize: '0.875rem' }}>
+                    Marking as a {mkBoard} {mkLevel} {mkSubject} examiner…
+                  </p>
+                </div>
+              )}
+              {mkResult && !mkLoading && (
+                <div className="card" style={{ borderLeft: '3px solid var(--accent)' }}>
+                  <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 10 }}>
+                    <span style={{ fontWeight: 700, fontSize: '0.88rem', display: 'flex', alignItems: 'center', gap: 6 }}>
+                      <Check size={15} color="var(--success)"/> Marking feedback
+                    </span>
+                    <button className="btn btn-ghost btn-sm" onClick={() => { navigator.clipboard.writeText(mkResult); toast.success('Copied') }}>
+                      <Copy size={12}/> Copy
+                    </button>
+                  </div>
+                  <AIOutput text={mkResult} label="Examiner feedback" compact />
+                  <div style={{ display: 'flex', gap: 8, marginTop: 12, flexWrap: 'wrap' }}>
+                    <button className="btn btn-secondary btn-sm" onClick={() => { setMkAnswer(''); setMkResult('') }}>Try again</button>
+                    <button className="btn btn-ghost btn-sm" onClick={() => { setMkQuestion(''); setMkAnswer(''); setMkResult('') }}>New question</button>
+                  </div>
+                </div>
+              )}
+              {!mkResult && !mkLoading && (
+                <div className="card empty-state" style={{ padding: '32px 20px' }}>
+                  <Brain size={32} style={{ opacity: 0.3 }}/>
+                  <p style={{ fontSize: '0.875rem', maxWidth: 300, textAlign: 'center' }}>
+                    Paste an exam question and your answer. The AI marks it like a real {mkBoard} examiner — awarding marks, flagging gaps, and explaining what a top answer includes.
+                  </p>
+                </div>
+              )}
+
+              {/* Session history */}
+              {mkHistory.length > 0 && (
+                <div className="card">
+                  <div style={{ fontWeight: 700, fontSize: '0.85rem', marginBottom: 10 }}>This session</div>
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
+                    {mkHistory.map((h, i) => (
+                      <button key={i} onClick={() => setMkResult(h.result)} style={{ textAlign: 'left', padding: '8px 10px', background: 'var(--bg-surface)', borderRadius: 8, border: '1px solid var(--border)', cursor: 'pointer', width: '100%' }}>
+                        <div style={{ fontWeight: 600, fontSize: '0.8rem', marginBottom: 2 }}>{h.subject}{h.marks ? ` · ${h.marks} marks` : ''}</div>
+                        <div style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>{h.question} · {h.time}</div>
+                      </button>
+                    ))}
+                  </div>
+                </div>
+              )}
+            </div>
+          </div>
+        </div>
+      )}
+
     </div>
   )
 }
@@ -285,6 +825,141 @@ function CustomSetEditor({ subjects, onSave, onClose, initialSet }) {
           </div>
         </div>
       </div>
+
+      {/* ── ANSWER MARKER ── */}
+      {tab === 'marker' && (
+        <div>
+          <div className="grid-2" style={{ gap: 20, alignItems: 'start' }}>
+            {/* Input panel */}
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
+              <div className="card">
+                <h4 style={{ marginBottom: 14, display: 'flex', alignItems: 'center', gap: 8 }}>
+                  <Brain size={18} color="var(--accent-light)"/> Mark My Answer
+                </h4>
+                <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
+                  {/* Subject + context row */}
+                  <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 8 }}>
+                    <div>
+                      <label className="label">Subject</label>
+                      <select className="select" value={mkSubject} onChange={e => { setMkSubject(e.target.value); const s = profile?.subjects?.find(x=>x.name===e.target.value); if(s?.board) setMkBoard(s.board); setMkLevel(profile?.qualification||'GCSE') }}>
+                        <option value="">Select…</option>
+                        {subjects.map(s => <option key={s} value={s}>{s}</option>)}
+                      </select>
+                    </div>
+                    <div>
+                      <label className="label">Board</label>
+                      <select className="select" value={mkBoard} onChange={e => setMkBoard(e.target.value)}>
+                        {['AQA','Edexcel','OCR','WJEC','Eduqas','CCEA'].map(b => <option key={b} value={b}>{b}</option>)}
+                      </select>
+                    </div>
+                    <div>
+                      <label className="label">Level</label>
+                      <select className="select" value={mkLevel} onChange={e => setMkLevel(e.target.value)}>
+                        <option value="GCSE">GCSE</option>
+                        <option value="A-Level">A-Level</option>
+                      </select>
+                    </div>
+                    <div>
+                      <label className="label">Marks available <span style={{fontWeight:400,color:'var(--text-muted)'}}>(optional)</span></label>
+                      <input className="input" type="number" min={1} max={40} value={mkMarks} onChange={e => setMkMarks(e.target.value)} placeholder="e.g. 6"/>
+                    </div>
+                    <div>
+                      <label className="label">Year <span style={{fontWeight:400,color:'var(--text-muted)'}}>(optional)</span></label>
+                      <input className="input" type="number" min={2015} max={2026} value={mkYear} onChange={e => setMkYear(e.target.value)} placeholder="e.g. 2023"/>
+                    </div>
+                    <div>
+                      <label className="label">Paper <span style={{fontWeight:400,color:'var(--text-muted)'}}>(optional)</span></label>
+                      <select className="select" value={mkPaper} onChange={e => setMkPaper(e.target.value)}>
+                        <option value="">Any</option>
+                        {[1,2,3].map(n => <option key={n} value={n}>{n}</option>)}
+                      </select>
+                    </div>
+                  </div>
+
+                  <div>
+                    <label className="label">Exam question</label>
+                    <textarea className="textarea" style={{ minHeight: 90 }} value={mkQuestion} onChange={e => setMkQuestion(e.target.value)} placeholder="Paste or type the exam question exactly as it appears on the paper…"/>
+                  </div>
+
+                  <div>
+                    <label className="label">Your answer</label>
+                    <textarea className="textarea" style={{ minHeight: 140 }} value={mkAnswer} onChange={e => setMkAnswer(e.target.value)} placeholder="Write your full answer here — the more detail you give, the better the feedback…"/>
+                  </div>
+
+                  <button className="btn btn-primary" onClick={handleMark} disabled={mkLoading || !mkSubject || !mkQuestion.trim() || !mkAnswer.trim()}>
+                    {mkLoading ? 'Marking your answer…' : `Mark my answer${mkMarks ? ` (/${mkMarks} marks)` : ''}`}
+                  </button>
+                </div>
+              </div>
+
+              {/* Tips */}
+              <div className="card" style={{ padding: '12px 14px', background: 'rgba(124,58,237,0.06)', border: '1px solid rgba(124,58,237,0.15)' }}>
+                <div style={{ fontWeight: 700, fontSize: '0.8rem', color: 'var(--accent-light)', marginBottom: 8 }}>Tips for best results</div>
+                <ul style={{ margin: 0, padding: '0 0 0 16px', fontSize: '0.78rem', color: 'var(--text-secondary)', lineHeight: 1.7 }}>
+                  <li>Paste the exact question text from the paper</li>
+                  <li>Include the mark allocation if you know it</li>
+                  <li>Write your full answer — don't summarise</li>
+                  <li>Set the correct board — marking criteria vary significantly</li>
+                </ul>
+              </div>
+            </div>
+
+            {/* Result + history panel */}
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
+              {/* Result */}
+              {mkLoading && (
+                <div className="card" style={{ textAlign: 'center', padding: 40 }}>
+                  <div className="spinner" style={{ margin: '0 auto 16px' }}/>
+                  <p style={{ color: 'var(--text-muted)', fontSize: '0.875rem' }}>
+                    Marking as a {mkBoard} {mkLevel} {mkSubject} examiner…
+                  </p>
+                </div>
+              )}
+              {mkResult && !mkLoading && (
+                <div className="card" style={{ borderLeft: '3px solid var(--accent)' }}>
+                  <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 10 }}>
+                    <span style={{ fontWeight: 700, fontSize: '0.88rem', display: 'flex', alignItems: 'center', gap: 6 }}>
+                      <Check size={15} color="var(--success)"/> Marking feedback
+                    </span>
+                    <button className="btn btn-ghost btn-sm" onClick={() => { navigator.clipboard.writeText(mkResult); toast.success('Copied') }}>
+                      <Copy size={12}/> Copy
+                    </button>
+                  </div>
+                  <AIOutput text={mkResult} label="Examiner feedback" compact />
+                  <div style={{ display: 'flex', gap: 8, marginTop: 12, flexWrap: 'wrap' }}>
+                    <button className="btn btn-secondary btn-sm" onClick={() => { setMkAnswer(''); setMkResult('') }}>Try again</button>
+                    <button className="btn btn-ghost btn-sm" onClick={() => { setMkQuestion(''); setMkAnswer(''); setMkResult('') }}>New question</button>
+                  </div>
+                </div>
+              )}
+              {!mkResult && !mkLoading && (
+                <div className="card empty-state" style={{ padding: '32px 20px' }}>
+                  <Brain size={32} style={{ opacity: 0.3 }}/>
+                  <p style={{ fontSize: '0.875rem', maxWidth: 300, textAlign: 'center' }}>
+                    Paste an exam question and your answer. The AI marks it like a real {mkBoard} examiner — awarding marks, flagging gaps, and explaining what a top answer includes.
+                  </p>
+                </div>
+              )}
+
+              {/* Session history */}
+              {mkHistory.length > 0 && (
+                <div className="card">
+                  <div style={{ fontWeight: 700, fontSize: '0.85rem', marginBottom: 10 }}>This session</div>
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
+                    {mkHistory.map((h, i) => (
+                      <button key={i} onClick={() => setMkResult(h.result)} style={{ textAlign: 'left', padding: '8px 10px', background: 'var(--bg-surface)', borderRadius: 8, border: '1px solid var(--border)', cursor: 'pointer', width: '100%' }}>
+                        <div style={{ fontWeight: 600, fontSize: '0.8rem', marginBottom: 2 }}>{h.subject}{h.marks ? ` · ${h.marks} marks` : ''}</div>
+                        <div style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>{h.question} · {h.time}</div>
+                      </button>
+                    ))}
+                  </div>
+                </div>
+              )}
+            </div>
+          </div>
+        </div>
+      )}
+
     </div>
   )
 }
@@ -325,6 +1000,19 @@ export default function Study() {
   const [eqParsed,  setEqParsed]  = useState([])
   const [eqResult,  setEqResult]  = useState('')
   const [eqExpanded,setEqExpanded]= useState(null)
+
+  // Answer marker state
+  const [mkSubject,  setMkSubject]  = useState('')
+  const [mkBoard,    setMkBoard]    = useState('AQA')
+  const [mkLevel,    setMkLevel]    = useState('GCSE')
+  const [mkQuestion, setMkQuestion] = useState('')
+  const [mkAnswer,   setMkAnswer]   = useState('')
+  const [mkMarks,    setMkMarks]    = useState('')
+  const [mkYear,     setMkYear]     = useState('')
+  const [mkPaper,    setMkPaper]    = useState('')
+  const [mkResult,   setMkResult]   = useState('')
+  const [mkLoading,  setMkLoading]  = useState(false)
+  const [mkHistory,  setMkHistory]  = useState([]) // previous submissions this session
 
   const subjects = profile?.subjects?.map(s => s.name) || []
 
@@ -440,6 +1128,34 @@ export default function Study() {
     finally { setEqLoading(false) }
   }
 
+  async function handleMark() {
+    if (!mkSubject || !mkQuestion.trim() || !mkAnswer.trim()) return
+    setMkLoading(true)
+    setMkResult('')
+    try {
+      const contextParts = []
+      if (mkBoard)  contextParts.push(mkBoard)
+      if (mkLevel)  contextParts.push(mkLevel)
+      if (mkYear)   contextParts.push(mkYear)
+      if (mkPaper)  contextParts.push(`Paper ${mkPaper}`)
+      if (mkMarks)  contextParts.push(`${mkMarks} marks`)
+      const context   = contextParts.length ? `[${mkSubject} — ${contextParts.join(', ')}] ` : `[${mkSubject}] `
+      const enrichedQ = context + mkQuestion.trim()
+      const res = await markAnswer(mkSubject, enrichedQ, mkAnswer.trim(), user?.uid)
+      const text = res.text || res.error || 'Could not mark answer.'
+      setMkResult(text)
+      // Save to session history
+      setMkHistory(h => [{
+        question: mkQuestion.slice(0, 80) + (mkQuestion.length > 80 ? '…' : ''),
+        subject: mkSubject, marks: mkMarks, result: text, time: new Date().toLocaleTimeString()
+      }, ...h].slice(0, 10))
+      await autoCompleteQuest(user.uid, 'use_ai')
+    } catch (e) {
+      setMkResult('Error: ' + e.message)
+    }
+    setMkLoading(false)
+  }
+
   const filteredPub = pubSets.filter(s =>
     !searchQ || s.title?.toLowerCase().includes(searchQ.toLowerCase()) || s.subject?.toLowerCase().includes(searchQ.toLowerCase())
   )
@@ -491,6 +1207,7 @@ export default function Study() {
       <div className="tabs" style={{ marginBottom:24, padding:4 }}>
         <button className={`tab${tab==='flashcards'?' active':''}`} onClick={() => setTab('flashcards')}><BookOpen size={15}/> Flashcards</button>
         <button className={`tab${tab==='examqs'?' active':''}`} onClick={() => setTab('examqs')}><ClipboardList size={15}/> Exam Questions</button>
+        <button className={`tab${tab==='marker'?' active':''}`} onClick={() => setTab('marker')}><Brain size={15}/> Answer Marker</button>
       </div>
 
       {/* ── FLASHCARDS ── */}
@@ -699,6 +1416,141 @@ export default function Study() {
           )}
         </div>
       )}
+
+      {/* ── ANSWER MARKER ── */}
+      {tab === 'marker' && (
+        <div>
+          <div className="grid-2" style={{ gap: 20, alignItems: 'start' }}>
+            {/* Input panel */}
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
+              <div className="card">
+                <h4 style={{ marginBottom: 14, display: 'flex', alignItems: 'center', gap: 8 }}>
+                  <Brain size={18} color="var(--accent-light)"/> Mark My Answer
+                </h4>
+                <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
+                  {/* Subject + context row */}
+                  <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 8 }}>
+                    <div>
+                      <label className="label">Subject</label>
+                      <select className="select" value={mkSubject} onChange={e => { setMkSubject(e.target.value); const s = profile?.subjects?.find(x=>x.name===e.target.value); if(s?.board) setMkBoard(s.board); setMkLevel(profile?.qualification||'GCSE') }}>
+                        <option value="">Select…</option>
+                        {subjects.map(s => <option key={s} value={s}>{s}</option>)}
+                      </select>
+                    </div>
+                    <div>
+                      <label className="label">Board</label>
+                      <select className="select" value={mkBoard} onChange={e => setMkBoard(e.target.value)}>
+                        {['AQA','Edexcel','OCR','WJEC','Eduqas','CCEA'].map(b => <option key={b} value={b}>{b}</option>)}
+                      </select>
+                    </div>
+                    <div>
+                      <label className="label">Level</label>
+                      <select className="select" value={mkLevel} onChange={e => setMkLevel(e.target.value)}>
+                        <option value="GCSE">GCSE</option>
+                        <option value="A-Level">A-Level</option>
+                      </select>
+                    </div>
+                    <div>
+                      <label className="label">Marks available <span style={{fontWeight:400,color:'var(--text-muted)'}}>(optional)</span></label>
+                      <input className="input" type="number" min={1} max={40} value={mkMarks} onChange={e => setMkMarks(e.target.value)} placeholder="e.g. 6"/>
+                    </div>
+                    <div>
+                      <label className="label">Year <span style={{fontWeight:400,color:'var(--text-muted)'}}>(optional)</span></label>
+                      <input className="input" type="number" min={2015} max={2026} value={mkYear} onChange={e => setMkYear(e.target.value)} placeholder="e.g. 2023"/>
+                    </div>
+                    <div>
+                      <label className="label">Paper <span style={{fontWeight:400,color:'var(--text-muted)'}}>(optional)</span></label>
+                      <select className="select" value={mkPaper} onChange={e => setMkPaper(e.target.value)}>
+                        <option value="">Any</option>
+                        {[1,2,3].map(n => <option key={n} value={n}>{n}</option>)}
+                      </select>
+                    </div>
+                  </div>
+
+                  <div>
+                    <label className="label">Exam question</label>
+                    <textarea className="textarea" style={{ minHeight: 90 }} value={mkQuestion} onChange={e => setMkQuestion(e.target.value)} placeholder="Paste or type the exam question exactly as it appears on the paper…"/>
+                  </div>
+
+                  <div>
+                    <label className="label">Your answer</label>
+                    <textarea className="textarea" style={{ minHeight: 140 }} value={mkAnswer} onChange={e => setMkAnswer(e.target.value)} placeholder="Write your full answer here — the more detail you give, the better the feedback…"/>
+                  </div>
+
+                  <button className="btn btn-primary" onClick={handleMark} disabled={mkLoading || !mkSubject || !mkQuestion.trim() || !mkAnswer.trim()}>
+                    {mkLoading ? 'Marking your answer…' : `Mark my answer${mkMarks ? ` (/${mkMarks} marks)` : ''}`}
+                  </button>
+                </div>
+              </div>
+
+              {/* Tips */}
+              <div className="card" style={{ padding: '12px 14px', background: 'rgba(124,58,237,0.06)', border: '1px solid rgba(124,58,237,0.15)' }}>
+                <div style={{ fontWeight: 700, fontSize: '0.8rem', color: 'var(--accent-light)', marginBottom: 8 }}>Tips for best results</div>
+                <ul style={{ margin: 0, padding: '0 0 0 16px', fontSize: '0.78rem', color: 'var(--text-secondary)', lineHeight: 1.7 }}>
+                  <li>Paste the exact question text from the paper</li>
+                  <li>Include the mark allocation if you know it</li>
+                  <li>Write your full answer — don't summarise</li>
+                  <li>Set the correct board — marking criteria vary significantly</li>
+                </ul>
+              </div>
+            </div>
+
+            {/* Result + history panel */}
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
+              {/* Result */}
+              {mkLoading && (
+                <div className="card" style={{ textAlign: 'center', padding: 40 }}>
+                  <div className="spinner" style={{ margin: '0 auto 16px' }}/>
+                  <p style={{ color: 'var(--text-muted)', fontSize: '0.875rem' }}>
+                    Marking as a {mkBoard} {mkLevel} {mkSubject} examiner…
+                  </p>
+                </div>
+              )}
+              {mkResult && !mkLoading && (
+                <div className="card" style={{ borderLeft: '3px solid var(--accent)' }}>
+                  <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 10 }}>
+                    <span style={{ fontWeight: 700, fontSize: '0.88rem', display: 'flex', alignItems: 'center', gap: 6 }}>
+                      <Check size={15} color="var(--success)"/> Marking feedback
+                    </span>
+                    <button className="btn btn-ghost btn-sm" onClick={() => { navigator.clipboard.writeText(mkResult); toast.success('Copied') }}>
+                      <Copy size={12}/> Copy
+                    </button>
+                  </div>
+                  <AIOutput text={mkResult} label="Examiner feedback" compact />
+                  <div style={{ display: 'flex', gap: 8, marginTop: 12, flexWrap: 'wrap' }}>
+                    <button className="btn btn-secondary btn-sm" onClick={() => { setMkAnswer(''); setMkResult('') }}>Try again</button>
+                    <button className="btn btn-ghost btn-sm" onClick={() => { setMkQuestion(''); setMkAnswer(''); setMkResult('') }}>New question</button>
+                  </div>
+                </div>
+              )}
+              {!mkResult && !mkLoading && (
+                <div className="card empty-state" style={{ padding: '32px 20px' }}>
+                  <Brain size={32} style={{ opacity: 0.3 }}/>
+                  <p style={{ fontSize: '0.875rem', maxWidth: 300, textAlign: 'center' }}>
+                    Paste an exam question and your answer. The AI marks it like a real {mkBoard} examiner — awarding marks, flagging gaps, and explaining what a top answer includes.
+                  </p>
+                </div>
+              )}
+
+              {/* Session history */}
+              {mkHistory.length > 0 && (
+                <div className="card">
+                  <div style={{ fontWeight: 700, fontSize: '0.85rem', marginBottom: 10 }}>This session</div>
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
+                    {mkHistory.map((h, i) => (
+                      <button key={i} onClick={() => setMkResult(h.result)} style={{ textAlign: 'left', padding: '8px 10px', background: 'var(--bg-surface)', borderRadius: 8, border: '1px solid var(--border)', cursor: 'pointer', width: '100%' }}>
+                        <div style={{ fontWeight: 600, fontSize: '0.8rem', marginBottom: 2 }}>{h.subject}{h.marks ? ` · ${h.marks} marks` : ''}</div>
+                        <div style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>{h.question} · {h.time}</div>
+                      </button>
+                    ))}
+                  </div>
+                </div>
+              )}
+            </div>
+          </div>
+        </div>
+      )}
+
     </div>
   )
 }
