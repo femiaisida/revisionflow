@@ -3619,6 +3619,72 @@ const ALEVEL = {
 
 } // end ALEVEL
 
+
+// ─────────────────────────────────────────────────────────────────────────────
+// HELPER FUNCTIONS
+// These match the function signatures expected throughout the app.
+// ─────────────────────────────────────────────────────────────────────────────
+
+/**
+ * Returns a flat array of { name, paper, subjectId } for use in topic seeding,
+ * confidence tracking, and the AI context builder.
+ *
+ * @param {string} board   - e.g. 'AQA', 'Edexcel', 'OCR', 'Eduqas/WJEC', 'CCEA'
+ * @param {string} subject - e.g. 'Biology', 'Mathematics'
+ * @param {string} level   - 'GCSE' or 'A-Level' (or 'ALEVEL')
+ */
+export function getAllTopicsFlat(board, subject, level) {
+  const levelKey = (level === 'A-Level' || level === 'ALEVEL' || level === 'A_LEVEL')
+    ? ALEVEL
+    : GCSE
+
+  // Try exact board name first, then common aliases
+  const boardAliases = {
+    'Eduqas': 'Eduqas/WJEC',
+    'WJEC':   'Eduqas/WJEC',
+    'eduqas': 'Eduqas/WJEC',
+  }
+  const boardKey = boardAliases[board] || board
+
+  const boardData = levelKey[boardKey] || levelKey['AQA'] || {}
+  const subjectData = boardData[subject]
+
+  if (!subjectData?.papers) return []
+
+  const result = []
+  for (const [paper, topics] of Object.entries(subjectData.papers)) {
+    for (const name of topics) {
+      result.push({ name, paper: Number(paper), subjectId: subject })
+    }
+  }
+  return result
+}
+
+/**
+ * Returns the raw papers object for a subject.
+ * { 1: ['topic1', ...], 2: [...] }
+ */
+export function getTopicsForSubject(board, subject, level) {
+  const levelKey = (level === 'A-Level' || level === 'ALEVEL' || level === 'A_LEVEL')
+    ? ALEVEL
+    : GCSE
+
+  const boardAliases = { 'Eduqas': 'Eduqas/WJEC', 'WJEC': 'Eduqas/WJEC' }
+  const boardKey = boardAliases[board] || board
+
+  const boardData = levelKey[boardKey] || levelKey['AQA'] || {}
+  return boardData[subject]?.papers || {}
+}
+
+/**
+ * Returns all subject names available for a given board and level.
+ */
+export function getSubjectsForBoard(board, level) {
+  const levelKey = (level === 'A-Level' || level === 'ALEVEL') ? ALEVEL : GCSE
+  const boardAliases = { 'Eduqas': 'Eduqas/WJEC', 'WJEC': 'Eduqas/WJEC' }
+  const boardKey = boardAliases[board] || board
+  return Object.keys(levelKey[boardKey] || {})
+}
 // ─────────────────────────────────────────────────────────────────────────────
 // EXPORTS
 // ─────────────────────────────────────────────────────────────────────────────
