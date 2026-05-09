@@ -319,21 +319,35 @@ export function sessionsForDay(sessions, date) {
 }
 
 // ── COUNTDOWN HELPERS ─────────────────────────────────────────────────────────
+// Canonical day-difference function — always compares date-only (no time component).
+// Exam dates stored as YYYY-MM-DD are midnight UTC; new Date() includes current time.
+// Stripping time from both sides gives consistent results everywhere in the app.
+export function daysUntilExam(examDateStr) {
+  if (!examDateStr) return null
+  // Parse exam date as local date components (not UTC) to avoid timezone shift
+  const [y, m, d] = String(examDateStr).slice(0, 10).split('-').map(Number)
+  const examDay   = new Date(y, m - 1, d)     // local midnight on exam day
+  const today     = new Date()
+  today.setHours(0, 0, 0, 0)                  // strip time — local midnight today
+  return Math.round((examDay - today) / 86400000)
+}
+
 export function countdownLabel(examDate) {
-  const days = differenceInDays(new Date(examDate), new Date())
-  if (days < 0)  return 'Completed'
+  const days = daysUntilExam(examDate)
+  if (days === null) return '—'
+  if (days < 0)   return 'Completed'
   if (days === 0) return 'TODAY'
   if (days === 1) return 'Tomorrow'
-  if (days < 7)  return `${days} days`
-  if (days < 14) return '1 week'
-  if (days < 21) return '2 weeks'
-  return `${Math.ceil(days/7)} weeks`
+  if (days < 7)   return `${days} days`
+  if (days < 14)  return '1 week'
+  if (days < 21)  return '2 weeks'
+  return `${Math.ceil(days / 7)} weeks`
 }
 
 export function countdownUrgency(examDate) {
-  const days = differenceInDays(new Date(examDate), new Date())
-  if (days < 0)  return 'done'
-  if (days <= 7) return 'urgent'
+  const days = daysUntilExam(examDate)
+  if (days === null || days < 0) return 'done'
+  if (days <= 7)  return 'urgent'
   if (days <= 21) return 'soon'
   return 'normal'
 }
