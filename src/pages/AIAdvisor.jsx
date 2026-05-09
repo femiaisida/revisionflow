@@ -245,8 +245,6 @@ export default function AIAdvisor() {
     setTechLoading(false)
   }
 
-  const bottomRef = useRef()
-  const [userContext, setUserContext] = useState('')
 
   useEffect(() => { buildContext() }, [profile, user])
 
