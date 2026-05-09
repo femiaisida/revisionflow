@@ -663,3 +663,58 @@ export async function runBadgeAudit(uid) {
 
   return { awarded }
 }
+
+/* =========================
+   FLASHCARD SETS
+   Stored at: users/{uid}/flashcardSets/{id}
+   Public sets also stored at: publicFlashcards/{id}
+========================= */
+
+export const saveFlashcardSet = async (uid, { title, subject, topic, cards, isPublic = false }) => {
+  const data = {
+    uid, title, subject, topic: topic || '',
+    cards, isPublic,
+    cardCount: cards.length,
+    createdAt: serverTimestamp(),
+    updatedAt: serverTimestamp(),
+  }
+  // Save to user's private collection
+  const ref = await addDoc(collection(db, 'users', uid, 'flashcardSets'), data)
+  // If public, also save to global collection so others can find it
+  if (isPublic) {
+    await setDoc(doc(db, 'publicFlashcards', ref.id), { ...data, setId: ref.id })
+  }
+  return ref.id
+}
+
+export const getFlashcardSets = async (uid) => {
+  const snap = await getDocs(collection(db, 'users', uid, 'flashcardSets'))
+  return snap.docs.map(d => ({ id: d.id, ...d.data() }))
+}
+
+export const deleteFlashcardSet = async (uid, setId, isPublic = false) => {
+  await deleteDoc(doc(db, 'users', uid, 'flashcardSets', setId))
+  if (isPublic) {
+    try { await deleteDoc(doc(db, 'publicFlashcards', setId)) } catch {}
+  }
+}
+
+export const getPublicFlashcardSets = async (subject = null, limitN = 50) => {
+  let q = subject
+    ? query(collection(db, 'publicFlashcards'), where('subject', '==', subject), limit(limitN))
+    : query(collection(db, 'publicFlashcards'), orderBy('createdAt', 'desc'), limit(limitN))
+  const snap = await getDocs(q)
+  return snap.docs.map(d => ({ id: d.id, ...d.data() }))
+}
+
+export const updateFlashcardSetVisibility = async (uid, setId, isPublic) => {
+  const ref  = doc(db, 'users', uid, 'flashcardSets', setId)
+  const snap = await getDoc(ref)
+  if (!snap.exists()) return
+  await updateDoc(ref, { isPublic, updatedAt: serverTimestamp() })
+  if (isPublic) {
+    await setDoc(doc(db, 'publicFlashcards', setId), { ...snap.data(), isPublic: true, setId })
+  } else {
+    try { await deleteDoc(doc(db, 'publicFlashcards', setId)) } catch {}
+  }
+}
