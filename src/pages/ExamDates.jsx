@@ -2,7 +2,7 @@
 import React, { useState, useEffect } from 'react'
 import { useAuth } from '../context/AuthContext'
 import { updateUserProfile } from '../utils/firestore'
-import { countdownLabel, countdownUrgency } from '../utils/calendar'
+import { countdownLabel, countdownUrgency, daysUntilExam } from '../utils/calendar'
 import { EXAM_BOARDS } from '../data/subjects'
 import { isTiered, getExamDates, EXAM_DATES_2026 } from '../data/examDates2026'
 import toast from 'react-hot-toast'
@@ -164,7 +164,7 @@ export default function ExamDates() {
       ) : (
         <div style={{display:'flex',flexDirection:'column',gap:10}}>
           {examDates.map(e => {
-            const days    = differenceInDays(new Date(e.examDate), new Date())
+            const days    = daysUntilExam(e.examDate)
             const urgency = countdownUrgency(e.examDate)
             const isSel   = selected.includes(e.id)
             return (
