@@ -14,13 +14,11 @@ import {
   predictGrade,
   suggestNextTopic,
   markAnswer,
-  generateFlashcards,
-  generatePredictedQuestions,
 } from '../utils/ai'
 import { checkAndAwardBadge } from '../utils/firestore'
 import AIOutput from '../components/AIOutput'
 import { SUBJECT_COLOURS } from '../data/subjects'
-import { MessageSquare, Send, Zap, BookOpen, TrendingUp, X, Brain, Star, Target, FileText, Check, Lightbulb } from 'lucide-react'
+import { MessageSquare, Send, Zap, BookOpen, TrendingUp, X, Brain, Target, FileText, Check, Lightbulb } from 'lucide-react'
 
 const QUICK_PROMPTS = [
   'What should I revise today?',
@@ -76,22 +74,6 @@ export default function AIAdvisor() {
   const [techLoading, setTechLoading] = useState(false)
   const [techResult,  setTechResult]  = useState('')
 
-  // Flashcard generator
-  const [flashSubj,   setFlashSubj]   = useState('')
-  const [flashTopic,  setFlashTopic]  = useState('')
-  const [flashCards,  setFlashCards]  = useState([])
-  const [flashLoad,   setFlashLoad]   = useState(false)
-  const [flashCount,  setFlashCount]  = useState(10)
-
-  // Predicted questions
-  const [predSubj,    setPredSubj]    = useState('')
-  const [predTopic,   setPredTopic]   = useState('')
-  const [predBoard,   setPredBoard]   = useState('')
-  const [predLevel,   setPredLevel]   = useState('')
-  const [predMarks,   setPredMarks]   = useState(20)
-  const [predResult,  setPredResult]  = useState('')
-  const [predParsed,  setPredParsed]  = useState([])
-  const [predLoad,    setPredLoad]    = useState(false)
 
   const bottomRef = useRef()
   const [userContext, setUserContext] = useState('')
@@ -254,16 +236,174 @@ export default function AIAdvisor() {
     setMarkLoad(false)
   }
 
-  async function handleFlashcards() {
-    if (!flashSubj) return
-    setFlashLoad(true)
-    const res = await generateFlashcards(flashSubj, flashTopic, flashCount)
-    const text = res.text||''
-    const cards = []
-    const matches = text.matchAll(/Q:\s*(.+?)\nA:\s*([\s\S]+?)(?=\nQ:|$)/g)
-    for (const m of matches) cards.push({q:m[1].trim(),a:m[2].trim()})
-    setFlashCards(cards.length ? cards : [{q:'Flashcards generated',a:text}])
-    setFlashLoad(false)
+  async function handleTechniques() {
+    if (!techSubj) return
+    setTechLoading(true)
+    setTechResult('')
+    const res = await getTopicAdvice(techSubj, `revision techniques for ${techSubj}`, 3, [])
+    setTechResult(res.text||res.error||'')
+    setTechLoading(false)
+  }
+
+  const bottomRef = useRef()
+  const [userContext, setUserContext] = useState('')
+
+  useEffect(() => { buildContext() }, [profile, user])
+
+  useEffect(() => {
+    if (!user) return
+    const loadSaved = async () => {
+      try {
+        const snap = await getDoc(doc(db, 'users', user.uid, 'aiData', 'studyPlan'))
+        if (snap.exists() && snap.data().text) {
+          setStudyPlan(snap.data().text)
+          setPlanPrefs(p => ({...p, hoursPerWeek: snap.data().hoursPerWeek||10, preferences: snap.data().preferences||p.preferences}))
+        }
+      } catch(e) {}
+    }
+    loadSaved()
+  }, [user])
+
+  useEffect(() => { bottomRef.current?.scrollIntoView({behavior:'smooth'}) }, [messages])
+
+  async function buildContext() {
+    if (!user || !profile) return
+    try {
+      const [papersSnap, topicsSnap, mistakesSnap] = await Promise.all([
+        getDocs(collection(db,'users',user.uid,'paperAttempts')),
+        getDocs(collection(db,'users',user.uid,'topics')),
+        getDocs(collection(db,'users',user.uid,'mistakes')),
+      ])
+      const papers   = papersSnap.docs.map(d=>d.data())
+      const topics   = topicsSnap.docs.map(d=>d.data())
+      const mistakes = mistakesSnap.docs.map(d=>d.data())
+
+      const weakTopics   = topics.filter(t=>(t.confidence||3)<=2).slice(0,10).map(t=>`${t.subjectId}: ${t.name}`)
+      const recentPapers = papers.slice(0,5).map(p=>`${p.subject} P${p.paper} ${p.year}: ${p.percentage}% (Grade ${p.grade||'?'})`)
+      const topMistakes  = mistakes.filter(m=>!m.resolved).slice(0,5).map(m=>`${m.subject} - ${m.topic}: ${m.description?.slice(0,60)}`)
+
+      const ctx = [
+        `Student: ${profile.displayName}`,
+        `Level: ${profile.level||1} | XP: ${profile.xp||0} | Streak: ${profile.streak||0} days`,
+        `Subjects: ${(profile.subjects||[]).map(s=>`${s.name} (${s.board}, target: ${s.targetGrade||9})`).join(', ')}`,
+        `Upcoming exams: ${(profile.examDates||[]).filter(e=>new Date(e.examDate)>new Date()).slice(0,5).map(e=>`${e.subject} P${e.paper} on ${e.examDate}`).join(', ')||'None set'}`,
+        weakTopics.length   ? `Weak topics: ${weakTopics.join(', ')}`          : '',
+        recentPapers.length ? `Recent papers: ${recentPapers.join(', ')}`      : '',
+        topMistakes.length  ? `Unresolved mistakes: ${topMistakes.join(', ')}` : '',
+      ].filter(Boolean).join('\n')
+      setUserContext(ctx)
+
+      setMessages([{
+        role:'assistant',
+        content:`Hi ${profile.displayName?.split(' ')[0]}! I'm your AI revision advisor and I can see your full profile.\n\n` +
+          `You're revising: ${(profile.subjects||[]).map(s=>s.name).join(', ')||'no subjects set yet'}.\n\n` +
+          (weakTopics.length ? `Your weakest topics right now: ${weakTopics.slice(0,3).join(', ')}.\n\n` : '') +
+          `Ask me anything — I can predict your grades, suggest what to revise next, mark your practice answers, generate flashcards, or give specific advice on any topic.`
+      }])
+    } catch(e) {
+      setMessages([{role:'assistant',content:`Hi! I'm your AI revision advisor. How can I help you today?`}])
+    }
+  }
+
+  async function sendMessage(text) {
+    const msg = text||input.trim()
+    if (!msg||loading) return
+    setInput('')
+    const newMessages = [...messages,{role:'user',content:msg}]
+    setMessages(newMessages)
+    setLoading(true)
+    const res = await chatWithAI(newMessages, { subjects: profile?.subjects, context: userContext })
+    setMessages(ms=>[...ms,{role:'assistant',content:res.text||res.error||'Sorry, I had trouble responding.'}])
+    setLoading(false)
+  }
+
+  async function getResources(subject) {
+    setLoadingRes(subject)
+    const subj = profile?.subjects?.find(s=>s.name===subject)
+    const res  = await getResourceRecommendations(subject, subj?.board, subj?.tier, [])
+    setResources(r=>({...r,[subject]:res.text||res.error}))
+    setLoadingRes(null)
+  }
+
+  async function handleStudyPlan() {
+    if (!planPrefs.confirmed) { setPlanPrefs(p=>({...p, showForm:true})); return }
+    setPlanLoading(true)
+    const upcomingExams = (profile?.examDates||[])
+      .filter(e => new Date(e.examDate) > new Date())
+      .sort((a,b) => new Date(a.examDate) - new Date(b.examDate))
+    const firstExam = upcomingExams[0]
+    const lastExam  = upcomingExams[upcomingExams.length-1]
+    const weeksUntilFirst = firstExam
+      ? Math.max(1, Math.ceil((new Date(firstExam.examDate)-new Date())/(7*86400000)))
+      : 12
+    const res = await generateStudyPlan({
+      subjects:       profile?.subjects||[],
+      examDates:      profile?.examDates||[],
+      weakTopics:     [],
+      availableHours: planPrefs.hoursPerWeek,
+      preferences:    planPrefs.preferences,
+      weeksUntilFirst,
+      firstExamDate:  firstExam?.examDate,
+      lastExamDate:   lastExam?.examDate,
+    })
+    const planText = res.text||res.error||''
+    setStudyPlan(planText)
+    if (res.text && user) {
+      await checkAndAwardBadge(user.uid, 'ai_plan').catch(()=>{})
+      try {
+        await setDoc(doc(db, 'users', user.uid, 'aiData', 'studyPlan'), {
+          text:         planText,
+          hoursPerWeek: planPrefs.hoursPerWeek,
+          preferences:  planPrefs.preferences,
+          generatedAt:  serverTimestamp(),
+        })
+      } catch(e) {}
+    }
+    setPlanLoading(false)
+  }
+
+  async function handleGradePredict() {
+    if (!gradeSubj) return
+    setGradeLoad(true)
+    // Fetch paper attempts and topic confidences for this subject
+    let papers = [], topics = []
+    try {
+      const [ps, ts] = await Promise.all([
+        getDocs(collection(db,'users',user.uid,'paperAttempts')),
+        getDocs(collection(db,'users',user.uid,'topics')),
+      ])
+      papers = ps.docs.map(d=>d.data())
+      topics = ts.docs.map(d=>d.data())
+    } catch(e) {}
+    const res = await predictGrade(gradeSubj, papers, topics)
+    setGradePred(res.text||res.error||'')
+    setGradeLoad(false)
+  }
+
+  async function handleNextTopic() {
+    if (!nextSubj) return
+    setNextLoad(true)
+    let topics = [], examDates = profile?.examDates || []
+    try {
+      const ts = await getDocs(collection(db,'users',user.uid,'topics'))
+      topics = ts.docs.map(d=>d.data())
+    } catch(e) {}
+    const res = await suggestNextTopic(nextSubj, topics, examDates)
+    setNextTopic(res.text||res.error||'')
+    setNextLoad(false)
+  }
+
+  async function handleMarkAnswer() {
+    if (!markSubj||!markQ||!markA) return
+    setMarkLoad(true)
+    setMarkResult('')
+    // Build an enriched question string with optional context
+    const enrichedQ = markIsPaper
+      ? `[${markSubj} ${markYear} Paper ${markPaperNum}${markMarks ? `, ${markMarks} marks` : ''}] ${markQ}`
+      : markMarks ? `[${markMarks} marks] ${markQ}` : markQ
+    const res = await markAnswer(markSubj, enrichedQ, markA)
+    setMarkResult(res.text||res.error||'')
+    setMarkLoad(false)
   }
 
   async function handleTechniques() {
@@ -321,11 +461,9 @@ export default function AIAdvisor() {
           {k:'predict',    label:'Grade Predict',  icon:Target},
           {k:'next',       label:'Next Topic',     icon:Brain},
           {k:'mark',       label:'Mark Answer',    icon:FileText},
-          {k:'flash',      label:'Flashcards',     icon:Star},
           {k:'resources',  label:'Resources',      icon:BookOpen},
           {k:'plan',       label:'Study Plan',     icon:TrendingUp},
           {k:'techniques', label:'Techniques',     icon:Lightbulb},
-          {k:'questions',  label:'Predicted Qs',   icon:FileText},
         ].map(({k,label,icon:Icon})=>(
           <button key={k} className={`tab${tab===k?' active':''}`} onClick={()=>setTab(k)}>
             <Icon size={13}/> {label}
@@ -461,47 +599,6 @@ export default function AIAdvisor() {
           </div>
           {markLoad&&<div className="loading-center" style={{marginTop:16}}><div className="spinner"/></div>}
           {markResult&&<div style={{marginTop:16}}><AIOutput text={markResult} label="Marking Feedback" /></div>}
-        </div>
-      )}
-
-      {/* ── Flashcards ── */}
-      {tab==='flash'&&(
-        <div>
-          <div className="card" style={{marginBottom:16}}>
-            <h4 style={{marginBottom:4,display:'flex',alignItems:'center',gap:8}}><Star size={18} color="var(--accent-light)"/> AI Flashcard Generator</h4>
-            <p style={{marginBottom:14,fontSize:'0.875rem'}}>Generate detailed flashcards for any topic. Copy them to Anki, Quizlet, or Gizmo.</p>
-            <div className="grid-2" style={{gap:10,marginBottom:10}}>
-              <div><label className="label">Subject</label>
-                <select className="select" value={flashSubj} onChange={e=>setFlashSubj(e.target.value)}>
-                  <option value="">Select…</option>
-                  {subjects.map(s=><option key={s} value={s}>{s}</option>)}
-                </select></div>
-              <div><label className="label">Topic (optional)</label>
-                <input className="input" value={flashTopic} onChange={e=>setFlashTopic(e.target.value)} placeholder="e.g. Cell biology"/></div>
-            </div>
-            <div style={{display:'flex',alignItems:'center',gap:10,flexWrap:'wrap'}}>
-              <div>
-                <label className="label">Number of cards</label>
-                <select className="select" style={{width:'auto'}} value={flashCount} onChange={e=>setFlashCount(parseInt(e.target.value))}>
-                  {[5,8,10,15,20,25,30].map(n=><option key={n} value={n}>{n} cards</option>)}
-                </select>
-              </div>
-              <button className="btn btn-primary" style={{alignSelf:'flex-end'}} onClick={handleFlashcards} disabled={flashLoad||!flashSubj}>
-                {flashLoad?'Generating…':`Generate ${flashCount} flashcards`}
-              </button>
-            </div>
-          </div>
-          {flashLoad&&<div className="loading-center"><div className="spinner"/></div>}
-          {flashCards.length>0&&(
-            <div style={{display:'grid',gridTemplateColumns:'repeat(auto-fill,minmax(280px,1fr))',gap:12}}>
-              {flashCards.map((c,i)=>(
-                <div key={i} className="card" style={{padding:14}}>
-                  <div style={{fontWeight:600,fontSize:'0.875rem',marginBottom:8,color:'var(--accent-light)'}}>Q: {c.q}</div>
-                  <div style={{fontSize:'0.85rem',lineHeight:1.7,color:'var(--text-secondary)'}}>A: {c.a}</div>
-                </div>
-              ))}
-            </div>
-          )}
         </div>
       )}
 
@@ -685,93 +782,6 @@ export default function AIAdvisor() {
               ))}
             </div>
           </div>
-        </div>
-      )}
-
-      {/* ── Predicted Questions ── */}
-      {tab==='questions'&&(
-        <div>
-          <div className="card" style={{marginBottom:16}}>
-            <h4 style={{marginBottom:4,display:'flex',alignItems:'center',gap:8}}>
-              <FileText size={18} color="var(--accent-light)"/> Predicted Exam Questions
-            </h4>
-            <p style={{marginBottom:14,fontSize:'0.875rem',color:'var(--text-secondary)'}}>
-              Board-specific, topic-specific questions in the exact style of your actual exam paper.
-            </p>
-            <div className="grid-2" style={{gap:10,marginBottom:10}}>
-              <div>
-                <label className="label">Subject</label>
-                <select className="select" value={predSubj} onChange={e=>{
-                  setPredSubj(e.target.value)
-                  const s = profile?.subjects?.find(x=>x.name===e.target.value)
-                  if(s){ setPredBoard(s.board); setPredLevel(profile?.qualification||'GCSE') }
-                }}>
-                  <option value="">Select subject…</option>
-                  {subjects.map(s=><option key={s} value={s}>{s}</option>)}
-                </select>
-              </div>
-              <div>
-                <label className="label">Topic</label>
-                <input className="input" value={predTopic} onChange={e=>setPredTopic(e.target.value)} placeholder="e.g. Cell division, Quadratics, WW1 causes…"/>
-              </div>
-              <div>
-                <label className="label">Exam board</label>
-                <select className="select" value={predBoard} onChange={e=>setPredBoard(e.target.value)}>
-                  <option value="">Auto (from subject)</option>
-                  {['AQA','Edexcel','OCR','WJEC','Eduqas','CCEA'].map(b=><option key={b} value={b}>{b}</option>)}
-                </select>
-              </div>
-              <div>
-                <label className="label">Total marks for 3 questions</label>
-                <select className="select" value={predMarks} onChange={e=>setPredMarks(parseInt(e.target.value))}>
-                  {[10,15,20,25,30,40].map(m=><option key={m} value={m}>{m} marks</option>)}
-                </select>
-              </div>
-            </div>
-            <button className="btn btn-primary" onClick={handlePredictedQuestions}
-              disabled={predLoad||!predSubj||!predTopic} style={{minWidth:200}}>
-              {predLoad?'Generating…':'Generate predicted questions'}
-            </button>
-          </div>
-
-          {predLoad&&<div className="loading-center" style={{marginBottom:16}}><div className="spinner"/></div>}
-
-          {predParsed.length>0 && (
-            <div style={{display:'flex',flexDirection:'column',gap:14}}>
-              {predParsed.map((q,i)=>(
-                <div key={i} className="card" style={{border:'1px solid var(--border)'}}>
-                  <div style={{fontWeight:700,fontSize:'0.85rem',color:'var(--accent-light)',marginBottom:8}}>
-                    Question {i+1}
-                  </div>
-                  <div style={{marginBottom:12}}>
-                    <AIOutput text={q.question} label={`Q${i+1}`} />
-                  </div>
-
-                  {q.markScheme && (
-                    <details style={{marginBottom:8}}>
-                      <summary style={{cursor:'pointer',fontSize:'0.8rem',fontWeight:600,color:'var(--success)',userSelect:'none',marginBottom:6}}>
-                        ▶ Show mark scheme
-                      </summary>
-                      <div style={{padding:'10px 14px',background:'rgba(34,197,94,0.06)',borderRadius:'var(--radius-md)',border:'1px solid rgba(34,197,94,0.2)'}}>
-                        <AIOutput text={q.markScheme} label="Mark scheme" />
-                      </div>
-                    </details>
-                  )}
-
-                  {q.tip && (
-                    <div style={{padding:'8px 12px',background:'rgba(245,158,11,0.08)',borderRadius:'var(--radius-md)',border:'1px solid rgba(245,158,11,0.2)',fontSize:'0.8rem'}}>
-                      <span style={{fontWeight:700,color:'var(--warning)'}}>💡 Examiner tip: </span>
-                      {q.tip}
-                    </div>
-                  )}
-                </div>
-              ))}
-            </div>
-          )}
-
-          {predResult && predParsed.length===0 && !predLoad && (
-            <AIOutput text={predResult} label="Predicted Questions" />
-          )}
         </div>
       )}
 
