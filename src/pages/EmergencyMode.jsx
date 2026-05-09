@@ -8,14 +8,13 @@ import { useAuth } from '../context/AuthContext'
 import { collection, getDocs, query, where, limit } from 'firebase/firestore'
 import { db } from '../firebase'
 import { callAI } from '../utils/ai'
+import { daysUntilExam } from '../utils/calendar'
 import AIOutput from '../components/AIOutput'
 import { AlertTriangle, Zap, ChevronLeft, Clock, Target, Brain, FileText } from 'lucide-react'
 
 // ── Helpers ──────────────────────────────────────────────────────────────────
 
-function getDaysUntil(dateStr) {
-  return Math.ceil((new Date(dateStr) - new Date()) / 86400000)
-}
+function getDaysUntil(dateStr) { return daysUntilExam(dateStr) }
 
 function getHoursUntil(dateStr) {
   return Math.round((new Date(dateStr) - new Date()) / 3600000)
@@ -23,45 +22,57 @@ function getHoursUntil(dateStr) {
 
 // ── AI call ──────────────────────────────────────────────────────────────────
 
-async function generateEmergencyPlan({ subject, board, level, weakTopics, avgScore, hoursUntil, mistakes }) {
+async function generateEmergencyPlan({ subject, board, level, paper, weakTopics, avgScore, hoursUntil, mistakes, allTopics }) {
   const days = Math.floor(hoursUntil / 24)
   const sessionsLeft = Math.max(2, Math.min(8, Math.floor(hoursUntil / 3)))
 
-  const prompt = `You are an expert ${board} ${subject} ${level} examiner and tutor.
-A student has their exam in approximately ${days} days (${hoursUntil} hours).
+  // Filter topics to the specific paper if known
+  const paperTopics = paper && allTopics.length
+    ? allTopics.filter(t => !t.paper || String(t.paper) === String(paper))
+    : allTopics
+
+  const weakPaperTopics = paperTopics.filter(t => (t.confidence || 3) <= 2)
+  const topicsForContext = weakPaperTopics.length > 0 ? weakPaperTopics : paperTopics.slice(0, 10)
+
+  const prompt = `You are a senior ${board} ${subject} examiner and chief marker for ${level} examinations.
+A student has ${subject} ${level}${paper ? ` Paper ${paper}` : ''} in ${days} days (${hoursUntil} hours).
+
+CRITICAL: All advice must be SPECIFICALLY for ${subject}${paper ? ` Paper ${paper}` : ''} — not any other paper.
+${board} ${subject} ${level}${paper ? ` Paper ${paper}` : ''} tests: ${topicsForContext.slice(0, 8).map(t => t.name).join(', ') || 'the full specification'}
 
 STUDENT DATA:
-- Recent average score: ${avgScore !== null ? Math.round(avgScore) + '%' : 'no papers logged yet'}
-- Weakest topics (confidence 1-2 out of 5): ${weakTopics.length > 0 ? weakTopics.map(t => t.name).join(', ') : 'none logged yet'}
-- Unresolved mistakes: ${mistakes.length > 0 ? mistakes.slice(0, 5).map(m => m.topic || m.description?.slice(0, 40)).join(', ') : 'none'}
-- Revision sessions available before exam: about ${sessionsLeft}
+- Average score on recent papers: ${avgScore !== null ? Math.round(avgScore) + '%' : 'no papers logged'}
+- Weakest topics for this paper (confidence ≤ 2/5): ${weakPaperTopics.slice(0, 6).map(t => t.name).join(', ') || 'none logged yet'}
+- Unresolved mistakes: ${mistakes.slice(0, 4).map(m => m.topic || m.description?.slice(0, 40)).join(', ') || 'none'}
+- Sessions available: ~${sessionsLeft}
 
-Respond in EXACTLY this format — no extra text, no preamble:
+Respond in EXACTLY this format. No preamble. No extra sections. Every piece of advice must be specific to ${subject}${paper ? ` Paper ${paper}` : ''}.
 
-PREDICTED GRADE: [e.g. Grade 6]
-GRADE REASONING: [one sentence only]
+PREDICTED GRADE: [single grade, e.g. Grade 6 or Grade B]
+GRADE REASONING: [one sentence — cite specific evidence from student data above]
 
 TOP 5 TOPICS TO REVISE:
-1. [topic name] — [one specific exam tip for this topic]
-2. [topic name] — [one specific exam tip for this topic]
-3. [topic name] — [one specific exam tip for this topic]
-4. [topic name] — [one specific exam tip for this topic]
-5. [topic name] — [one specific exam tip for this topic]
+1. [exact topic name from Paper ${paper || 'specification'}] — [one specific examiner tip — what the mark scheme rewards]
+2. [exact topic name] — [one specific tip]
+3. [exact topic name] — [one specific tip]
+4. [exact topic name] — [one specific tip]
+5. [exact topic name] — [one specific tip]
 
 TODAY'S PLAN:
-Session 1 (30 min): [very specific task — name the topic and the activity]
-Session 2 (30 min): [very specific task]
-Session 3 (30 min): [very specific task]
+Session 1 (30 min): [specific task — name exact topic, specific activity e.g. "complete 2019 Paper ${paper || '1'} Q3, mark against scheme"]
+Session 2 (30 min): [specific task]
+Session 3 (30 min): [specific task — must include past paper practice]
 
 PREDICTED EXAM QUESTIONS:
-Q1 ([X] marks): [write an actual exam-style question in ${board} style]
-Q2 ([X] marks): [write an actual exam-style question in ${board} style]
-Q3 ([X] marks): [write an actual exam-style question in ${board} style]
+Q1 ([X] marks): [actual ${board}-style question on a weak topic — use exact command word ${board} uses]
+Q2 ([X] marks): [actual ${board}-style question — different topic]
+Q3 ([X] marks): [actual ${board}-style question — different topic]
 
-EXAM DAY TIP: [one sentence, highly specific to ${subject}]`
+EXAM DAY TIP: [one highly specific tip for ${subject}${paper ? ` Paper ${paper}` : ''} — e.g. time allocation, common traps, how marks are awarded]`
 
   return callAI(prompt)
 }
+
 
 // ── Parse the AI response into sections ──────────────────────────────────────
 
@@ -160,7 +171,9 @@ export default function EmergencyMode() {
         subject:    selectedExam.subject,
         board:      subj?.board || selectedExam.board || 'AQA',
         level:      profile?.qualification || 'GCSE',
+        paper:      selectedExam.paper || null,
         weakTopics,
+        allTopics,
         avgScore,
         hoursUntil: getHoursUntil(selectedExam.examDate),
         mistakes,
