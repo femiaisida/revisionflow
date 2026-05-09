@@ -14,7 +14,7 @@ export default function EmergencyBanner() {
   const nextUrgentExam = useMemo(() => {
     return (profile?.examDates || [])
       .filter(e => {
-        const d = Math.ceil((new Date(e.examDate) - new Date()) / 86400000)
+        const d = daysUntilExam(e.examDate)
         return d >= 0 && d <= 7
       })
       .sort((a, b) => new Date(a.examDate) - new Date(b.examDate))[0]
@@ -22,7 +22,7 @@ export default function EmergencyBanner() {
 
   if (!nextUrgentExam) return null
 
-  const days = Math.ceil((new Date(nextUrgentExam.examDate) - new Date()) / 86400000)
+  const days = daysUntilExam(nextUrgentExam.examDate)
   const isToday = days === 0
 
   return (
