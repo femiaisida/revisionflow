@@ -1,10 +1,12 @@
 // src/utils/ai.js
-// AI provider: Mistral AI (mistral-small-latest)
-// Free tier: https://console.mistral.ai
-// Add VITE_MISTRAL_API_KEY to your Netlify environment variables.
+// All AI calls now go through /api/ai (netlify/functions/ai.js)
+// The Mistral API key is NEVER in the browser bundle.
+//
+// SETUP:
+//   - Remove VITE_MISTRAL_API_KEY from Netlify env vars
+//   - Add MISTRAL_API_KEY (no VITE_ prefix) to Netlify env vars (same value)
 
-const MISTRAL_KEY = import.meta.env.VITE_MISTRAL_API_KEY
-const MISTRAL_URL = 'https://api.mistral.ai/v1/chat/completions'
+const AI_ENDPOINT = '/api/ai'
 
 const SYSTEM = `You are RevisionFlow's AI tutor — an expert on UK GCSE and A-Level revision.
 You give specific, practical, encouraging advice tailored to UK students.
@@ -19,51 +21,61 @@ Always reference specific free resources where relevant:
 - Languages: Seneca, Herr Antrim (German)
 - All subjects: Seneca, PMT, SaveMyExams`
 
-// ── Core call function ────────────────────────────────────────────────────────
-export async function callAI(prompt, systemPrompt = SYSTEM, maxTokens = 8192) {
-  if (!MISTRAL_KEY) {
-    return { error: 'No AI API key configured. Add VITE_MISTRAL_API_KEY to your Netlify environment variables.' }
-  }
-
+// ── Core call function ─────────────────────────────────────────────────────────
+// uid is passed for server-side rate limiting — never used for anything else.
+export async function callAI(prompt, systemPrompt = SYSTEM, maxTokens = 8192, uid = null) {
   try {
-    const res = await fetch(MISTRAL_URL, {
-      method: 'POST',
-      headers: {
-        'Content-Type':  'application/json',
-        'Authorization': `Bearer ${MISTRAL_KEY}`,
-      },
+    const res = await fetch(AI_ENDPOINT, {
+      method:  'POST',
+      headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
-        model:      'mistral-small-latest',
-        messages: [
-          { role: 'system', content: systemPrompt },
-          { role: 'user',   content: prompt },
-        ],
-        temperature: 0.7,
-        max_tokens:  maxTokens,
+        messages:     [{ role: 'user', content: prompt }],
+        systemPrompt: systemPrompt || SYSTEM,
+        maxTokens,
+        uid,
       }),
     })
 
+    const data = await res.json()
+
     if (!res.ok) {
-      const err = await res.json().catch(() => ({}))
-      console.error('[AI] Mistral error:', res.status, err)
-      return { error: `AI request failed (${res.status}). Please try again shortly.` }
+      // 429 = rate limit hit
+      if (res.status === 429) {
+        return { error: data.error || 'Daily AI limit reached. Try again tomorrow.' }
+      }
+      return { error: data.error || `AI request failed (${res.status}). Please try again.` }
     }
 
-    const data = await res.json()
-    const text = data.choices?.[0]?.message?.content || ''
-    if (!text) return { error: 'AI returned an empty response. Please try again.' }
-    return { text, provider: 'mistral' }
+    if (!data.text) return { error: 'AI returned an empty response. Please try again.' }
+    return { text: data.text, provider: 'mistral', remaining: data.remaining }
   } catch (e) {
     console.error('[AI] Network error:', e)
-    return { error: 'Could not reach the AI service. Check your internet connection and try again.' }
+    return { error: 'Could not reach the AI service. Check your internet connection.' }
   }
 }
 
-// ── Exported functions ────────────────────────────────────────────────────────
+// Multi-turn chat variant — sends full message history
+export async function callAIChat(messages, systemPrompt = SYSTEM, uid = null) {
+  try {
+    const res = await fetch(AI_ENDPOINT, {
+      method:  'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ messages, systemPrompt, uid }),
+    })
 
-export async function generateStudyPlan(userData) {
+    const data = await res.json()
+    if (!res.ok) return { error: data.error || `AI request failed (${res.status}).` }
+    if (!data.text) return { error: 'AI returned an empty response.' }
+    return { text: data.text, provider: 'mistral', remaining: data.remaining }
+  } catch (e) {
+    return { error: 'Could not reach the AI service.' }
+  }
+}
+
+// ── Exported AI functions ──────────────────────────────────────────────────────
+
+export async function generateStudyPlan(userData, uid) {
   const { subjects, examDates, weakTopics, availableHours, preferences, weeksUntilFirst, firstExamDate, lastExamDate } = userData
-
   const weeks = weeksUntilFirst || 12
   const windowDesc = firstExamDate && lastExamDate
     ? `from now until ${lastExamDate} (first exam: ${firstExamDate}, approximately ${weeks} weeks away)`
@@ -80,7 +92,6 @@ Focus preference: ${preferences || 'Balanced content and exam practice'}
 
 IMPORTANT CONSTRAINTS:
 - The plan must cover EXACTLY ${weeks} weeks — no more
-- Do NOT repeat the same weekly structure endlessly — vary it by phase
 - Structure into 3 clear phases: Foundation (weeks 1-${Math.floor(weeks*0.4)}), Intensive (weeks ${Math.floor(weeks*0.4)+1}-${Math.floor(weeks*0.8)}), Final push (weeks ${Math.floor(weeks*0.8)+1}-${weeks})
 - In the final 2 weeks before each exam, prioritise that specific subject heavily
 - Keep each week's entry concise — one paragraph per phase, not per week
@@ -94,10 +105,10 @@ FORMAT:
 6. 3 practical motivation tips
 
 Keep the total response under 600 words. Be specific and actionable.`
-  return callAI(prompt)
+  return callAI(prompt, SYSTEM, 8192, uid)
 }
 
-export async function getTopicAdvice(subject, topic, confidence, mistakes) {
+export async function getTopicAdvice(subject, topic, confidence, mistakes, uid) {
   const confLabel = ['','Very weak — needs urgent attention','Weak — gaps in understanding','Building — some understanding but not secure','Strong — mostly secure','Mastered — confident'][confidence] || 'Building'
   const prompt = `You are an expert GCSE/A-Level tutor. A student is revising the topic "${topic}" within ${subject}. Their current confidence is: ${confLabel}.
 
@@ -110,28 +121,24 @@ Give a focused, exam-targeted response with these sections:
 4-6 bullet points of the essential knowledge/skills for "${topic}". Use exact terminology the examiner expects.
 
 **Best way to revise this specific topic**
-One concrete, actionable technique tailored to the nature of this content (e.g. for a process: draw and label a diagram from memory; for definitions: make flashcards with trigger words; for calculations: do 10 timed questions without notes). Explain why this works for this topic.
+One concrete, actionable technique tailored to the nature of this content.
 
 **Exam technique tip**
-One specific, actionable tip on how marks are awarded for "${topic}" — what examiners want to see, what students commonly miss.
+One specific, actionable tip on how marks are awarded for "${topic}".
 
 **Free resources**
 2 specific free resources. Format exactly as: [Name](URL) — one line of what it covers.
-Only use real URLs: bbc.co.uk/bitesize, savemyexams.com, physicsandmathstutor.com, youtube.com, senecalearning.com, or subject-specific sites.
 
-Keep under 280 words total. Everything must be specific to "${topic}" — nothing generic.
+Keep under 280 words total. Everything must be specific to "${topic}".
 Recent mistakes to address: ${mistakes?.join(', ') || 'none logged'}`
-  return callAI(prompt)
+  return callAI(prompt, SYSTEM, 8192, uid)
 }
 
-export async function analyseWeaknesses(paperAttempts, subject) {
+export async function analyseWeaknesses(paperAttempts, subject, uid) {
   const recent = paperAttempts?.slice(0, 8) || []
   const prompt = `Analyse this student's past paper performance:
 Subject: ${subject || 'All subjects'}
-Recent attempts: ${JSON.stringify(recent.map(a => ({
-  subject: a.subject, paper: a.paper, year: a.year,
-  score: a.score, maxMarks: a.maxMarks, percentage: a.percentage, grade: a.grade
-})))}
+Recent attempts: ${JSON.stringify(recent.map(a => ({ subject: a.subject, paper: a.paper, year: a.year, score: a.score, maxMarks: a.maxMarks, percentage: a.percentage, grade: a.grade })))}
 
 Provide:
 1. Pattern analysis — which topics/question types are consistently weak
@@ -139,10 +146,10 @@ Provide:
 3. Specific free resources for each weak area
 4. Whether to focus more on content revision or exam technique
 5. Realistic grade trajectory based on recent scores`
-  return callAI(prompt)
+  return callAI(prompt, SYSTEM, 8192, uid)
 }
 
-export async function getResourceRecommendations(subject, board, tier, weakTopics) {
+export async function getResourceRecommendations(subject, board, tier, weakTopics, uid) {
   const prompt = `Recommend the best FREE revision resources for:
 Subject: ${subject} (${board || 'AQA'}, ${tier || 'Higher'})
 Weak topics: ${weakTopics?.join(', ') || 'General revision'}
@@ -154,10 +161,10 @@ For each resource:
 - Recommended time per week
 
 Only include genuinely free resources. Include at least 5.`
-  return callAI(prompt)
+  return callAI(prompt, SYSTEM, 8192, uid)
 }
 
-export async function generateCalendarPlan(userData) {
+export async function generateCalendarPlan(userData, uid) {
   const prompt = `Generate a revision calendar plan for a student:
 Subjects: ${userData.subjects?.map(s => `${s.name} (${s.board}, target: ${s.targetGrade || 9})`).join(', ')}
 Available days: ${userData.availableDays?.join(', ')}
@@ -168,7 +175,7 @@ Weeks until exams: ${userData.weeksUntilExams}
 
 Generate a week-by-week plan showing subject priority, session types, and key milestones.
 Be specific about which papers and topics to cover each week.`
-  return callAI(prompt)
+  return callAI(prompt, SYSTEM, 8192, uid)
 }
 
 export async function getDailyAdvice(uid, todaysSessions, streak, recentMistakes) {
@@ -184,22 +191,18 @@ Give:
 4. A reminder about their most urgent weak area
 
 Keep it short, punchy, and encouraging. Max 150 words total.`
-  return callAI(prompt)
+  return callAI(prompt, SYSTEM, 1024, uid)
 }
 
-export async function chatWithAI(messages, userContext) {
+export async function chatWithAI(messages, userContext, uid) {
   const contextStr = userContext?.subjects?.length
     ? `Student context: studying ${userContext.subjects.map(s => s.name).join(', ')}.`
     : ''
-  const conversationStr = messages
-    .slice(-10)
-    .map(m => `${m.role === 'user' ? 'Student' : 'AI'}: ${m.content}`)
-    .join('\n')
-  const prompt = `${contextStr}\n\nConversation:\n${conversationStr}\n\nAI:`
-  return callAI(prompt)
+  const systemWithContext = contextStr ? `${SYSTEM}\n\n${contextStr}` : SYSTEM
+  return callAIChat(messages.slice(-10), systemWithContext, uid)
 }
 
-export async function predictGrade(subject, paperAttempts, topicConfidences) {
+export async function predictGrade(subject, paperAttempts, topicConfidences, uid) {
   const subjectAttempts = paperAttempts?.filter(a => a.subject === subject) || []
   const weakTopics = topicConfidences?.filter(t => t.subjectId === subject && (t.confidence||3) <= 2) || []
   const prompt = `Predict the likely GCSE final grade for this student:
@@ -212,10 +215,10 @@ Provide:
 2. What would push the grade up
 3. What risks pulling it down
 4. The single most impactful thing to work on right now`
-  return callAI(prompt)
+  return callAI(prompt, SYSTEM, 8192, uid)
 }
 
-export async function suggestNextTopic(subject, topicConfidences, examDates) {
+export async function suggestNextTopic(subject, topicConfidences, examDates, uid) {
   const subjectTopics = topicConfidences?.filter(t => t.subjectId === subject) || []
   const nextExam = examDates?.filter(e => e.subject === subject && new Date(e.examDate) > new Date())
     .sort((a,b) => new Date(a.examDate) - new Date(b.examDate))[0]
@@ -230,10 +233,10 @@ Recommend ONE specific topic and explain:
 2. How to structure a 45-minute revision session on it
 3. Specific resources to use
 4. What a grade 9 answer looks like for exam questions on this topic`
-  return callAI(prompt)
+  return callAI(prompt, SYSTEM, 8192, uid)
 }
 
-export async function markAnswer(subject, question, answer) {
+export async function markAnswer(subject, question, answer, uid) {
   const prompt = `You are a ${subject} GCSE examiner. Mark this student's answer:
 
 Question: ${question}
@@ -246,10 +249,10 @@ Provide:
 3. What marks were lost and why (specific)
 4. What a model answer would include
 5. One exam technique tip for this question type`
-  return callAI(prompt)
+  return callAI(prompt, SYSTEM, 8192, uid)
 }
 
-export async function generateFlashcards(subject, topic, count = 8) {
+export async function generateFlashcards(subject, topic, count = 8, uid) {
   const prompt = `Generate ${count} GCSE flashcards for: ${subject}${topic ? ` — ${topic}` : ''}
 
 Format each card exactly like this:
@@ -261,22 +264,22 @@ Focus on:
 - Key definitions and processes
 - Common command word questions (state, explain, evaluate)
 - Numbers and statistics students must know`
-  return callAI(prompt)
+  return callAI(prompt, SYSTEM, 8192, uid)
 }
 
-export async function generatePredictedQuestions(subject, board, topic, level, totalMarks, numQuestions = 3) {
+export async function generatePredictedQuestions(subject, board, topic, level, totalMarks, numQuestions = 3, uid) {
   const validMarks = {
-    AQA:    { GCSE: [1,2,3,4,5,6,8], 'A-Level': [2,3,4,5,6,8,9,12,15,20,25] },
-    Edexcel:{ GCSE: [1,2,3,4,5,6,8], 'A-Level': [2,3,4,5,6,8,10,12,16,20] },
-    OCR:    { GCSE: [1,2,3,4,5,6],   'A-Level': [2,3,4,5,6,8,9,12,15] },
-    default:{ GCSE: [1,2,3,4,5,6],   'A-Level': [2,3,4,5,6,8,10,12,20] },
+    AQA:     { GCSE: [1,2,3,4,5,6,8],    'A-Level': [2,3,4,5,6,8,9,12,15,20,25] },
+    Edexcel: { GCSE: [1,2,3,4,5,6,8],    'A-Level': [2,3,4,5,6,8,10,12,16,20] },
+    OCR:     { GCSE: [1,2,3,4,5,6],       'A-Level': [2,3,4,5,6,8,9,12,15] },
+    default: { GCSE: [1,2,3,4,5,6],       'A-Level': [2,3,4,5,6,8,10,12,20] },
   }
-  const marks  = (validMarks[board] || validMarks.default)[level] || [1,2,3,4,5,6]
+  const marks = (validMarks[board] || validMarks.default)[level] || [1,2,3,4,5,6]
   const cmdWords = {
-    AQA:    { GCSE: 'State [1], Give [1], Describe [2-3], Explain [3-4], Evaluate [6]',     'A-Level': 'State, Outline [2-3], Explain [4-5], Evaluate [8-9], Discuss [15-25]' },
-    Edexcel:{ GCSE: 'State, Give, Describe, Explain, Assess, Evaluate',                       'A-Level': 'Outline [2-3], Explain [4-5], Assess [8-10], Evaluate [12], To what extent [16-20]' },
-    OCR:    { GCSE: 'Identify, Name, Describe, Explain, Evaluate',                            'A-Level': 'Describe, Explain, Discuss, Evaluate, Assess' },
-    WJEC:   { GCSE: 'Name, Identify, Describe, Explain, Evaluate',                            'A-Level': 'Describe, Explain, Evaluate, Discuss, Analyse' },
+    AQA:     { GCSE: 'State [1], Give [1], Describe [2-3], Explain [3-4], Evaluate [6]', 'A-Level': 'State, Outline [2-3], Explain [4-5], Evaluate [8-9], Discuss [15-25]' },
+    Edexcel: { GCSE: 'State, Give, Describe, Explain, Assess, Evaluate',                  'A-Level': 'Outline [2-3], Explain [4-5], Assess [8-10], Evaluate [12], To what extent [16-20]' },
+    OCR:     { GCSE: 'Identify, Name, Describe, Explain, Evaluate',                       'A-Level': 'Describe, Explain, Discuss, Evaluate, Assess' },
+    WJEC:    { GCSE: 'Name, Identify, Describe, Explain, Evaluate',                       'A-Level': 'Describe, Explain, Evaluate, Discuss, Analyse' },
   }
   const words = ((cmdWords[board] || cmdWords.AQA)[level]) || 'State, Describe, Explain, Evaluate'
 
@@ -307,5 +310,5 @@ export async function generatePredictedQuestions(subject, board, topic, level, t
     `[Continue same format for each question]`,
   ].join('\n')
 
-  return callAI(prompt)
+  return callAI(prompt, SYSTEM, 8192, uid)
 }
