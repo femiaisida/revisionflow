@@ -310,138 +310,85 @@ Focus on:
   return callAI(prompt, SYSTEM, 8192, uid)
 }
 
-export async function generatePredictedQuestions(subject, board, topic, level, totalMarks, numQuestions = 3, uid) {
-  // Board-specific mark schemes and command words
+export async function generatePredictedQuestions(subject, board, level, topic, totalMarks, numQuestions, uid) {
+  // Board-specific config
   const boardConfig = {
     AQA: {
-      GCSE: {
-        marks: [1,2,3,4,5,6,8],
-        commands: { 1:'State/Give/Name/Identify', 2:'Describe/Outline', 3:'Explain', 4:'Explain/Describe in detail', 5:'Explain', 6:'Evaluate/Discuss/Assess' },
-        markScheme: 'Award one mark per valid bullet point. Do not award marks for vague or generic answers. Max marks stated in brackets.',
-        style: 'Questions are concise. Higher mark questions often begin with a stimulus (data, graph, scenario). No "to what extent" phrasing. Essay questions use "Evaluate" or "Discuss".',
-      },
-      'A-Level': {
-        marks: [2,3,4,5,6,8,9,12,15,20,25],
-        commands: { 2:'State/Give', 3:'Outline', 4:'Explain', 5:'Explain/Analyse', 6:'Explain/Analyse', 8:'Analyse/Evaluate', 9:'Evaluate', 12:'Evaluate/Discuss', 15:'Discuss/Assess', 20:'Evaluate/To what extent', 25:'Essay' },
-        markScheme: 'Level-based marking for 8+ mark questions. Level 1 (basic, limited analysis), Level 2 (some development), Level 3 (clear and coherent), Level 4 (sustained, well-evidenced). Point-mark for ≤6 marks.',
-        style: 'Longer stimulus material for essay questions. Precise scientific/technical language expected. Mark schemes use "indicative content" not exhaustive lists.',
-      }
+      GCSE:    { marks:[1,2,3,4,5,6,8],         commands:{1:'State/Give/Name',2:'Describe/Outline',3:'Explain',4:'Explain in detail',5:'Explain',6:'Evaluate/Discuss'},    markScheme:'Award one mark per valid bullet point. Max marks stated in brackets.', style:'Concise questions. Higher mark questions use stimulus material. Use Evaluate or Discuss for 6-mark questions.' },
+      ALevel:  { marks:[2,3,4,5,6,8,9,12,15,20], commands:{2:'State/Give',3:'Outline',4:'Explain',5:'Explain/Analyse',6:'Analyse',8:'Evaluate',9:'Evaluate',12:'Evaluate/Discuss',15:'Discuss/Assess',20:'Essay'}, markScheme:'Level-based marking for 8+ marks. Level 1 (basic), Level 2 (some development), Level 3 (clear/coherent), Level 4 (sustained). Point-mark for 6 marks and under.', style:'Longer stimulus for essays. Precise technical language required. Mark schemes use indicative content.' },
     },
     Edexcel: {
-      GCSE: {
-        marks: [1,2,3,4,5,6,8],
-        commands: { 1:'State/Give', 2:'Describe', 3:'Explain', 4:'Explain', 5:'Explain', 6:'Evaluate/Assess' },
-        markScheme: 'Point marking. Each bullet point = 1 mark. "Do not accept" entries specified for common wrong answers.',
-        style: 'Often uses "complete the sentence" or "use the data to..." stems. More structured scaffolding in questions.',
-      },
-      'A-Level': {
-        marks: [2,3,4,5,6,8,10,12,16,20],
-        commands: { 2:'State', 3:'Outline', 4:'Explain', 5:'Explain', 6:'Assess/Analyse', 8:'Assess/Evaluate', 10:'Evaluate', 12:'Evaluate', 16:'Assess/To what extent', 20:'Essay' },
-        markScheme: 'Levels-based for 6+ marks. Rewards chains of reasoning. Quality of Written Communication assessed at 12+ marks.',
-        style: '"To what extent" essays are common. Data response questions include quantitative analysis.',
-      }
+      GCSE:    { marks:[1,2,3,4,5,6,8],         commands:{1:'State/Give',2:'Describe',3:'Explain',4:'Explain',5:'Explain',6:'Evaluate/Assess'}, markScheme:'Point marking. Each bullet = 1 mark. Do not accept entries listed.', style:'Structured scaffolding. Often uses complete-the-sentence or use-the-data stems.' },
+      ALevel:  { marks:[2,3,4,5,6,8,10,12,16,20], commands:{2:'State',3:'Outline',4:'Explain',5:'Explain',6:'Assess/Analyse',8:'Evaluate',10:'Evaluate',12:'Evaluate',16:'To what extent',20:'Essay'}, markScheme:'Levels-based for 6+ marks. QWC assessed at 12+ marks.', style:'To what extent essays common. Data response includes quantitative analysis.' },
     },
     OCR: {
-      GCSE: {
-        marks: [1,2,3,4,5,6],
-        commands: { 1:'State/Identify', 2:'Describe', 3:'Explain', 4:'Explain', 5:'Discuss', 6:'Evaluate' },
-        markScheme: 'Point marking with "accept" alternatives listed. Owtte (or words to that effect) used frequently.',
-        style: 'Structured questions with sub-parts (a)(i), (a)(ii) etc. Context-based scenarios common.',
-      },
-      'A-Level': {
-        marks: [2,3,4,5,6,8,9,12,15],
-        commands: { 2:'State', 3:'Explain', 4:'Explain', 5:'Analyse', 6:'Evaluate', 8:'Discuss', 9:'Evaluate', 12:'Assess', 15:'Essay' },
-        markScheme: 'Levels-based marking for 6+ marks. AO1/AO2/AO3 breakdown specified per question.',
-        style: 'Assessment objective balance specified. AO1=knowledge, AO2=application, AO3=analysis/evaluation.',
-      }
+      GCSE:    { marks:[1,2,3,4,5,6],            commands:{1:'State/Identify',2:'Describe',3:'Explain',4:'Explain',5:'Discuss',6:'Evaluate'}, markScheme:'Point marking with accept alternatives. Owtte used frequently.', style:'Structured sub-parts (a)(i)(ii). Context-based scenarios common.' },
+      ALevel:  { marks:[2,3,4,5,6,8,9,12,15],   commands:{2:'State',3:'Explain',4:'Explain',5:'Analyse',6:'Evaluate',8:'Discuss',9:'Evaluate',12:'Assess',15:'Essay'}, markScheme:'Levels-based for 6+ marks. AO1/AO2/AO3 breakdown per question.', style:'Assessment objective balance specified per question.' },
     },
-    Edexcel: {
-      GCSE: {
-        marks: [1,2,3,4,5,6,8],
-        commands: { 1:'State/Give', 2:'Describe', 3:'Explain', 4:'Explain', 5:'Explain', 6:'Evaluate/Assess' },
-        markScheme: 'Point marking.',
-        style: 'Structured with scaffolding.',
-      }
-    }
   }
 
-  const cfg = boardConfig[board]?.[level] || boardConfig.AQA[level] || boardConfig.AQA.GCSE
-  const availableMarks = cfg.marks
+  const cfgKey = (level === 'A-Level' || level === 'ALEVEL') ? 'ALevel' : 'GCSE'
+  const cfg    = boardConfig[board]?.[cfgKey] || boardConfig.AQA[cfgKey]
+  const n      = Number(numQuestions) || 3
+  const total  = Number(totalMarks)  || n * 6
 
-  // Distribute marks across exactly numQuestions questions
-  // Build a realistic distribution that sums close to totalMarks
-  function distributeMarks(total, n, available) {
+  // Distribute marks across questions
+  function distributeMarks(tot, count, available) {
     const result = []
-    let remaining = total
-    for (let i = 0; i < n; i++) {
-      const isLast = i === n - 1
-      if (isLast) {
-        // Use closest available mark to what's remaining
-        const closest = available.reduce((a, b) => Math.abs(b - remaining) < Math.abs(a - remaining) ? b : a)
-        result.push(closest)
-      } else {
-        // Aim for roughly equal distribution, pick from available
-        const target  = Math.round(remaining / (n - i))
-        const closest = available.reduce((a, b) => Math.abs(b - target) < Math.abs(a - target) ? b : a)
-        result.push(closest)
-        remaining -= closest
-      }
+    let rem = tot
+    for (let i = 0; i < count; i++) {
+      const target  = Math.round(rem / (count - i))
+      const closest = available.reduce((a, b) => Math.abs(b - target) < Math.abs(a - target) ? b : a)
+      result.push(closest)
+      rem -= closest
     }
     return result
   }
 
-  const markDist = distributeMarks(totalMarks || numQuestions * 6, numQuestions, availableMarks)
+  const markDist = distributeMarks(total, n, cfg.marks)
 
-  const prompt = `You are a senior ${board} examiner writing the OFFICIAL ${level} ${subject} examination paper.
+  // Build each question block as a plain string — no nested template literals
+  function makeMarkScheme(m) {
+    if (m <= 6) {
+      return '• Award 1 mark for: [specific answer point]\n• Award 1 mark for: [another valid point]\n(Maximum ' + m + ' marks)'
+    }
+    const l3lo = Math.round(m * 0.75)
+    const l2lo = Math.round(m * 0.4)
+    const l2hi = Math.round(m * 0.74)
+    const l1hi = Math.round(m * 0.39)
+    return 'Level 3 [' + l3lo + '-' + m + ' marks]: [descriptor]\nLevel 2 [' + l2lo + '-' + l2hi + ' marks]: [descriptor]\nLevel 1 [1-' + l1hi + ' marks]: [descriptor]\nIndicative content:\n• [point 1]\n• [point 2]'
+  }
 
-TASK: Write EXACTLY ${numQuestions} exam question${numQuestions > 1 ? 's' : ''} on the topic "${topic}".
+  function makeQuestion(m, num) {
+    const cmd = cfg.commands[m] || (m <= 2 ? 'State/Give' : m <= 4 ? 'Explain' : 'Evaluate')
+    return '---QUESTION ' + num + '--- [' + m + ' marks]\n' +
+      '[Write question here — command word: ' + cmd + ' — about "' + subject + '" topic: "' + (topic || 'the specified topic') + '"]\n\n' +
+      'MARK SCHEME:\n' + makeMarkScheme(m) + '\n\n' +
+      'EXAMINER NOTE: [Most common student mistake on this question type]'
+  }
 
-MARK ALLOCATION (follow exactly):
-${markDist.map((m, i) => `Question ${i+1}: ${m} marks — command word must be: ${cfg.commands[m] || (m <= 2 ? 'State/Give' : m <= 4 ? 'Explain' : 'Evaluate')}`).join('
-')}
-Total: ${markDist.reduce((a,b)=>a+b,0)} marks
+  const allocationLines = markDist.map(function(m, i) {
+    const cmd = cfg.commands[m] || (m <= 2 ? 'State/Give' : m <= 4 ? 'Explain' : 'Evaluate')
+    return 'Question ' + (i + 1) + ': ' + m + ' marks — command word must be: ' + cmd
+  }).join('\n')
 
-BOARD-SPECIFIC RULES FOR ${board} ${level}:
-- ${cfg.style}
-- Mark scheme format: ${cfg.markScheme}
-- NEVER invent mark values not in this list: ${availableMarks.join(', ')}
-- Write questions EXACTLY as they appear on real ${board} ${level} ${subject} papers
-- Use correct ${board} question paper formatting and terminology
-- All questions MUST be specifically about "${topic}" — no generic questions
+  const formatBlocks = markDist.map(function(m, i) {
+    return makeQuestion(m, i + 1)
+  }).join('\n\n')
 
-STRICT OUTPUT FORMAT — use EXACTLY this structure, no deviations:
-
----QUESTION 1--- [${markDist[0]} marks]
-[Question text here — written exactly as it appears on a real ${board} paper]
-
-MARK SCHEME:
-${markDist[0] <= 6 ? '• Award 1 mark for: [specific answer point]
-• Award 1 mark for: [specific answer point]
-(Maximum ' + markDist[0] + ' marks)' : 'Level 3 [' + Math.round(markDist[0]*0.75) + '-' + markDist[0] + ' marks]: [descriptor]
-Level 2 [' + Math.round(markDist[0]*0.4) + '-' + Math.round(markDist[0]*0.74) + ' marks]: [descriptor]
-Level 1 [1-' + Math.round(markDist[0]*0.39) + ' marks]: [descriptor]
-Indicative content:
-• [point 1]
-• [point 2]'}
-
-EXAMINER NOTE: [One sentence on the most common mistake students make on this question type]
-
-${markDist.slice(1).map((m, i) => `---QUESTION ${i+2}--- [${m} marks]
-[Question text here]
-
-MARK SCHEME:
-${m <= 6 ? '• Award 1 mark for: [specific answer point]
-(Maximum ' + m + ' marks)' : 'Level 3 [' + Math.round(m*0.75) + '-' + m + ' marks]: [descriptor]
-Level 2: [descriptor]
-Level 1: [descriptor]
-Indicative content:
-• [point 1]'}
-
-EXAMINER NOTE: [Common mistake]`).join('
-
-')}
-
-CRITICAL: Output EXACTLY ${numQuestions} question${numQuestions > 1 ? 's' : ''}, no more, no fewer. Do not add introduction text, preamble, or any text outside the ---QUESTION N--- blocks.`
+  const prompt = 'You are a senior ' + board + ' examiner writing the OFFICIAL ' + level + ' ' + subject + ' examination paper.\n\n' +
+    'TASK: Write EXACTLY ' + n + ' exam question' + (n > 1 ? 's' : '') + ' on the topic "' + (topic || 'the specified topic') + '".\n\n' +
+    'MARK ALLOCATION (follow exactly):\n' + allocationLines + '\n' +
+    'Total: ' + markDist.reduce(function(a,b){return a+b}, 0) + ' marks\n\n' +
+    'BOARD-SPECIFIC RULES FOR ' + board + ' ' + level + ':\n' +
+    '- ' + cfg.style + '\n' +
+    '- Mark scheme format: ' + cfg.markScheme + '\n' +
+    '- NEVER use mark values outside this list: ' + cfg.marks.join(', ') + '\n' +
+    '- Write questions EXACTLY as they appear on real ' + board + ' ' + level + ' ' + subject + ' papers\n' +
+    '- All questions MUST be specifically about the given topic\n\n' +
+    'STRICT OUTPUT FORMAT (copy exactly):\n\n' +
+    formatBlocks + '\n\n' +
+    'CRITICAL: Output EXACTLY ' + n + ' question' + (n > 1 ? 's' : '') + ', no more, no fewer. No preamble or extra text outside the ---QUESTION N--- blocks.'
 
   return callAI(prompt, SYSTEM, 8192, uid)
 }
