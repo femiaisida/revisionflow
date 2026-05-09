@@ -13,7 +13,6 @@ import {
   getTopicAdvice,
   predictGrade,
   suggestNextTopic,
-  markAnswer,
 } from '../utils/ai'
 import { checkAndAwardBadge } from '../utils/firestore'
 import AIOutput from '../components/AIOutput'
@@ -59,15 +58,6 @@ export default function AIAdvisor() {
   const [nextLoad,    setNextLoad]    = useState(false)
 
   // Answer marker
-  const [markSubj,    setMarkSubj]    = useState('')
-  const [markQ,       setMarkQ]       = useState('')
-  const [markA,       setMarkA]       = useState('')
-  const [markResult,  setMarkResult]  = useState('')
-  const [markMarks,   setMarkMarks]   = useState('')
-  const [markIsPaper, setMarkIsPaper] = useState(false)
-  const [markYear,    setMarkYear]    = useState('2024')
-  const [markPaperNum,setMarkPaperNum]= useState('1')
-  const [markLoad,    setMarkLoad]    = useState(false)
 
   // Techniques
   const [techSubj,    setTechSubj]    = useState('')
@@ -221,19 +211,6 @@ export default function AIAdvisor() {
     const res = await suggestNextTopic(nextSubj, topics, examDates)
     setNextTopic(res.text||res.error||'')
     setNextLoad(false)
-  }
-
-  async function handleMarkAnswer() {
-    if (!markSubj||!markQ||!markA) return
-    setMarkLoad(true)
-    setMarkResult('')
-    // Build an enriched question string with optional context
-    const enrichedQ = markIsPaper
-      ? `[${markSubj} ${markYear} Paper ${markPaperNum}${markMarks ? `, ${markMarks} marks` : ''}] ${markQ}`
-      : markMarks ? `[${markMarks} marks] ${markQ}` : markQ
-    const res = await markAnswer(markSubj, enrichedQ, markA)
-    setMarkResult(res.text||res.error||'')
-    setMarkLoad(false)
   }
 
   async function handleTechniques() {
@@ -458,7 +435,6 @@ export default function AIAdvisor() {
           {k:'chat',       label:'Chat',          icon:MessageSquare},
           {k:'predict',    label:'Grade Predict',  icon:Target},
           {k:'next',       label:'Next Topic',     icon:Brain},
-          {k:'mark',       label:'Mark Answer',    icon:FileText},
           {k:'resources',  label:'Resources',      icon:BookOpen},
           {k:'plan',       label:'Study Plan',     icon:TrendingUp},
           {k:'techniques', label:'Techniques',     icon:Lightbulb},
@@ -548,59 +524,6 @@ export default function AIAdvisor() {
       )}
 
       {/* ── Answer Marker ── */}
-      {tab==='mark'&&(
-        <div className="card">
-          <h4 style={{marginBottom:4,display:'flex',alignItems:'center',gap:8}}><FileText size={18} color="var(--accent-light)"/> AI Answer Marker</h4>
-          <p style={{marginBottom:16,fontSize:'0.875rem'}}>Write a practice answer and the AI marks it like a GCSE examiner — with feedback and a model answer.</p>
-          <div style={{display:'flex',flexDirection:'column',gap:12}}>
-            <div><label className="label">Subject</label>
-              <select className="select" value={markSubj} onChange={e=>setMarkSubj(e.target.value)}>
-                <option value="">Select…</option>
-                {subjects.map(s=><option key={s} value={s}>{s}</option>)}
-              </select></div>
-            <div><label className="label">Question</label>
-              <textarea className="textarea" style={{minHeight:70}} value={markQ} onChange={e=>setMarkQ(e.target.value)} placeholder="Paste or type the exam question here…"/></div>
-            <div><label className="label">Your answer</label>
-              <textarea className="textarea" style={{minHeight:120}} value={markA} onChange={e=>setMarkA(e.target.value)} placeholder="Write your answer here…"/></div>
-            <div className="grid-2" style={{gap:10}}>
-              <div>
-                <label className="label">Marks available (optional)</label>
-                <input className="input" type="number" min={1} max={40} value={markMarks} onChange={e=>setMarkMarks(e.target.value)} placeholder="e.g. 8"/>
-              </div>
-              <div style={{display:'flex',alignItems:'flex-end',gap:8}}>
-                <label style={{display:'flex',alignItems:'center',gap:6,cursor:'pointer',paddingBottom:8}}>
-                  <input type="checkbox" checked={markIsPaper} onChange={e=>setMarkIsPaper(e.target.checked)}
-                    style={{width:15,height:15,accentColor:'var(--accent)'}}/>
-                  <span style={{fontSize:'0.82rem',fontWeight:500}}>From a real past paper</span>
-                </label>
-              </div>
-            </div>
-            {markIsPaper && (
-              <div className="grid-2" style={{gap:10}}>
-                <div>
-                  <label className="label">Year</label>
-                  <select className="select" value={markYear} onChange={e=>setMarkYear(e.target.value)}>
-                    {[2024,2023,2022,2021,2020,2019,2018,2017].map(y=><option key={y} value={y}>{y}</option>)}
-                  </select>
-                </div>
-                <div>
-                  <label className="label">Paper number</label>
-                  <select className="select" value={markPaperNum} onChange={e=>setMarkPaperNum(e.target.value)}>
-                    {['1','2','3','4'].map(p=><option key={p} value={p}>Paper {p}</option>)}
-                  </select>
-                </div>
-              </div>
-            )}
-            <button className="btn btn-primary" onClick={handleMarkAnswer} disabled={markLoad||!markSubj||!markQ||!markA}>
-              {markLoad?'Marking…':'Mark my answer'}
-            </button>
-          </div>
-          {markLoad&&<div className="loading-center" style={{marginTop:16}}><div className="spinner"/></div>}
-          {markResult&&<div style={{marginTop:16}}><AIOutput text={markResult} label="Marking Feedback" /></div>}
-        </div>
-      )}
-
-      {/* ── Resources ── */}
       {tab==='resources'&&(
         <div style={{display:'flex',flexDirection:'column',gap:14}}>
           <p>Personalised resource recommendations for each of your subjects.</p>
