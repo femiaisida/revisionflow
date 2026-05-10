@@ -7,6 +7,7 @@ import { useNavigate } from 'react-router-dom'
 import { useAuth } from '../context/AuthContext'
 import { collection, getDocs, query, where, limit } from 'firebase/firestore'
 import { db } from '../firebase'
+import { checkAndAwardBadge } from '../utils/firestore'
 import { callAI } from '../utils/ai'
 import { daysUntilExam } from '../utils/calendar'
 import AIOutput from '../components/AIOutput'
@@ -185,6 +186,7 @@ export default function EmergencyMode() {
       }
       const text = result.text || 'Could not generate plan. Please try again.'
       setPlanText(text)
+      if (text) checkAndAwardBadge(uid, 'emergency_mode').catch(()=>{})
       setParsed(parsePlan(text))
     } catch (err) {
       setError(`Error: ${err.message || 'Something went wrong. Check your Mistral API key is set in Netlify environment variables.'}`)
