@@ -135,6 +135,7 @@ export default function AIAdvisor() {
     const res = await chatWithAI(newMessages, { subjects: profile?.subjects, context: userContext })
     setMessages(ms=>[...ms,{role:'assistant',content:res.text||res.error||'Sorry, I had trouble responding.'}])
     setLoading(false)
+    if (res.text) checkAndAwardBadge(user.uid, 'first_ai').catch(()=>{})
   }
 
   async function getResources(subject) {
@@ -290,6 +291,7 @@ export default function AIAdvisor() {
     const res = await chatWithAI(newMessages, { subjects: profile?.subjects, context: userContext })
     setMessages(ms=>[...ms,{role:'assistant',content:res.text||res.error||'Sorry, I had trouble responding.'}])
     setLoading(false)
+    if (res.text) checkAndAwardBadge(user.uid, 'first_ai').catch(()=>{})
   }
 
   async function getResources(subject) {
