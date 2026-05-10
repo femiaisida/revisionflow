@@ -12,7 +12,7 @@ import { getSessions, getTasks, getPaperAttempts } from '../utils/firestore'
 import { doc, getDoc, setDoc, serverTimestamp } from 'firebase/firestore'
 import { db } from '../firebase'
 import { getDailyAdvice } from '../utils/ai'
-import { countdownLabel, countdownUrgency, gradeColour, daysUntilExam } from '../utils/calendar'
+import { countdownLabel, countdownUrgency, gradeColour } from '../utils/calendar'
 import { BADGE_LIST } from '../data/badges'
 import { SUBJECT_COLOURS } from '../data/subjects'
 import { applyReferralCodeForExistingUser } from '../utils/referrals'
@@ -254,9 +254,9 @@ export default function Dashboard() {
             { label: 'Today',     val: todaySessions.length,  sub: `${todaySessions.filter(s => s.completed).length} done`, col: 'var(--success)' },
             (() => {
               const nextExam = (profile?.examDates || [])
-                .filter(e => e.examDate && daysUntilExam(e.examDate) >= 0)
+                .filter(e => { if (!e.examDate) return false; const p = e.examDate.slice(0,10).split('-').map(Number); const ex = new Date(p[0], p[1]-1, p[2]); const td = new Date(); td.setHours(0,0,0,0); return Math.round((ex-td)/86400000) >= 0 })
                 .sort((a, b) => new Date(a.examDate) - new Date(b.examDate))[0]
-              const daysTo = nextExam ? daysUntilExam(nextExam.examDate) : null
+              const daysTo = (() => { if (!nextExam) return null; const p = nextExam.examDate.slice(0,10).split('-').map(Number); const ex = new Date(p[0], p[1]-1, p[2]); const td = new Date(); td.setHours(0,0,0,0); return Math.round((ex-td)/86400000); })()
               return { label: 'Next exam', val: daysTo === 0 ? 'Today!' : daysTo === 1 ? '1 day' : daysTo !== null ? `${daysTo} days` : '—', sub: nextExam ? `${nextExam.subject}` : 'No exams added', col: daysTo !== null && daysTo <= 7 ? 'var(--danger)' : daysTo !== null && daysTo <= 14 ? 'var(--warning)' : 'var(--accent-light)' }
             })(),
           ].map(s => (
