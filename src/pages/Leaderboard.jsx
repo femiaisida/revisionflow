@@ -1,7 +1,7 @@
 // src/pages/Leaderboard.jsx
 import React, { useState, useEffect } from 'react'
 import { useAuth } from '../context/AuthContext'
-import { getLeaderboard, getGlobalLeaderboard, updateUserProfile } from '../utils/firestore'
+import { checkAndAwardBadge, getLeaderboard, getGlobalLeaderboard, updateUserProfile } from '../utils/firestore'
 import { LEVELS } from '../data/subjects'
 import { PROFILE_ICONS } from '../data/themes'
 import { Trophy, Flame, Zap, Globe, Users, EyeOff } from 'lucide-react'
@@ -18,6 +18,13 @@ export default function Leaderboard() {
   useEffect(() => {
     if (!user || !profile) return
     getLeaderboard(profile.friends || [], user.uid)
+    // Check top_three badge on global board
+    try {
+      const { getGlobalLeaderboard } = await import('../utils/firestore')
+      const board = await getGlobalLeaderboard(10)
+      const rank  = board.findIndex(u => u.uid === user.uid)
+      if (rank >= 0 && rank < 3) checkAndAwardBadge(user.uid, 'top_three').catch(()=>{})
+    } catch {}
       .then(d => { setFriendsBoard(d); setLoadingF(false) })
   }, [user, profile])
 
