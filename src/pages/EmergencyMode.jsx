@@ -35,43 +35,45 @@ async function generateEmergencyPlan({ subject, board, level, paper, weakTopics,
   const weakPaperTopics = paperTopics.filter(t => (t.confidence || 3) <= 2)
   const topicsForContext = weakPaperTopics.length > 0 ? weakPaperTopics : paperTopics.slice(0, 10)
 
-  const prompt = `You are a senior ${board} ${subject} examiner and chief marker for ${level} examinations.
-A student has ${subject} ${level}${paper ? ` Paper ${paper}` : ''} in ${days} days (${hoursUntil} hours).
+  const prompt = [
+    'You are a senior ' + board + ' ' + subject + ' examiner and the student's personal tutor.',
+    'The student has ' + subject + ' ' + level + (paper ? ' Paper ' + paper : '') + ' in ' + days + ' day' + (days !== 1 ? 's' : '') + ' (' + hoursUntil + ' hours).',
+    '',
+    'STUDENT DATA:',
+    '- Recent paper average: ' + (avgScore !== null ? Math.round(avgScore) + '%' : 'no papers logged'),
+    '- Weakest topics: ' + (weakPaperTopics.slice(0, 6).map(function(t){return t.name}).join(', ') || 'none logged'),
+    '- Unresolved mistakes: ' + (mistakes.slice(0, 4).map(function(m){return m.topic || (m.description || '').slice(0, 30)}).join(', ') || 'none'),
+    '- Revision sessions available before exam: ~' + sessionsLeft,
+    '',
+    'SPECIFICATION TOPICS FOR THIS PAPER:',
+    topicsForContext.slice(0, 10).map(function(t){return '- ' + t.name + ' (confidence ' + (t.confidence || 3) + '/5)'}).join('\n'),
+    '',
+    'OUTPUT FORMAT — follow exactly, every section required:',
+    '',
+    'PREDICTED GRADE: [e.g. Grade 6]',
+    'GRADE REASONING: [one sentence citing the student data]',
+    '',
+    'TOP 5 TOPICS TO REVISE:',
+    '1. [topic name] — [what the mark scheme rewards, 1 sentence]',
+    '2. [topic name] — [examiner tip]',
+    '3. [topic name] — [examiner tip]',
+    '4. [topic name] — [examiner tip]',
+    '5. [topic name] — [examiner tip]',
+    '',
+    "TODAY'S PLAN:",
+    'Session 1 (30 min): [specific task with exact topic and activity]',
+    'Session 2 (30 min): [specific task]',
+    'Session 3 (30 min): [past paper practice — name specific year and paper if possible]',
+    '',
+    'PREDICTED EXAM QUESTIONS:',
+    'Q1 ([X] marks): [realistic ' + board + '-style question on weakest topic]',
+    'Q2 ([X] marks): [realistic question — different topic]',
+    'Q3 ([X] marks): [realistic question — different topic]',
+    '',
+    'EXAM DAY TIP: [one specific, actionable tip for ' + subject + (paper ? ' Paper ' + paper : '') + ']',
+  ].join('\n')
 
-CRITICAL: All advice must be SPECIFICALLY for ${subject}${paper ? ` Paper ${paper}` : ''} — not any other paper.
-${board} ${subject} ${level}${paper ? ` Paper ${paper}` : ''} tests: ${topicsForContext.slice(0, 8).map(t => t.name).join(', ') || 'the full specification'}
-
-STUDENT DATA:
-- Average score on recent papers: ${avgScore !== null ? Math.round(avgScore) + '%' : 'no papers logged'}
-- Weakest topics for this paper (confidence ≤ 2/5): ${weakPaperTopics.slice(0, 6).map(t => t.name).join(', ') || 'none logged yet'}
-- Unresolved mistakes: ${mistakes.slice(0, 4).map(m => m.topic || m.description?.slice(0, 40)).join(', ') || 'none'}
-- Sessions available: ~${sessionsLeft}
-
-Respond in EXACTLY this format. No preamble. No extra sections. Every piece of advice must be specific to ${subject}${paper ? ` Paper ${paper}` : ''}.
-
-PREDICTED GRADE: [single grade, e.g. Grade 6 or Grade B]
-GRADE REASONING: [one sentence — cite specific evidence from student data above]
-
-TOP 5 TOPICS TO REVISE:
-1. [exact topic name from Paper ${paper || 'specification'}] — [one specific examiner tip — what the mark scheme rewards]
-2. [exact topic name] — [one specific tip]
-3. [exact topic name] — [one specific tip]
-4. [exact topic name] — [one specific tip]
-5. [exact topic name] — [one specific tip]
-
-TODAY'S PLAN:
-Session 1 (30 min): [specific task — name exact topic, specific activity e.g. "complete 2019 Paper ${paper || '1'} Q3, mark against scheme"]
-Session 2 (30 min): [specific task]
-Session 3 (30 min): [specific task — must include past paper practice]
-
-PREDICTED EXAM QUESTIONS:
-Q1 ([X] marks): [actual ${board}-style question on a weak topic — use exact command word ${board} uses]
-Q2 ([X] marks): [actual ${board}-style question — different topic]
-Q3 ([X] marks): [actual ${board}-style question — different topic]
-
-EXAM DAY TIP: [one highly specific tip for ${subject}${paper ? ` Paper ${paper}` : ''} — e.g. time allocation, common traps, how marks are awarded]`
-
-  return callAI(prompt)
+  return callAI(prompt, null, 8192)
 }
 
 
@@ -186,7 +188,7 @@ export default function EmergencyMode() {
       }
       const text = result.text || 'Could not generate plan. Please try again.'
       setPlanText(text)
-      if (text) checkAndAwardBadge(uid, 'emergency_mode').catch(()=>{})
+      if (text && user?.uid) checkAndAwardBadge(user.uid, 'emergency_mode').catch(()=>{})
       setParsed(parsePlan(text))
     } catch (err) {
       setError(`Error: ${err.message || 'Something went wrong. Check your Mistral API key is set in Netlify environment variables.'}`)
@@ -209,7 +211,7 @@ export default function EmergencyMode() {
             Emergency Mode activates automatically when you have an exam within 7 days.
             Make sure your exam dates are added.
           </p>
-          <button className="btn btn-primary" onClick={() => navigate('/exam-dates')}>
+          <button className="btn btn-primary" onClick={() => navigate('/exams')}>
             Add exam dates
           </button>
         </div>
