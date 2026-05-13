@@ -74,11 +74,14 @@ function renderMarkdown(text) {
       elements.push(<br key={i} />)
     } else {
       // Lines that are entirely **bold** get rendered as a styled heading
-      const boldLineMatch = line.match(/^\*\*(.+?)\*\*:?$/)
+      // Only treat as a standalone bold heading if the ENTIRE line is **text** or **text:**
+      // Lines like "**Session 1:** do the task" must NOT match — they have content after
+      const boldLineMatch = line.match(/^\*\*(.+?)\*\*:?\s*$/) && !line.match(/^\*\*(.+?)\*\*:?.+/)
       if (boldLineMatch) {
+        const boldText = (line.match(/^\*\*(.+?)\*\*/) || [])[1] || ''
         elements.push(
           <div key={i} style={{ fontWeight:700, color:'var(--text-primary)', marginTop:'0.6rem', marginBottom:'0.1rem', fontSize:'0.9rem' }}>
-            {inlineFormat(boldLineMatch[1])}
+            {inlineFormat(boldText)}
           </div>
         )
       } else {
