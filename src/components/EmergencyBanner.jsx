@@ -7,14 +7,7 @@ import { useNavigate } from 'react-router-dom'
 import { useAuth } from '../context/AuthContext'
 import { AlertTriangle, Zap } from 'lucide-react'
 
-// Self-contained day calculator — no import needed
-function daysUntilExam(dateStr) {
-  if (!dateStr) return null
-  var p = String(dateStr).slice(0, 10).split('-').map(Number)
-  var ex = new Date(p[0], p[1] - 1, p[2])
-  var td = new Date(); td.setHours(0, 0, 0, 0)
-  return Math.round((ex - td) / 86400000)
-}
+import { isExamDone, daysUntilExam } from '../utils/examUtils'
 
 export default function EmergencyBanner() {
   const { profile } = useAuth()
@@ -22,10 +15,7 @@ export default function EmergencyBanner() {
 
   const nextUrgentExam = useMemo(() => {
     return (profile?.examDates || [])
-      .filter(e => {
-        const d = daysUntilExam(e.examDate)
-        return d >= 0 && d <= 7
-      })
+      .filter(g => !isExamDone(g.examDate) && daysUntilExam(g.examDate) <= 7)
       .sort((a, b) => new Date(a.examDate) - new Date(b.examDate))[0]
   }, [profile])
 
