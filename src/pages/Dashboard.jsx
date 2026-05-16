@@ -25,14 +25,7 @@ import {
 } from 'lucide-react'
 import toast from 'react-hot-toast'
 
-// Self-contained day calculator — no import needed
-function _daysTil(d) {
-  if (!d) return null
-  var p = String(d).slice(0,10).split('-').map(Number)
-  var e = new Date(p[0], p[1]-1, p[2])
-  var t = new Date(); t.setHours(0,0,0,0)
-  return Math.round((e-t)/86400000)
-}
+import { isExamDone, daysUntilExam as _daysTil } from '../utils/examUtils'
 
 // Level formula — matches firestore.js
 function xpForLevel(n) { return Math.floor(100 * Math.pow(1.15, n - 1)) }
@@ -263,7 +256,7 @@ export default function Dashboard() {
             { label: 'Today',     val: todaySessions.length,  sub: `${todaySessions.filter(s => s.completed).length} done`, col: 'var(--success)' },
             (() => {
               const nextExam = (profile?.examDates || [])
-                .filter(e => e.examDate && _daysTil(e.examDate) >= 0)
+                .filter(e => e.examDate && !isExamDone(e.examDate))
                 .sort((a, b) => new Date(a.examDate) - new Date(b.examDate))[0]
               const daysTo = nextExam ? _daysTil(nextExam.examDate) : null
               return { label: 'Next exam', val: daysTo === 0 ? 'Today!' : daysTo === 1 ? '1 day' : daysTo !== null ? `${daysTo} days` : '—', sub: nextExam ? `${nextExam.subject}` : 'No exams added', col: daysTo !== null && daysTo <= 7 ? 'var(--danger)' : daysTo !== null && daysTo <= 14 ? 'var(--warning)' : 'var(--accent-light)' }
