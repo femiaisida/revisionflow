@@ -315,7 +315,7 @@ export default function Onboarding() {
                 <Brain size={20} color="var(--accent-light)"/>
                 <h3 style={{margin:0}}>Generate your AI study plan</h3>
               </div>
-              <p style={{marginBottom:16,fontSize:'0.875rem'}}>Personalised to your subjects, targets, and availability using Google Gemini.</p>
+              <p style={{marginBottom:16,fontSize:'0.875rem'}}>Personalised to your subjects, targets, and availability using Mistral AI.</p>
               {!planDone ? (
                 <div style={{textAlign:'center',padding:'20px 0'}}>
                   <div style={{fontSize:'3rem',marginBottom:12}}>🤖</div>
