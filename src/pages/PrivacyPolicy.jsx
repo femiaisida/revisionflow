@@ -93,7 +93,7 @@ export default function PrivacyPolicy() {
           <ul style={UL_STYLE}>
             <li>Messages sent to the AI Advisor, Mark Answer, Grade Predictor, Flashcard Generator, and Study Plan features</li>
             <li>Your revision data (subjects, grades, recent sessions) included in AI prompts to personalise responses</li>
-            <li>These are processed by <strong>Mistral AI</strong> (primary) or <strong>Google Gemini</strong> (fallback) via their APIs</li>
+            <li>These are processed by <strong>Mistral AI</strong> via their API</li>
           </ul>
 
           <p style={{ ...P_STYLE, fontWeight:600 }}>Technical data (lawful basis: legitimate interests)</p>
@@ -134,7 +134,6 @@ export default function PrivacyPolicy() {
                 {[
                   ['Google Firebase','Authentication, Firestore database, hosting infrastructure','Email, display name, all Firestore data','EU / USA (SCCs apply)','firebase.google.com/support/privacy'],
                   ['Mistral AI','AI Advisor, answer marking, study plan generation','Your messages + summarised revision context','EU','mistral.ai/privacy'],
-                  ['Google Gemini','AI fallback when Mistral is unavailable','Same as Mistral AI','USA (SCCs apply)','policies.google.com/privacy'],
                   ['Netlify','Web hosting and deployment','IP addresses in server logs (Netlify standard logging)','USA (SCCs apply)','netlify.com/privacy'],
                 ].map(([s,p,d,l,url]) => (
                   <tr key={s} style={{ borderBottom:'1px solid var(--border)' }}>
@@ -225,8 +224,8 @@ export default function PrivacyPolicy() {
 
         <section style={SECTION_STYLE}>
           <h2 style={H2_STYLE}>11. AI Data Processing</h2>
-          <p style={P_STYLE}>When you use AI features (Chat, Grade Predictor, Mark Answer, Flashcards, Study Plan), your message and a summary of your relevant revision data is sent to Mistral AI's API (or Google Gemini as fallback). This is processed on their servers to generate a response.</p>
-          <p style={P_STYLE}><strong>Important:</strong> Mistral AI's API terms state that API data is <em>not</em> used to train their models by default. Google Gemini's API terms similarly exclude API data from training. However, both services may retain request logs for up to 30 days for abuse detection. We recommend not entering sensitive personal information beyond what is needed for revision advice.</p>
+          <p style={P_STYLE}>When you use AI features (Chat, Grade Predictor, Mark Answer, Flashcards, Study Plan), your message and a summary of your relevant revision data is sent to Mistral AI's API. This is processed on their servers to generate a response.</p>
+          <p style={P_STYLE}><strong>Important:</strong> Mistral AI's API terms state that API data is <em>not</em> used to train their models by default. However, Mistral may retain request logs for up to 30 days for abuse detection. We recommend not entering sensitive personal information beyond what is needed for revision advice.</p>
         </section>
 
         <section style={SECTION_STYLE}>
