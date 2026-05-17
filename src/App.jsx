@@ -17,11 +17,9 @@ const Signup        = lazy(() => import('./pages/Signup'))
 const Onboarding    = lazy(() => import('./pages/Onboarding'))
 const Dashboard     = lazy(() => import('./pages/Dashboard'))
 const Topics        = lazy(() => import('./pages/Topics'))
-const TopicMastery  = lazy(() => import('./pages/TopicMastery'))
 const Calendar      = lazy(() => import('./pages/Calendar'))
 const Timer         = lazy(() => import('./pages/Timer'))
 const Tasks         = lazy(() => import('./pages/Tasks'))
-const Notes         = lazy(() => import('./pages/Notes'))
 const Mistakes      = lazy(() => import('./pages/Mistakes'))
 const PastPapers    = lazy(() => import('./pages/PastPapers'))
 const Analytics     = lazy(() => import('./pages/Analytics'))
@@ -115,7 +113,6 @@ export default function App() {
                 </Suspense>
               </BrowserRouter>
             <Toaster position="top-right" toastOptions={{ duration: 4000, style: { background: 'var(--bg-surface)', color: 'var(--text-primary)', border: '1px solid var(--border)' } }} />
-            <XPToast />
             <XPToast />
             </PriorityProvider>
           </TimerProvider>
