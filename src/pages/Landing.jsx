@@ -13,7 +13,7 @@ const FEATURES = [
   { icon:Brain,         title:'Topic Tracker',        desc:'Rate confidence per topic, view a heatmap of strengths and weaknesses, and get AI-powered next-topic suggestions.' },
   { icon:FileText,      title:'Past Paper Tracker',   desc:'Log marks per question, auto-calculate grades from real boundaries, and get AI weakness analysis.' },
   { icon:BarChart2,     title:'Progress Analytics',   desc:'Grade progression graphs, subject averages, and AI-predicted final grades based on your trajectory.' },
-  { icon:MessageSquare, title:'AI Revision Advisor',  desc:'Chat, grade predictor, answer marker, flashcard generator, resource recommendations — all powered by Gemini AI.' },
+  { icon:MessageSquare, title:'AI Revision Advisor',  desc:'Chat, grade predictor, answer marker, flashcard generator, resource recommendations — all powered by Mistral AI.' },
   { icon:Trophy,        title:'Gamification',         desc:'Earn XP, level up, unlock 14 badges, maintain streaks, and compete on leaderboards with friends.' },
   { icon:Users,         title:'Social Features',      desc:'Add friends, compare streaks and XP, and stay accountable together.' },
   { icon:Timer,         title:'Study Timer',          desc:'Countdown timer, stopwatch, and alarm clock with multiple sound options. Pop out as a floating widget.' },
@@ -115,7 +115,7 @@ export default function Landing() {
             and AI-powered personalisation.
           </p>
           <div style={{display:'flex',gap:10,justifyContent:'center',flexWrap:'wrap'}}>
-            <div className="badge badge-purple"><Code2 size={11}/> React + Firebase + Gemini AI</div>
+            <div className="badge badge-purple"><Code2 size={11}/> React + Firebase + Mistral AI</div>
             <div className="badge badge-purple"><GraduationCap size={11}/> GCSE 2026</div>
             <div className="badge badge-purple"><Zap size={11}/> Open to all students</div>
           </div>
@@ -142,7 +142,7 @@ export default function Landing() {
               { icon:'🇬🇧', title:'UK GDPR compliant', desc:'We comply fully with the UK General Data Protection Regulation and the Data Protection Act 2018.' },
               { icon:'🗑️', title:'Delete anytime', desc:'Delete your account and all associated data permanently from Settings at any time — no questions asked.' },
               { icon:'👶', title:'Age 13+', desc:'Designed for secondary school students. Users under 13 require parental consent. We do not knowingly collect data from under-13s.' },
-              { icon:'🤖', title:'AI transparency', desc:'AI requests use Mistral AI and Google Gemini APIs. Neither trains their models on API data by default.' },
+              { icon:'🤖', title:'AI transparency', desc:'AI requests use Mistral AI. Mistral does not train on API data by default and may retain request logs for up to 30 days for abuse detection.' },
               { icon:'📧', title:'Right to access', desc:'Email femiaisida1@gmail.com to request a copy of your data, corrections, or deletion under UK GDPR Article 15–17.' },
             ].map(item => (
               <div key={item.title} style={{padding:'16px',background:'var(--bg-card)',borderRadius:'var(--radius-md)',border:'1px solid var(--border)'}}>
