@@ -1,6 +1,6 @@
-// netlify/functions/ai.js
-// ES Module format — required because package.json has "type": "module"
-// MISTRAL_API_KEY must be set in Netlify env vars (no VITE_ prefix)
+// netlify/functions/tutor.js
+// CommonJS format — required because netlify/functions/package.json sets "type":"commonjs"
+// MISTRAL_API_KEY must be set in Netlify env vars (no VITE_ prefix, never in .env.local)
 
 const MISTRAL_URL = 'https://api.mistral.ai/v1/chat/completions'
 const MAX_TOKENS  = 8192
@@ -18,7 +18,7 @@ function checkRateLimit(uid) {
   }
   if (entry.count >= DAILY_LIMIT) {
     const resetIn = Math.ceil((entry.resetAt - now) / 60000)
-    return { allowed: false, reason: `Daily AI limit reached. Resets in ${resetIn} minutes.` }
+    return { allowed: false, reason: 'Daily AI limit reached. Resets in ' + resetIn + ' minutes.' }
   }
   entry.count++
   return { allowed: true, remaining: DAILY_LIMIT - entry.count }
@@ -36,17 +36,9 @@ function respond(statusCode, body) {
   }
 }
 
-const DEFAULT_SYSTEM = `You are RevisionFlow's AI tutor — an expert on UK GCSE and A-Level revision.
-You give specific, practical, encouraging advice tailored to UK students.
-Be concise but thorough. Use bullet points where helpful. Focus on actionable recommendations.
-Always reference specific free resources where relevant:
-- Maths: Dr Frost Maths, Corbettmaths, PMT
-- Sciences: Cognito, PMT, SaveMyExams, Primrose Kitten
-- Computer Science: Craig 'n' Dave, Seneca
-- English: Mr Bruff, SaveMyExams
-- All subjects: Seneca, PMT, SaveMyExams`
+const DEFAULT_SYSTEM = "You are RevisionFlow's AI tutor — an expert on UK GCSE and A-Level revision. You give specific, practical, encouraging advice tailored to UK students. Be concise but thorough. Use bullet points where helpful. Focus on actionable recommendations. Always reference specific free resources where relevant: Maths: Dr Frost Maths, 1stclassmaths, Corbettmaths, PMT. Sciences: Cognito, PMT, SaveMyExams, Primrose Kitten. Computer Science: Craig 'n' Dave, CS GCSE Guru, Seneca. English: Mr Bruff, SaveMyExams. All subjects: Seneca, PMT, SaveMyExams."
 
-export const handler = async function(event) {
+module.exports.handler = async function(event) {
   if (event.httpMethod === 'OPTIONS') {
     return {
       statusCode: 204,
@@ -63,46 +55,46 @@ export const handler = async function(event) {
     return respond(405, { error: 'Method not allowed' })
   }
 
-  let body
+  var body
   try {
     body = JSON.parse(event.body || '{}')
-  } catch {
+  } catch (e) {
     return respond(400, { error: 'Invalid JSON body' })
   }
 
-  const { messages, systemPrompt, maxTokens, uid } = body
+  var messages     = body.messages
+  var systemPrompt = body.systemPrompt
+  var maxTokens    = body.maxTokens
+  var uid          = body.uid
 
   if (!messages || !Array.isArray(messages) || messages.length === 0) {
     return respond(400, { error: 'messages array is required' })
   }
 
-  const rateCheck = checkRateLimit(uid || null)
+  var rateCheck = checkRateLimit(uid || null)
   if (!rateCheck.allowed) {
     return respond(429, { error: rateCheck.reason })
   }
 
-  const apiKey = process.env.MISTRAL_API_KEY
+  var apiKey = process.env.MISTRAL_API_KEY
   if (!apiKey) {
-    console.error('[AI proxy] MISTRAL_API_KEY not set in Netlify environment variables')
+    console.error('[tutor] MISTRAL_API_KEY not set in Netlify environment variables')
     return respond(500, { error: 'AI service not configured. Add MISTRAL_API_KEY to Netlify environment variables.' })
   }
 
-  const safeMessages = messages
-    .filter(m => m.role === 'user' || m.role === 'assistant')
-    .map(m => ({ role: m.role, content: String(m.content || '').slice(0, 20000) }))
+  var safeMessages = messages
+    .filter(function(m) { return m.role === 'user' || m.role === 'assistant' })
+    .map(function(m) { return { role: m.role, content: String(m.content || '').slice(0, 20000) } })
     .slice(-20)
 
-  const fullMessages = [
-    { role: 'system', content: systemPrompt || DEFAULT_SYSTEM },
-    ...safeMessages,
-  ]
+  var fullMessages = [{ role: 'system', content: systemPrompt || DEFAULT_SYSTEM }].concat(safeMessages)
 
   try {
-    const mistralRes = await fetch(MISTRAL_URL, {
+    var mistralRes = await fetch(MISTRAL_URL, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
-        'Authorization': `Bearer ${apiKey}`,
+        'Authorization': 'Bearer ' + apiKey,
       },
       body: JSON.stringify({
         model: 'mistral-small-latest',
@@ -113,19 +105,20 @@ export const handler = async function(event) {
     })
 
     if (!mistralRes.ok) {
-      const errBody = await mistralRes.json().catch(() => ({}))
-      console.error('[AI proxy] Mistral error:', mistralRes.status, errBody)
-      return respond(502, { error: `AI request failed (${mistralRes.status}). Please try again.` })
+      var errBody = {}
+      try { errBody = await mistralRes.json() } catch(e) {}
+      console.error('[tutor] Mistral error:', mistralRes.status, errBody)
+      return respond(502, { error: 'AI request failed (' + mistralRes.status + '). Please try again.' })
     }
 
-    const data = await mistralRes.json()
-    const text = data.choices?.[0]?.message?.content || ''
+    var data = await mistralRes.json()
+    var text = (data.choices && data.choices[0] && data.choices[0].message && data.choices[0].message.content) || ''
 
     if (!text) return respond(502, { error: 'AI returned an empty response.' })
 
-    return respond(200, { text, provider: 'mistral', remaining: rateCheck.remaining })
+    return respond(200, { text: text, provider: 'mistral', remaining: rateCheck.remaining })
   } catch (e) {
-    console.error('[AI proxy] error:', e)
+    console.error('[tutor] error:', e)
     return respond(503, { error: 'Could not reach the AI service. Check your connection.' })
   }
 }
