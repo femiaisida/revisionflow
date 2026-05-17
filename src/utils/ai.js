@@ -1,10 +1,7 @@
 // src/utils/ai.js
-// All AI calls now go through /api/ai (netlify/functions/ai.js)
-// The Mistral API key is NEVER in the browser bundle.
-//
-// SETUP:
-//   - Remove VITE_MISTRAL_API_KEY from Netlify env vars
-//   - Add MISTRAL_API_KEY (no VITE_ prefix) to Netlify env vars (same value)
+// All AI calls go through /api/tutor (netlify/functions/tutor.js).
+// The Mistral API key is server-side only: MISTRAL_API_KEY in Netlify env vars.
+// Never use VITE_MISTRAL_API_KEY — the key must never be in the browser bundle.
 
 const AI_ENDPOINT = '/api/tutor'
 
